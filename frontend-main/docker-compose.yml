@@ -1,0 +1,7 @@
+services:
+  frontend:
+    build: .
+    container_name: pets_frontend_ctn
+    network_mode: "host"
+    ports:
+      - "80:80"

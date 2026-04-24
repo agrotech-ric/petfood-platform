@@ -1,0 +1,47 @@
+.inputWrapper {
+  width: 100%;
+  max-width: 340px;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 14px;
+  color: #363636;
+  text-align: left;
+}
+
+.phoneContainer {
+  width: 100% !important;
+}
+
+.phoneInput {
+  width: 100% !important;
+  padding: 0.75rem 0.75rem 0.75rem 3.5rem !important;
+  font-size: 16px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  background-color: #f8f8f8 !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  height: 48px !important;
+}
+
+.phoneInput::placeholder {
+  font-size: 14px;
+  color: #999;
+}
+
+.phoneButton {
+  border: none !important;
+  background-color: transparent !important;
+  border-radius: 6px 0 0 6px !important;
+}
+
+.phoneDropdown {
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}

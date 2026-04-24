@@ -1,0 +1,52 @@
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #F2704C;
+  margin-bottom: 1rem;
+}
+
+.calorieContainer {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.kcalInput {
+  width: 150px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #F8F8F8;
+}
+
+.kcalInput:focus {
+  outline: none;
+  border-color: #F2704C;
+}
+
+.kcalInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.recommendedText {
+  color: #666;
+  font-size: 14px;
+}
+
+.recalculateBtn {
+  padding: 0.75rem 1.5rem;
+  background-color: #F2704C;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.recalculateBtn:hover {
+  background-color: #d6633d;
+}

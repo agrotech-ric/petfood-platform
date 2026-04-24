@@ -1,0 +1,9 @@
+services:
+  recommender-api:
+    build: .
+    container_name: recommender_api_ctn
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1

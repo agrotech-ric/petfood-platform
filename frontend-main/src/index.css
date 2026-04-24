@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-primary: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --box-sizing: border-box;
+  --transition-speed: 0.2s;
+  --page-transition-speed: 0.25s;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: var(--box-sizing);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  scrollbar-gutter: stable;
+}
+
+body {
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.auth-wrapper,
+main,
+.container,
+[class*="container"],
+[class*="wrapper"] {
+  animation: fadeInUp var(--page-transition-speed) ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition: all var(--transition-speed) ease;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline-offset: 2px;
+  transition: outline var(--transition-speed) ease;
+}
+
+[class*="card"],
+[class*="Card"] {
+  animation: fadeIn var(--page-transition-speed) ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

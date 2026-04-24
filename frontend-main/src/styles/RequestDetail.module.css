@@ -1,0 +1,195 @@
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(255, 255, 255, 1);
+  position: relative;
+}
+
+.backBtn {
+  position: absolute;
+  left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #F28C4C;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.backBtn:hover {
+  opacity: 0.9;
+}
+
+.backIcon {
+  font-size: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #F28C4C;
+  margin: 0;
+  text-align: center;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(255, 255, 255, 1);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(242, 112, 76, 1);
+  margin: 0 0 1.5rem 0;
+}
+
+.requestDate {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.petInfoSection {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.petImage {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.petDetails {
+  flex: 1;
+}
+
+.petName {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.petDetail {
+  font-size: 14px;
+  color: #374151;
+  margin: 0.5rem 0;
+}
+
+.petDetail strong {
+  color: #1f2937;
+}
+
+.requestContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.infoRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.infoRow strong {
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.infoRow span {
+  font-size: 14px;
+  color: #374151;
+}
+
+.symptomsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.symptomTag {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.comments {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.actions {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.editBtn {
+  padding: 0.75rem 1.5rem;
+  background-color: #F28C4C;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.editBtn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    gap: 1rem;
+  }
+}

@@ -1,0 +1,20 @@
+.nestedField {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-left: 1.5rem;
+  margin-top: 1rem;
+  position: relative;
+}
+
+.nestedField::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #FFE5DC;
+  border-radius: 2px;
+  z-index: 0;
+}

@@ -1,0 +1,14 @@
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #F2704C;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.maximizationSubtext {
+  font-size: 0.875rem;
+  color: #363636;
+  margin-bottom: 0.75rem;
+  margin-top: -0.5rem;
+}

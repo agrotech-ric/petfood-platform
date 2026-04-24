@@ -1,0 +1,22 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notifications
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+logging:
+  level:
+    root: INFO
+
+smtp:
+  gmail:
+    user: ${SMTP_GMAIL_USER:}
+    pass: ${SMTP_GMAIL_PASS:}
+    from: ${SMTP_GMAIL_FROM:}

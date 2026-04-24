@@ -1,0 +1,145 @@
+.container {
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  background-color: #F8F8F8;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  user-select: none;
+}
+
+.select:hover {
+  border-color: #F2704C;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #F2704C;
+}
+
+.selectOpen {
+  border-color: #F2704C;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.selectError {
+  border-color: #ef4444;
+}
+
+.selectDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+.selectText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  color: #374151;
+}
+
+.placeholder {
+  color: #9ca3af;
+  flex: 1;
+}
+
+.arrow {
+  color: #F2704C;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.arrowOpen {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #FFFFFF;
+  border: 1px solid #F2704C;
+  border-top: none;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 999;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-bottom-right-radius: 6px;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  background: #F2704C;
+  border-radius: 4px;
+}
+
+.dropdown::-webkit-scrollbar-thumb:hover {
+  background: #e56340;
+}
+
+.option {
+  padding: 0.75rem;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.option:hover,
+.optionHighlighted {
+  background-color: #FFF5F0;
+  color: #F2704C;
+}
+
+.optionSelected {
+  background-color: #FFF5F0;
+  color: #F2704C;
+  font-weight: 500;
+}
+
+.checkIcon {
+  color: #F2704C;
+  flex-shrink: 0;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 0.25rem;
+}

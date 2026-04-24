@@ -1,0 +1,319 @@
+.container {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  background-color: #F8F8F8;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+.input:hover {
+  border-color: #F2704C;
+}
+
+.inputOpen {
+  border-color: #F2704C;
+}
+
+.inputError {
+  border-color: #ef4444;
+}
+
+.placeholder {
+  color: #939393;
+}
+
+.calendarIcon {
+  width: 18px;
+  height: 18px;
+  color: #F2704C;
+  flex-shrink: 0;
+}
+
+.calendar {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem;
+  z-index: 999999;
+  width: 280px;
+  opacity: 0;
+  transform: scale(0.95);
+  animation: calendarFadeIn 0.15s ease-out forwards;
+}
+
+@keyframes calendarFadeIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #F2704C;
+}
+
+.monthYearButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: color 0.2s;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.monthYearButton:hover {
+  color: #F2704C;
+  background-color: #FFF5F0;
+}
+
+.navButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  border-radius: 4px;
+}
+
+.navButton:hover {
+  color: #F2704C;
+  background-color: #FFF5F0;
+}
+
+.daysHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 0.25rem;
+}
+
+.dayName {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  padding: 0.25rem 0;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dayCell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day:hover {
+  background-color: #FFF5F0;
+  color: #F2704C;
+}
+
+.dayDisabled {
+  color: #ccc;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.dayToday {
+  border: 1px solid #F2704C;
+  color: #F2704C;
+}
+
+.daySelected {
+  background-color: #F2704C;
+  color: white;
+  font-weight: 500;
+}
+
+.daySelected:hover {
+  background-color: #e56340;
+  color: white;
+}
+
+.yearPicker {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.yearPickerHeader {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #F2704C;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.backButton:hover {
+  color: #F2704C;
+  background-color: #FFF5F0;
+}
+
+.yearGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.yearOption {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.yearOption:hover {
+  background-color: #FFF5F0;
+  border-color: #F2704C;
+  color: #F2704C;
+}
+
+.yearSelected {
+  background-color: #F2704C;
+  border-color: #F2704C;
+  color: white;
+  font-weight: 500;
+}
+
+.yearSelected:hover {
+  background-color: #e56340;
+  color: white;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 0.25rem;
+}
+
+.inputOrange {
+  background-color: #F2704C !important;
+  color: #FFFFFF !important;
+  border-color: #F2704C !important;
+}
+
+.inputOrange:hover {
+  background-color: #d6633d !important;
+}
+
+.inputOrange .calendarIcon {
+  color: #FFFFFF !important;
+}
+
+.inputOrange .placeholder {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dayInRange {
+  background-color: rgba(242, 112, 76, 0.15) !important;
+  color: #363636 !important;
+}
+
+.dayRangeStart,
+.dayRangeEnd {
+  background-color: #F2704C !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
+
+.dayRangeStart {
+  border-radius: 50% 0 0 50%;
+}
+
+.dayRangeEnd {
+  border-radius: 0 50% 50% 0;
+}
+
+.dayRangeStart.dayRangeEnd {
+  border-radius: 50%;
+}
+
+.rangeHint {
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: #666;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 0.5rem;
+}
+
+.inputOrange {
+  background-color: #F2704C !important;
+  color: #FFFFFF !important;
+  border-color: #F2704C !important;
+}
+
+.inputOrange:hover {
+  background-color: #d6633d !important;
+}
+
+.inputOrange .calendarIcon {
+  color: #FFFFFF !important;
+}
+
+.inputOrange .placeholder {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+

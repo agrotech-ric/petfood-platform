@@ -1,0 +1,44 @@
+.layoutContainer {
+  min-height: 100vh;
+  background-color: #f4f4f4;
+  display: flex;
+}
+
+.mainWithSidebar {
+  margin-left: 64px;
+  flex: 1;
+  min-height: 100vh;
+  width: calc(100% - 64px);
+}
+
+.mainFullWidth {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.contentContainer {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1440px) {
+  .contentContainer {
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .contentContainer {
+    max-width: 960px;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .contentContainer {
+    padding: 1rem;
+  }
+}
