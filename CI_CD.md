@@ -117,6 +117,7 @@ jobs:
 **Вариант A: В терминале (для тестирования)**
 
 ```bash
+export GITHUB_WEBHOOK_SECRET="$(openssl rand -hex 32)"
 cd /home/iot/PetFood/petfood_platforma
 python3 webhook_server.py
 ```
@@ -130,10 +131,8 @@ python3 webhook_server.py
 **Вариант B: Systemd сервис (автозапуск)**
 
 ```bash
-# Отредактируйте webhook_server.py и установите GITHUB_SECRET
-nano webhook_server.py
-# Найдите строку: GITHUB_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "your-secret-key")
-# Измените "your-secret-key" на реальный секрет или экспортируйте переменную
+# Секрет теперь берётся только из переменной окружения GITHUB_WEBHOOK_SECRET
+export GITHUB_WEBHOOK_SECRET="$(openssl rand -hex 32)"
 
 # Установите как systemd сервис
 cd /home/iot/PetFood/petfood_platforma
@@ -167,6 +166,8 @@ openssl rand -hex 32
 - **Active**: ☑️ Отмечено
 
 Нажмите **Add webhook**
+
+Webhook сервер отвечает `202 Accepted` и запускает деплой в фоне, поэтому GitHub не ждёт завершения сборки.
 
 #### 4. Тест webhook'а
 

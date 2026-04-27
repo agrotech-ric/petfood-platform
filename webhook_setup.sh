@@ -7,7 +7,11 @@ set -e
 
 PROJECT_DIR="/home/iot/PetFood/petfood_platforma"
 WEBHOOK_PORT=9000
-GITHUB_SECRET="your-secret-key"  # Измените на реальный!
+GITHUB_SECRET="${GITHUB_WEBHOOK_SECRET:-}"
+
+if [ -n "${2:-}" ]; then
+   GITHUB_SECRET="$2"
+fi
 
 echo "🔧 PetFood Webhook Setup"
 echo "========================"
@@ -27,6 +31,13 @@ if ! command -v git &> /dev/null; then
 fi
 
 echo "✓ Git установлен: $(git --version)"
+
+if [[ ( "$1" == "--install" || "$1" == "--run" ) && -z "$GITHUB_SECRET" ]]; then
+   echo "❌ Укажите GITHUB_WEBHOOK_SECRET или передайте секрет вторым аргументом"
+   echo "   Пример: GITHUB_WEBHOOK_SECRET=... ./webhook_setup.sh --install"
+   echo "   Или:    ./webhook_setup.sh --install <secret>"
+   exit 1
+fi
 
 # 3. Создаём systemd сервис для webhook (опционально)
 if [ "$1" == "--install" ]; then

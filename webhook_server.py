@@ -10,11 +10,14 @@ import subprocess
 import hmac
 import hashlib
 import json
+import shlex
+import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 PROJECT_DIR = Path("/home/iot/PetFood/petfood_platforma")
-GITHUB_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "your-secret-key")
+GITHUB_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "").strip()
+DEPLOY_LOCK = threading.Lock()
 
 class WebhookHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -47,12 +50,17 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 self.wfile.write(b'{"status": "ignored - not main branch"}')
                 return
 
-            # Запускаем деплой
-            self._deploy()
+            if not DEPLOY_LOCK.acquire(blocking=False):
+                self.send_response(409)
+                self.end_headers()
+                self.wfile.write(b'{"status": "deploy already running"}')
+                return
 
-            self.send_response(200)
+            threading.Thread(target=self._deploy, daemon=True).start()
+
+            self.send_response(202)
             self.end_headers()
-            self.wfile.write(b'{"status": "deploying"}')
+            self.wfile.write(b'{"status": "deploy queued"}')
 
         except Exception as e:
             self._log(f"Error: {e}")
@@ -71,27 +79,37 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
     def _deploy(self):
         """Выполняет деплой"""
-        commands = [
-            f"cd {PROJECT_DIR}",
-            "git pull origin main",
-            "docker compose down",
-            "docker compose up --build -d",
-        ]
-
-        cmd = " && ".join(commands)
-
         self._log("Starting deployment...")
-        result = subprocess.run(
-            cmd,
-            shell=True,
-            capture_output=True,
-            text=True
-        )
+        script = f"""
+set -e
+cd {shlex.quote(str(PROJECT_DIR))}
+git fetch origin main
+git reset --hard origin/main
+git clean -fd
+docker compose down
+docker compose up -d --build --remove-orphans
+docker compose ps
+"""
 
-        if result.returncode == 0:
-            self._log("Deployment completed successfully!")
-        else:
-            self._log(f"Deployment failed!\nStderr: {result.stderr}")
+        try:
+            result = subprocess.run(
+                ["/bin/bash", "-lc", script],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            if result.stdout:
+                self._log(f"stdout:\n{result.stdout.strip()}")
+
+            if result.returncode == 0:
+                self._log("Deployment completed successfully!")
+            else:
+                self._log(f"Deployment failed (exit {result.returncode})")
+                if result.stderr:
+                    self._log(f"stderr:\n{result.stderr.strip()}")
+        finally:
+            DEPLOY_LOCK.release()
 
     def _log(self, message):
         """Логирует сообщения в файл"""
@@ -105,6 +123,10 @@ class WebhookHandler(BaseHTTPRequestHandler):
         pass
 
 def main():
+    if not GITHUB_SECRET:
+        print("❌ GITHUB_WEBHOOK_SECRET is not set", file=sys.stderr)
+        sys.exit(1)
+
     host = "0.0.0.0"
     port = int(os.getenv("WEBHOOK_PORT", "9000"))
 
