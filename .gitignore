@@ -3,3 +3,4 @@
 *.env
 !.env.example
 deploy.log
+actions-runner/
