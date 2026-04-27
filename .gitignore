@@ -4,3 +4,4 @@
 !.env.example
 deploy.log
 actions-runner/
+AGENTS.md
