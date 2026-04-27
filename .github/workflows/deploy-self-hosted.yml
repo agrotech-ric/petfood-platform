@@ -1,0 +1,32 @@
+name: Deploy to local production (self-hosted)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, petfood-prod]
+    timeout-minutes: 60
+
+    steps:
+      - name: Deploy main on local server
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT_DIR="/home/iot/PetFood/petfood_platforma"
+
+          cd "$PROJECT_DIR"
+          git fetch origin main
+          git reset --hard origin/main
+          git clean -fd
+
+          docker compose down
+          docker compose up -d --build --remove-orphans
+          docker compose ps
