@@ -13,7 +13,7 @@ type FieldErrors = {
   email?: string;
   firstName?: string;
   lastName?: string;
-  //iin?: string;
+  iin?: string;
   password?: string;
   general?: string;
 };
@@ -22,7 +22,7 @@ const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
- // const [iin, setIIN] = useState('');
+  const [iin, setIIN] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
@@ -39,13 +39,13 @@ const Register: React.FC = () => {
     const emailError = validateEmail(email);
     const firstNameError = validateName(firstName, 'Имя');
     const lastNameError = validateName(lastName, 'Фамилия');
-    //const iinError = validateIIN(iin);
+    const iinError = validateIIN(iin);
     const passwordError = validatePassword(password);
 
     if (emailError) newErrors.email = emailError;
     if (firstNameError) newErrors.firstName = firstNameError;
     if (lastNameError) newErrors.lastName = lastNameError;
-   // if (iinError) newErrors.iin = iinError;
+    if (iinError) newErrors.iin = iinError;
     if (passwordError) newErrors.password = passwordError;
 
     if (Object.keys(newErrors).length > 0) {
@@ -59,7 +59,7 @@ const Register: React.FC = () => {
         email,
         firstName,
         lastName,
-        //iin,
+        iin,
         password,
       });
 
@@ -106,6 +106,16 @@ const Register: React.FC = () => {
               value={lastName}
               onChange={setLastName}
               error={errors.lastName}
+            />
+
+            <InputField
+              label="ИИН"
+              type="text"
+              placeholder="Введите ИИН"
+              value={iin}
+              onChange={setIIN}
+              error={errors.iin}
+              maxLength={12}
             />
 
             <PasswordField

@@ -14,15 +14,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByEmail(String email);
 
-    //boolean existsByIin(String iin);
+    boolean existsByIin(String iin);
 
     Optional<User> findByEmail(String email);
 
-   // Optional<User> findByIin(String iin);
+    Optional<User> findByIin(String iin);
 
     Page<User> findByEmailContainingIgnoreCaseOrIinContainingIgnoreCase(
         String email,
-        //String iin,
+        String iin,
         Pageable pageable
     );
 
@@ -31,6 +31,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
         where lower(u.email) like lower(concat('%', :q, '%'))
            or lower(coalesce(u.firstName, '')) like lower(concat('%', :q, '%'))
            or lower(coalesce(u.lastName, '')) like lower(concat('%', :q, '%'))
+           or coalesce(u.iin, '') like concat('%', :q, '%')
     """)
     Page<User> adminDirectorySearch(@Param("q") String q, Pageable pageable);
 }
