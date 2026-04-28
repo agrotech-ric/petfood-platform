@@ -37,7 +37,7 @@ function validateName(name: string, fieldName: string): string | null {
 
   return null;
 }
-
+/*
 function validatePhoneKZ(phone: string): string | null {
   if (!phone) return '*Введите номер телефона';
 
@@ -94,13 +94,15 @@ function validateIIN(iin: string): string | null {
   return null;
 }
 
+
+*/
 const examplePassword = 'My123$password';
 
 export {
   validateEmail,
   validatePassword,
   validateName,
-  validatePhoneKZ,
-  validateIIN,
+  //validatePhoneKZ,
+  //validateIIN,
   examplePassword
 };

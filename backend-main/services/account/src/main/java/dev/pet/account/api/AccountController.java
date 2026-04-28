@@ -236,7 +236,7 @@ public class AccountController {
     @PreAuthorize("hasRole('ADMIN')")
     public AdminUserResponse findUser(
         @RequestParam(required = false) String email,
-        @RequestParam(required = false) String iin,
+        //@RequestParam(required = false) String iin,
         @AuthenticationPrincipal Jwt jwt,
         HttpServletRequest httpReq
     ) {
@@ -244,16 +244,13 @@ public class AccountController {
 
         if (email != null && !email.isEmpty()) {
             resp = accounts.adminFindUser("email", email);
-        }
-        else if (iin != null && !iin.isEmpty()) {
-            resp = accounts.adminFindUser("iin", iin);
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one search parameter is required");
         }
 
         var adminId = java.util.UUID.fromString(jwt.getSubject());
         java.util.UUID targetId = resp.id();
-        String details = "email=" + email + ",iin=" + iin;
+        String details = "email=" + email;
         audit.log(adminId, "ADMIN_LOOKUP_USER", targetId, details, httpReq.getRemoteAddr());
 
         return resp;
@@ -262,14 +259,11 @@ public class AccountController {
     @GetMapping("/bio/owners/findUser")
     @PreAuthorize("hasRole('VET')")
     public BioOwnerResponse bioFindUser(
-        @RequestParam(required = false) String email,
-        @RequestParam(required = false) String iin
+        @RequestParam(required = false) String email
     ) {
         if (email != null && !email.isEmpty()) {
             return accounts.bioFindUser("email", email);
-        } else if (iin != null && !iin.isEmpty()) {
-            return accounts.bioFindUser("iin", iin);
-        } else {
+        }  else {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "At least one search parameter is required"

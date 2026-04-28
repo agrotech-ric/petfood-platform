@@ -21,7 +21,7 @@ type AuthContextType = {
     email: string;
     firstName: string;
     lastName: string;
-    iin: string;
+   // iin: string;
     password: string;
   }) => Promise<{ userId: string; email: string }>;
   confirmRegistration: (data: { email: string; code: string }) => Promise<void>;

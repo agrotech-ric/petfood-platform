@@ -26,8 +26,8 @@ public class User extends BaseEntity {
     @Column(name = "last_name", length = 64)
     private String lastName;
 
-    @Column(length = 12, unique = true)
-    private String iin;
+    //@Column(length = 12, unique = true)
+    //private String iin;
 
     @Column(name = "enable_2fa", nullable = false)
     private boolean enable2fa = false;
@@ -64,12 +64,12 @@ public class User extends BaseEntity {
         this.lastName = lastName == null ? null : lastName.trim();
     }
 
-
+/*
     public String getIin() { return iin; }
     public void setIin(String iin) {
         this.iin = iin == null ? null : iin.trim();
     }
-
+*/
     public boolean isEnable2fa() { return enable2fa; }
     public void setEnable2fa(boolean enable2fa) { this.enable2fa = enable2fa; }
 

@@ -89,18 +89,19 @@ public class AccountService {
     @Transactional
     public RegisterResponse register(RegisterRequest req) {
         String email = req.email().trim().toLowerCase();
-        String iin   = req.iin().trim();
+       // String iin   = req.iin().trim();
 
         if (users.existsByEmail(email)) {
             throw new DuplicateKeyException("Email already registered");
         }
+        /*
         if (users.existsByIin(iin)) {
             throw new DuplicateKeyException("IIN already registered");
-        }
+        }*/
 
         User u = new User();
         u.setEmail(email);
-        u.setIin(iin);
+        //u.setIin(iin);
         u.setPasswordHash(encoder.encode(req.password()));
         u.setStatus(UserStatus.PENDING_VERIFICATION);
         u.setRole(Role.USER);
@@ -515,7 +516,7 @@ public class AccountService {
         return new AdminUserResponse(
             u.getId(),
             u.getEmail(),
-            u.getIin(),
+           // u.getIin(),
             u.getFirstName(),
             u.getLastName(),
             u.getStatus().name(),

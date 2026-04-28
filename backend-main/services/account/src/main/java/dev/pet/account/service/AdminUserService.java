@@ -41,7 +41,7 @@ public class AdminUserService {
                 u.getId(),
                 u.getEmail(),
                 fullName(u),
-                u.getIin(),
+               // u.getIin(),
                 u.getRole() == null ? "" : u.getRole().name(),
                 u.getCreatedAt(),
                 u.getRole() != Role.ADMIN

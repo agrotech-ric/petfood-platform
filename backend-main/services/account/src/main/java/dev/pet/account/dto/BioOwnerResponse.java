@@ -4,6 +4,6 @@ import java.util.UUID;
 
 public record BioOwnerResponse(
     UUID id,
-    String iin,
+   // String iin,
     String fullName
 ) {}
