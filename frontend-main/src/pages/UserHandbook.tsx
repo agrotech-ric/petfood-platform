@@ -13,7 +13,6 @@ type UserStatus = 'ACTIVE' | 'INACTIVE';
 type User = {
   id: string;
   email: string;
-  iin: string;
   firstName: string;
   lastName: string;
   status: UserStatus;
@@ -202,8 +201,7 @@ export const UserHandbook = () => {
     const matchesSearch = !searchQuery || (
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.iin.includes(searchQuery)
+      user.lastName.toLowerCase().includes(searchQuery.toLowerCase())
     );
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
@@ -270,7 +268,7 @@ export const UserHandbook = () => {
             <Search size={20} className={styles.searchIcon} />
             <input
               type="text"
-              placeholder="Поиск по имени, email или ИИН"
+              placeholder="Поиск по имени или email"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
@@ -296,7 +294,6 @@ export const UserHandbook = () => {
                 <tr>
                   <th>Email</th>
                   <th>ФИО</th>
-                  <th>ИИН</th>
                   <th>Роль</th>
                   <th>Дата регистрации</th>
                   <th>Действия</th>
@@ -307,7 +304,7 @@ export const UserHandbook = () => {
                   <tr key={user.id}>
                     <td>{user.email}</td>
                     <td>{formatFullName(user)}</td>
-                    <td>{user.iin}</td>
+
                     <td>
                       <span className={`${styles.roleBadge} ${styles[user.role.toLowerCase()]}`}>
                         {roleNames[user.role]}

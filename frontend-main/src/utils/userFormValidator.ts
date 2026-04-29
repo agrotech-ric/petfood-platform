@@ -50,49 +50,6 @@ function validatePhoneKZ(phone: string): string | null {
   return null;
 }
 
-function validateIIN(iin: string): string | null {
-  if (!iin) return '*Введите ИИН';
-
-  const cleanIIN = iin.replace(/[\s-]/g, '');
-
-  if (!/^\d+$/.test(cleanIIN)) {
-    return '*ИИН должен содержать только цифры';
-  }
-
-  if (cleanIIN.length !== 12) {
-    return '*ИИН должен состоять из 12 цифр';
-  }
-
-  const month = parseInt(cleanIIN.substring(2, 4), 10);
-  const day = parseInt(cleanIIN.substring(4, 6), 10);
-
-  if (month < 1 || month > 12) {
-    return '*Неверная дата в ИИН';
-  }
-
-  if (day < 1 || day > 31) {
-    return '*Неверная дата в ИИН';
-  }
-
-  const digits = cleanIIN.split('').map(Number);
-
-  const weights1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-  const weights2 = [3, 4, 5, 6, 7, 8, 9, 10, 11, 1, 2];
-
-  let sum = digits.slice(0, 11).reduce((acc, d, i) => acc + d * weights1[i], 0);
-  let checksum = sum % 11;
-
-  if (checksum === 10) {
-    sum = digits.slice(0, 11).reduce((acc, d, i) => acc + d * weights2[i], 0);
-    checksum = sum % 11;
-  }
-
-  if (checksum !== digits[11]) {
-    return '*Неверный ИИН';
-  }
-
-  return null;
-}
 
 const examplePassword = 'My123$password';
 
@@ -101,6 +58,5 @@ export {
   validatePassword,
   validateName,
   validatePhoneKZ,
-  validateIIN,
   examplePassword
 };

@@ -1,0 +1,2 @@
+ALTER TABLE users DROP COLUMN IF EXISTS iin;
+DROP INDEX IF EXISTS uk_users_iin;

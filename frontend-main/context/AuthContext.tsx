@@ -21,7 +21,6 @@ type AuthContextType = {
     email: string;
     firstName: string;
     lastName: string;
-    iin: string;
     password: string;
   }) => Promise<{ userId: string; email: string }>;
   confirmRegistration: (data: { email: string; code: string }) => Promise<void>;
@@ -134,7 +133,6 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     email: string;
     firstName: string;
     lastName: string;
-    iin: string;
     password: string;
   }) => {
     try {

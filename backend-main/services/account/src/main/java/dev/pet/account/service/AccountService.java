@@ -89,18 +89,13 @@ public class AccountService {
     @Transactional
     public RegisterResponse register(RegisterRequest req) {
         String email = req.email().trim().toLowerCase();
-        String iin   = req.iin().trim();
 
         if (users.existsByEmail(email)) {
             throw new DuplicateKeyException("Email already registered");
         }
-        if (users.existsByIin(iin)) {
-            throw new DuplicateKeyException("IIN already registered");
-        }
 
         User u = new User();
         u.setEmail(email);
-        u.setIin(iin);
         u.setPasswordHash(encoder.encode(req.password()));
         u.setStatus(UserStatus.PENDING_VERIFICATION);
         u.setRole(Role.USER);
@@ -515,7 +510,6 @@ public class AccountService {
         return new AdminUserResponse(
             u.getId(),
             u.getEmail(),
-            u.getIin(),
             u.getFirstName(),
             u.getLastName(),
             u.getStatus().name(),
@@ -535,8 +529,8 @@ public class AccountService {
 
         String p = (q == null) ? "" : q.trim();
 
-        var res = users.findByEmailContainingIgnoreCaseOrIinContainingIgnoreCase(
-            p, p, pageable
+        var res = users.findByEmailContainingIgnoreCase(
+            p, pageable
         );
 
         return res.map(this::toAdmin);
@@ -545,31 +539,23 @@ public class AccountService {
 
 
     @Transactional(readOnly = true)
-    public AdminUserResponse adminLookup(String iin, String email) {
+    public AdminUserResponse adminLookup(String email) {
 
         int provided =
-            ((iin   != null && !iin.isBlank())   ? 1 : 0) +
                 ((email != null && !email.isBlank()) ? 1 : 0);
 
         if (provided != 1) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Provide exactly one of: iin, email"
+                "Provide exactly: email"
             );
         }
 
         final User u;
-
-        if (iin != null && !iin.isBlank()) {
-            u = users.findByIin(iin).orElseThrow(() ->
-                new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "User not found"));
-        } else {
-            // сюда попадаем, если iin пустой, но email валидный
-            u = users.findByEmail(email.trim().toLowerCase()).orElseThrow(() ->
-                new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "User not found"));
-        }
+        u = users.findByEmail(email.trim().toLowerCase()).orElseThrow(() ->
+            new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "User not found"));
+        
 
         return toAdmin(u);
     }
@@ -625,15 +611,11 @@ public class AccountService {
         User u;
 
         switch (key) {
-            case "iin" -> {
-                u = users.findByIin(value)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-            }
             case "email" -> {
                 u = users.findByEmail(value.trim().toLowerCase())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
             }
-            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "by must be one of: iin,email");
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "by must be: email");
         }
         return toAdmin(u);
     }
@@ -723,36 +705,8 @@ public class AccountService {
 
         return new BioOwnerResponse(
             u.getId(),
-            u.getIin(),
             fullName
         );
     }
-
-    @Transactional(readOnly = true)
-    public BioOwnerResponse bioFindUser(String by, String value) {
-        if (by == null || value == null || value.isBlank()) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "by and value are required"
-            );
-        }
-
-        String key = by.trim().toLowerCase();
-        User u;
-
-        switch (key) {
-            case "iin" -> u = users.findByIin(value)
-                .orElseThrow(() -> new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "User not found"));
-
-            default -> throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "by must be one: iin"
-            );
-        }
-
-        return toBioOwner(u);
-    }
-
 
 }
