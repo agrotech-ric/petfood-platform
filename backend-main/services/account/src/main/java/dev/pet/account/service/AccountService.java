@@ -601,17 +601,22 @@ public class AccountService {
 
 
 
-
     @Transactional(readOnly = true)
-    public AdminUserResponse adminFindUser(String email) {
-        if (email == null || email.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+    public AdminUserResponse adminFindUser(String by, String value) {
+
+        if (by == null || value == null || value.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "by and value are required");
         }
 
-        User u = users.findByEmail(email.trim().toLowerCase())
-            .orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
-            );
+        String key = by.trim().toLowerCase();
+        User u;
+
+        switch (key) {
+            case "email" -> u = users.findByEmail(value.trim().toLowerCase())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "by must be: email");
+        }
 
         return toAdmin(u);
     }
