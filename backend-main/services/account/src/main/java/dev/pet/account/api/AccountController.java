@@ -257,20 +257,13 @@ public class AccountController {
 
     @GetMapping("/bio/owners/findUser")
     @PreAuthorize("hasRole('VET')")
-    public BioOwnerResponse bioFindUser(
-        @RequestParam(required = false) String email
-    ) {
-        if (email != null && !email.isEmpty()) {
-            return accounts.bioFindUser("email", email);
-        } else {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Email is required"
-            );
+    public BioOwnerResponse bioFindUser(@RequestParam String email) {
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
         }
+
+        return accounts.bioFindUser(email);
     }
-
-
 
 
     @GetMapping("/admin/users")
