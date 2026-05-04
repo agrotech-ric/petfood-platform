@@ -551,7 +551,7 @@ public class PetService {
     @Transactional(readOnly = true)
     public List<HealthRecordResponse> listHealthRecordsByOwner(UUID ownerId) {
 
-        List<PetHealthRecord> records = petHealthRecordRepository.findByOwnerId(ownerId);
+        List<PetHealthRecord> records = healthRepo.findByOwnerId(ownerId);
 
         return records.stream()
             .map(this::toHealthRecordResponse)
