@@ -379,6 +379,14 @@ public class PetService {
         return toHealthDto(savedRecord);
     }
 
+    private HealthRecordResponse toHealthRecordResponse(PetHealthRecord record) {
+        return new HealthRecordResponse(
+            record.getId(),
+            record.getPet().getId(),
+            record.getPet().getName(),
+            record.getCreatedAt()
+        );
+    }
 
     @Transactional
     public HealthRecordResponse updateHealthRecord(
@@ -540,11 +548,14 @@ public class PetService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<HealthRecordResponse> listHealthRecordsByOwner(UUID ownerId) {
-        return healthRecordRepository.findByOwnerId(ownerId)
-                .stream()
-                .map(this::toHealthRecordResponse)
-                .toList();
+
+        List<PetHealthRecord> records = petHealthRecordRepository.findByOwnerId(ownerId);
+
+        return records.stream()
+            .map(this::toHealthRecordResponse)
+            .toList();
     }
 
 
