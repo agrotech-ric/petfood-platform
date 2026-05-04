@@ -554,7 +554,7 @@ public class PetService {
         List<PetHealthRecord> records = healthRepo.findByOwnerId(ownerId);
 
         return records.stream()
-            .map(this::toHealthRecordResponse)
+            .map(this::toHealthDto)
             .toList();
     }
 
