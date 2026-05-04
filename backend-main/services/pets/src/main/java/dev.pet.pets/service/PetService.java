@@ -379,14 +379,6 @@ public class PetService {
         return toHealthDto(savedRecord);
     }
 
-    private HealthRecordResponse toHealthRecordResponse(PetHealthRecord record) {
-        return new HealthRecordResponse(
-            record.getId(),
-            record.getPet().getId(),
-            record.getPet().getName(),
-            record.getCreatedAt()
-        );
-    }
 
     @Transactional
     public HealthRecordResponse updateHealthRecord(
