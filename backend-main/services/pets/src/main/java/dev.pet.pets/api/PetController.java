@@ -134,7 +134,7 @@ public class PetController {
 
 
     @PostMapping("/health-records/{recordId}/recommendation")
-    @PreAuthorize("hasRole('VET')")
+    @PreAuthorize("hasRole('VET') or hasRole('USER')")
     public RecommendationResponse createRecommendation(
         @AuthenticationPrincipal Jwt jwt,
         @PathVariable("recordId") UUID healthRecordId,
@@ -152,7 +152,7 @@ public class PetController {
     }
 
     @PatchMapping("/health-records/{recordId}/recommendation")
-    @PreAuthorize("hasRole('VET')")
+    @PreAuthorize("hasRole('VET') or hasRole('USER') ")
     public RecommendationResponse updateRecommendation(
         @AuthenticationPrincipal Jwt jwt,
         @PathVariable("recordId") UUID healthRecordId,
