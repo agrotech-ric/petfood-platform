@@ -204,12 +204,7 @@ public class PetService {
         Pet saved = pets.save(pet);
 
         // Create initial health record for newly registered pet
-        try {
-            createInitialHealthRecord(saved, getSubject(jwt));
-        } catch (Exception e) {
-            logger.warn("Failed to create initial health record for pet {}: {}", saved.getId(), e.getMessage());
-            // Don't fail the pet creation if initial health record fails
-        }
+        createInitialHealthRecord(saved, getSubject(jwt));
 
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             saved.getOwnerId(),
@@ -326,8 +321,8 @@ public class PetService {
             .orElse(null);
 
         if (defaultActivityType == null) {
-            logger.warn("No activity types available for initial health record");
-            return;
+            logger.error("CRITICAL: No activity types available for initial health record. Database not properly seeded!");
+            throw new IllegalStateException("Activity types not found in database. Application requires reference data initialization.");
         }
 
         // Get at least one symptom to satisfy the constraint
@@ -336,8 +331,8 @@ public class PetService {
             .orElse(null);
 
         if (defaultSymptom == null) {
-            logger.warn("No symptoms available for initial health record");
-            return;
+            logger.error("CRITICAL: No symptoms available for initial health record. Database not properly seeded!");
+            throw new IllegalStateException("Symptoms not found in database. Application requires reference data initialization.");
         }
 
         PetHealthRecord healthRecord = new PetHealthRecord();
@@ -347,11 +342,11 @@ public class PetService {
         healthRecord.setSymptoms(new HashSet<>());
         healthRecord.getSymptoms().add(defaultSymptom);
         healthRecord.setNotes("Начальная запись при регистрации питомца");
-        healthRecord.setWeightKg(pet.getWeightKg());
+        healthRecord.setWeightKg(pet.getWeightKg() != null ? pet.getWeightKg() : 0.0);
         healthRecord.assignNewId();
 
         healthRepo.save(healthRecord);
-        logger.info("Created initial health record for pet {}", pet.getId());
+        logger.info("Successfully created initial health record for pet {} with ID {}", pet.getId(), healthRecord.getId());
     }
 
 
@@ -821,7 +816,4 @@ public class PetService {
             java.util.Map.of()
         );
     }
-
-
-
 }

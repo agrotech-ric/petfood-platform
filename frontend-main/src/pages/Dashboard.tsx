@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
 import { usePets } from '../../context/PetContext';
 import { usePetFilters } from '../hooks/usePetFilters';
 import { Layout } from '../../layout/Layout';
@@ -12,9 +13,20 @@ import {
 import styles from '../styles/Dashboard.module.css';
 
 export const Dashboard = () => {
-  const { pets, isLoading } = usePets();
+  const { pets, isLoading, fetchPets } = usePets();
   const { filters, filteredPets, setAgeSortOrder, setGenderFilter } = usePetFilters(pets);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Refresh pets when returning from registration
+  React.useEffect(() => {
+    const shouldRefresh = location.state?.refresh;
+    if (shouldRefresh) {
+      fetchPets();
+      // Clear the state to avoid re-triggering on navigation
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state?.refresh, fetchPets, navigate, location.pathname]);
 
   const handleRegisterClick = () => {
     navigate('/register-pet');

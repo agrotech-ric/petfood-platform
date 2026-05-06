@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, X, SlidersHorizontal } from 'lucide-react';
+import { Search, X, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { apiClient } from '../../src/utils/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import { Sidebar } from '../components/Sidebar';
@@ -51,6 +51,7 @@ export const UserRecordsPage = () => {
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -72,7 +73,7 @@ export const UserRecordsPage = () => {
         state: {}
       });
     }
-  }, [location.state?.timestamp, user?.id]);
+  }, [location.state?.timestamp, user?.id, navigate, location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -122,6 +123,12 @@ export const UserRecordsPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchAllRequests();
+    setIsRefreshing(false);
   };
 
   const handleRecommendationClick = (request: VetPetRequest) => {
@@ -251,6 +258,16 @@ export const UserRecordsPage = () => {
               )}
             </div>
 
+            <button
+              className={styles.filterBtn}
+              onClick={handleManualRefresh}
+              title="Обновить список"
+              disabled={isRefreshing}
+              style={{ marginLeft: '8px' }}
+            >
+              <RefreshCw size={20} style={{ animation: isRefreshing ? 'spin 1s linear infinite' : 'none' }} />
+            </button>
+
             <div className={styles.filterDropdownWrapper} ref={dropdownRef}>
               <button
                 className={`${styles.filterBtn} ${statusFilter !== 'all' ? styles.filterActive : ''}`}
@@ -343,6 +360,13 @@ export const UserRecordsPage = () => {
           )}
         </section>
       </main>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

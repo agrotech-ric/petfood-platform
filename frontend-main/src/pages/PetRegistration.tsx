@@ -66,7 +66,7 @@ const PetRegistration = () => {
         title: isEditMode ? 'Успешно обновлено!' : 'Питомец добавлен!',
         message: isEditMode
           ? `Профиль питомца ${formData.name} был успешно обновлен.`
-          : `${formData.name} успешно зарегистрирован в системе.`
+          : `${formData.name} успешно зарегистрирован в системе. Запись о его здоровье создана и появится в разделе "Записи".`
       });
       setShowSuccessModal(true);
     }
@@ -74,11 +74,20 @@ const PetRegistration = () => {
 
   const handleModalClose = () => {
     setShowSuccessModal(false);
-    navigate(isEditMode && id ? `/pet-profile/${id}` : '/dashboard');
+    if (isEditMode && id) {
+      navigate(`/pet-profile/${id}`);
+    } else {
+      // After new pet registration, trigger refresh in dashboard and records
+      navigate('/dashboard', { state: { refresh: true, timestamp: Date.now() } });
+    }
   };
 
   const handleBackClick = () => {
-    navigate(isEditMode && id ? `/pet-profile/${id}` : '/dashboard');
+    if (isEditMode && id) {
+      navigate(`/pet-profile/${id}`);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   if (isLoadingReference) {
