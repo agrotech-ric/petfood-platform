@@ -202,6 +202,15 @@ public class PetService {
 
         PetMapper.toEntity(req, pet, species, breed, color, status, subStatus);
         Pet saved = pets.save(pet);
+
+        // Create initial health record for newly registered pet
+        try {
+            createInitialHealthRecord(saved, getSubject(jwt));
+        } catch (Exception e) {
+            logger.warn("Failed to create initial health record for pet {}: {}", saved.getId(), e.getMessage());
+            // Don't fail the pet creation if initial health record fails
+        }
+
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             saved.getOwnerId(),
             "PET_UPDATED",
@@ -308,6 +317,43 @@ public class PetService {
             throw new ForbiddenOperationException("admin or veterinarian role required");
         }
     }
+
+    @Transactional
+    private void createInitialHealthRecord(Pet pet, UUID ownerId) {
+        // Get default/first activity type (usually "Normal" or "Moderate")
+        ActivityType defaultActivityType = activityTypeRepo.findAll().stream()
+            .findFirst()
+            .orElse(null);
+
+        if (defaultActivityType == null) {
+            logger.warn("No activity types available for initial health record");
+            return;
+        }
+
+        // Get at least one symptom to satisfy the constraint
+        Symptom defaultSymptom = symptomRepo.findAll().stream()
+            .findFirst()
+            .orElse(null);
+
+        if (defaultSymptom == null) {
+            logger.warn("No symptoms available for initial health record");
+            return;
+        }
+
+        PetHealthRecord healthRecord = new PetHealthRecord();
+        healthRecord.setPet(pet);
+        healthRecord.setOwnerId(ownerId);
+        healthRecord.setActivityType(defaultActivityType);
+        healthRecord.setSymptoms(new HashSet<>());
+        healthRecord.getSymptoms().add(defaultSymptom);
+        healthRecord.setNotes("Начальная запись при регистрации питомца");
+        healthRecord.setWeightKg(pet.getWeightKg());
+        healthRecord.assignNewId();
+
+        healthRepo.save(healthRecord);
+        logger.info("Created initial health record for pet {}", pet.getId());
+    }
+
 
     private boolean isAdminOrVet(Jwt jwt) {
         Object roleClaim = jwt.getClaims().get("role");
