@@ -25,6 +25,13 @@ import { RequestDetail } from './pages/RequestDetail';
 import { VetRecommendation } from './pages/VetRecommendation';
 import { UserHandbook } from './pages/UserHandbook';
 import { UserRecordsPage } from './pages/UserRecordsPage';
+import { UserRecommendationCreate } from './pages/UserRecommendationCreate';
+import { UserRecommendationView } from './pages/UserRecommendationView';
+import { UserRecommendationCreateDetails } from './pages/UserRecommendationCreateDetails';
+
+
+
+
 
 function App() {
   return (
@@ -171,6 +178,35 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              <Route
+                  path="/recommendationcreate/:id"
+                  element={
+                    <PrivateRoute allowedRoles={['USER']}>
+                      <UserRecommendationCreate />
+                    </PrivateRoute>
+                  }
+                />
+
+              <Route
+                  path="/recommendationcreate/:id/view"
+                  element={
+                    <PrivateRoute allowedRoles={['USER']}>
+                      <UserRecommendationView />
+                    </PrivateRoute>
+                  }
+                />
+
+                
+                
+                <Route
+                  path="/recommendationcreate/:id/detail"
+                  element={
+                    <PrivateRoute allowedRoles={['USER']}>
+                      <UserRecommendationCreateDetails />
+                    </PrivateRoute>
+                  }
+                />
+
 
                 <Route
                   path="/vet/dashboard"

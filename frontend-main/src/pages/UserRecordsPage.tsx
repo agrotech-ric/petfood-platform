@@ -133,11 +133,11 @@ export const UserRecordsPage = () => {
 
   const handleRecommendationClick = (request: VetPetRequest) => {
     if (request.hasRecommendation) {
-      navigate(`/vet/recommendation/${request.id}/detail`, {
+      navigate(`/recommendationcreate/${request.id}/detail`, {
         state: { request }
       });
     } else {
-      navigate(`/vet/recommendation/${request.id}`, {
+      navigate(`/recommendationcreate/${request.id}`, {
         state: { request }
       });
     }
