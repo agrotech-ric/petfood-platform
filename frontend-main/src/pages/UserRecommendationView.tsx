@@ -20,7 +20,7 @@ const isRecommendation = (data: any): data is Recommendation => {
   return data && typeof data === 'object' && 'optimizationResult' in data;
 };
 
-export const VetRecommendationView = () => {
+export const UserRecommendationView = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();

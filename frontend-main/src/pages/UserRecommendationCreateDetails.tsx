@@ -17,7 +17,7 @@ type SavedRecommendation = {
   payload: OptimizationResult;
 };
 
-export const VetRecommendationDetail = () => {
+export const UserRecommendationCreateDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
