@@ -21,7 +21,7 @@ public class PetPhotoController {
     private final Path rootDir;
 
     public PetPhotoController(
-        @Value("${app.photo-storage.fs.root-dir:/data/pet-photos}") String rootDir
+        @Value("${app.photo-storage.fs.root-dir:/data/pets-photos}") String rootDir
     ) {
         this.rootDir = Paths.get(rootDir).toAbsolutePath().normalize();
     }

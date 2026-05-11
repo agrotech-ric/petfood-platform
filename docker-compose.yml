@@ -163,6 +163,10 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      # Persist pet photos when using app.photo-storage.type=fs (default in application.yml)
+      PETS_PHOTO_DIR: /data/pets-photos
+    volumes:
+      - pets_photos:/data/pets-photos
     restart: unless-stopped
     networks:
       - pets_network
@@ -270,3 +274,4 @@ volumes:
   redis_data:
   rabbitmq_data:
   minio_data:
+  pets_photos:

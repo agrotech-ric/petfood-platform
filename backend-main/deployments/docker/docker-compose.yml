@@ -161,6 +161,9 @@ services:
       PETS_MINIO_BUCKET: ${PETS_MINIO_BUCKET}
       PETS_MINIO_UPLOAD_TTL_SECONDS: ${PETS_MINIO_UPLOAD_TTL_SECONDS}
       PETS_MINIO_DOWNLOAD_TTL_SECONDS: ${PETS_MINIO_DOWNLOAD_TTL_SECONDS}
+      PETS_PHOTO_DIR: /data/pets-photos
+    volumes:
+      - pets-photos:/data/pets-photos
     ports:
       - "8083:8083"
 
@@ -192,3 +195,4 @@ volumes:
   pg-data:
   redis-data:
   rabbit-data:
+  pets-photos:
