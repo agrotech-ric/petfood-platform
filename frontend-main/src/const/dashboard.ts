@@ -6,6 +6,7 @@ export const AGE_SORT_OPTIONS: Array<{ value: AgeSortOrder; label: string }> = [
 ];
 
 export const GENDER_FILTER_OPTIONS: Array<{ value: GenderFilter; label: string }> = [
+  { value: 'all', label: 'Все' },
   { value: 'female', label: 'Самка' },
   { value: 'male', label: 'Самец' }
 ];

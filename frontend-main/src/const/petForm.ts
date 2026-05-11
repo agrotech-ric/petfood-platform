@@ -24,7 +24,6 @@ export const LACTATION_WEEKS = [
 
 export const INITIAL_FORM_DATA: PetFormData = {
   photo: null,
-  petType: 'Собака',
   name: '',
   breed: '',
   gender: '',

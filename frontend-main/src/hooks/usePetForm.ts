@@ -7,6 +7,7 @@ import {
   validatePetForm
 } from '../utils/petFormValidator';
 import { usePets } from '../../context/PetContext';
+import type { Species } from '../../context/PetContext/types';
 import { getReproductiveStatusId, getLactationWeekId } from '../const/petMappings';
 import { petService } from '../../services/petService';
 import { useFormPersistence } from './useFormPersistence';
@@ -16,6 +17,17 @@ type ReferenceItem = {
   name?: string;
   nameRu?: string;
   nameEn?: string;
+};
+
+const resolveDogSpeciesId = (species: Species[]): number => {
+  if (!species?.length) return 0;
+  const dog =
+    species.find(
+      (s) =>
+        s.code === 'dog' ||
+        (s.name && s.name.toLowerCase().includes('соба'))
+    ) ?? species[0];
+  return dog?.id ?? 0;
 };
 
 const STORAGE_KEY = 'pet_registration_draft';
@@ -179,7 +191,7 @@ export const usePetForm = (editPetId?: string) => {
   const validateReferenceIds = (speciesId: number, breedId: number, colorId: number) => {
     const missingFields = [];
 
-    if (speciesId === 0) missingFields.push(`Вид животного (${formData.petType})`);
+    if (speciesId === 0) missingFields.push('Вид «собака» в справочнике');
     if (breedId === 0) missingFields.push(`Порода (${formData.breed})`);
     if (colorId === 0) missingFields.push(`Окрас (${formData.color})`);
 
@@ -230,7 +242,7 @@ export const usePetForm = (editPetId?: string) => {
     setLoading(true);
 
     try {
-      const speciesId = findIdByName(species, formData.petType);
+      const speciesId = resolveDogSpeciesId(species);
       const breedId = findIdByName(breeds, formData.breed);
       const colorId = findIdByName(colors, formData.color);
 

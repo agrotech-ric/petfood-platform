@@ -1,6 +1,5 @@
 export type PetFormData = {
   photo: File | null;
-  petType: string;
   name: string;
   breed: string;
   gender: string;
@@ -15,7 +14,6 @@ export type PetFormData = {
 
 export type FormErrors = {
   photo?: string;
-  petType?: string;
   name?: string;
   breed?: string;
   gender?: string;

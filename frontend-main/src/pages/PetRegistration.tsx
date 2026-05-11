@@ -41,7 +41,6 @@ const PetRegistration = () => {
 
         setInitialData({
           photo: null,
-          petType: pet.speciesName,
           name: pet.name,
           breed: pet.breedName,
           gender: pet.gender,
@@ -132,7 +131,6 @@ const PetRegistration = () => {
 
             <div className={styles.formGrid}>
               <PetFormLeftColumn
-                petType={formData.petType}
                 breed={formData.breed}
                 dateOfBirth={formData.dateOfBirth}
                 passportId={formData.passportId}

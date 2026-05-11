@@ -6,7 +6,6 @@ import DatePicker from '../components/Calendar';
 import styles from '../styles/PetRegistration.module.css';
 
 type PetFormLeftColumnProps = {
-  petType: string;
   breed: string;
   dateOfBirth: string;
   passportId: string;
@@ -15,7 +14,6 @@ type PetFormLeftColumnProps = {
 };
 
 const PetFormLeftColumn = ({
-  petType,
   breed,
   dateOfBirth,
   passportId,
@@ -37,18 +35,6 @@ const PetFormLeftColumn = ({
 
   return (
     <div className={styles.leftColumn}>
-      <div className={styles.formGroup}>
-        <label className={styles.label}>
-          Вид животного <span className={styles.required}>*</span>
-        </label>
-        <input
-          type="text"
-          value={petType}
-          disabled
-          className={styles.input}
-        />
-      </div>
-
       <div className={styles.formGroup}>
         <label className={styles.label}>
           Порода <span className={styles.required}>*</span>

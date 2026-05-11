@@ -9,7 +9,16 @@ const getInitialFilters = (): PetFilters => {
 
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored) as Partial<PetFilters>;
+      const genderFilter: PetFilters['genderFilter'] =
+        parsed.genderFilter === 'all' ||
+        parsed.genderFilter === 'male' ||
+        parsed.genderFilter === 'female'
+          ? parsed.genderFilter
+          : 'all';
+      const ageSortOrder: PetFilters['ageSortOrder'] =
+        parsed.ageSortOrder === 'desc' ? 'desc' : 'asc';
+      return { ageSortOrder, genderFilter };
     } catch (error) {
       console.error('Failed to parse stored filters:', error);
     }
@@ -17,7 +26,7 @@ const getInitialFilters = (): PetFilters => {
 
   return {
     ageSortOrder: 'asc',
-    genderFilter: 'male'
+    genderFilter: 'all'
   };
 };
 
