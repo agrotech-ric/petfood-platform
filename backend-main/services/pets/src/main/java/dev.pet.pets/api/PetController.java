@@ -129,7 +129,7 @@ public class PetController {
     public List<HealthRecordResponse> listHealthRecords (@AuthenticationPrincipal Jwt jwt,
         @PathVariable UUID id){
         UUID ownerId = UUID.fromString(jwt.getSubject());
-        return service.listHealthRecords(id, ownerId);
+        return service.listHealthRecords(id, ownerId, jwt);
     }
 
 
@@ -198,7 +198,7 @@ public class PetController {
         @AuthenticationPrincipal Jwt jwt
     ) {
         UUID ownerId = UUID.fromString(jwt.getSubject());
-        return service.listHealthRecordsByOwner(ownerId);
+        return service.listHealthRecordsByOwner(ownerId, jwt);
     }
 
     @GetMapping("/health-records/{recordId}/protein")

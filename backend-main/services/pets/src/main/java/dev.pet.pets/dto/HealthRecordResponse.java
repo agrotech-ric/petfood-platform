@@ -25,6 +25,8 @@ public class HealthRecordResponse {
     private String passportId;
     private Double weightKg;
     private String photoObjectKey;
+    private String comments;
+    private String ownerName;
 
 
     public UUID getId() { return id; }
@@ -80,4 +82,10 @@ public class HealthRecordResponse {
 
     public String getPhotoObjectKey() { return photoObjectKey; }
     public void setPhotoObjectKey(String photoObjectKey) { this.photoObjectKey = photoObjectKey; }
+
+    public String getComments() { return comments; }
+    public void setComments(String comments) { this.comments = comments; }
+
+    public String getOwnerName() { return ownerName; }
+    public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
 }

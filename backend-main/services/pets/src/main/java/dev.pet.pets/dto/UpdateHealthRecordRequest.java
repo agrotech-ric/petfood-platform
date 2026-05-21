@@ -1,5 +1,6 @@
 package dev.pet.pets.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -13,6 +14,7 @@ public class UpdateHealthRecordRequest {
     private List<Long> symptomIds;
 
     @Size(max = 2000)
+    @JsonAlias("comments")
     private String notes;
 
     private Double weightKg;

@@ -18,7 +18,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 0.75rem;
 }
 
 .backBtn {

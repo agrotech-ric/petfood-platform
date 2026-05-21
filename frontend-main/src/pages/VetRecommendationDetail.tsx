@@ -5,6 +5,8 @@ import { MdKeyboardArrowLeft } from 'react-icons/md';
 import { apiClient } from '../utils/apiClient';
 import type { OptimizationResult } from '../../context/RequestContext';
 import  DigestionAnalysis from '../components/DigestionAnalysis';
+import { RecommendationExportButton } from '../components/RecommendationExportButton';
+import { buildExportMeta } from '../utils/recommendationReport';
 import styles from '../styles/VetRecommendationView.module.css';
 
 const COLORS = ['#4A90E2', '#7FDB6A', '#FF9F5A', '#E74C3C', '#9B59B6'];
@@ -30,12 +32,28 @@ export const VetRecommendationDetail = () => {
     const stateRequest = location.state?.request;
     if (stateRequest) {
       setRequest(stateRequest);
+    } else if (id) {
+      fetchRequestContext(id);
     }
 
     if (id) {
       fetchRecommendation();
     }
   }, [id]);
+
+  const fetchRequestContext = async (recordId: string) => {
+    try {
+      const records = await apiClient.get<Record<string, unknown>[]>(
+        '/api/v1/pets/health-records/all'
+      );
+      const found = records.find((r) => r.id === recordId);
+      if (found) {
+        setRequest(found);
+      }
+    } catch (err) {
+      console.warn('Could not load health record context for PDF:', err);
+    }
+  };
 
   const fetchRecommendation = async () => {
     if (!id) return;
@@ -269,6 +287,10 @@ export const VetRecommendationDetail = () => {
           Назад
         </button>
         <h1 className={styles.title}>Рекомендация от {formattedDate}</h1>
+        <RecommendationExportButton
+          optimizationResult={optimizationResult}
+          meta={buildExportMeta(petName, formattedDate, { recordId: id, request })}
+        />
       </div>
 
       <main className={styles.main}>
@@ -278,7 +300,7 @@ export const VetRecommendationDetail = () => {
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Вид животного:</span>
-                <span className={styles.infoValue}>{request.petSpecies || 'Собака'}</span>
+                <span className={styles.infoValue}>{request.petSpecies || request.speciesName || 'Собака'}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Кличка:</span>
@@ -286,7 +308,7 @@ export const VetRecommendationDetail = () => {
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Порода:</span>
-                <span className={styles.infoValue}>{request.petBreed || 'Не указано'}</span>
+                <span className={styles.infoValue}>{request.petBreed || request.breedName || 'Не указано'}</span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Пол:</span>
@@ -318,10 +340,10 @@ export const VetRecommendationDetail = () => {
                   {request.symptoms?.join(', ') || 'Не указано'}
                 </span>
               </div>
-              {request.comments && (
+              {(request.comments || request.notes) && (
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Комментарий:</span>
-                  <span className={styles.infoValue}>{request.comments}</span>
+                  <span className={styles.infoValue}>{request.comments || request.notes}</span>
                 </div>
               )}
             </div>
@@ -352,7 +374,7 @@ export const VetRecommendationDetail = () => {
         <div className={styles.chartsContainer}>
           <div className={styles.chartSection}>
             <h2 className={styles.sectionTitle}>Состав рациона</h2>
-            <div className={styles.chartWithTable}>
+            <div className={styles.chartWithTable} data-pdf-chart="composition">
               <div className={styles.pieChartContainer}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -406,7 +428,7 @@ export const VetRecommendationDetail = () => {
 
           <div className={styles.chartSection}>
             <h2 className={styles.sectionTitle}>Питательная ценность</h2>
-            <div className={styles.nutritionContent}>
+            <div className={styles.nutritionContent} data-pdf-chart="nutrition">
               <div className={styles.pieChartContainer}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -453,7 +475,7 @@ export const VetRecommendationDetail = () => {
 
         {macroMineralsData.length > 0 && traceMineralsData.length > 0 && (
           <div className={styles.balanceChartsRow}>
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="macro-minerals">
               <h2 className={styles.sectionTitle}>Баланс макроминералов</h2>
               <ResponsiveContainer width="100%" height={500}>
                 <BarChart
@@ -483,7 +505,7 @@ export const VetRecommendationDetail = () => {
               </ResponsiveContainer>
             </div>
 
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="trace-minerals">
               <h2 className={styles.sectionTitle}>Баланс микроэлементов</h2>
               <ResponsiveContainer width="100%" height={500}>
                 <BarChart
@@ -517,7 +539,7 @@ export const VetRecommendationDetail = () => {
 
         {vitaminsData.length > 0 && fattyAcidsData.length > 0 && (
           <div className={styles.balanceChartsRow}>
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="vitamins">
               <h2 className={styles.sectionTitle}>Баланс витаминов</h2>
               <ResponsiveContainer width="100%" height={600}>
                 <BarChart
@@ -547,7 +569,7 @@ export const VetRecommendationDetail = () => {
               </ResponsiveContainer>
             </div>
 
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="fatty-acids">
               <h2 className={styles.sectionTitle}>Баланс жирных кислот</h2>
               <ResponsiveContainer width="100%" height={600}>
                 <BarChart

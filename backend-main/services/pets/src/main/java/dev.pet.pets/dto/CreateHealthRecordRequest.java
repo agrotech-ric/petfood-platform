@@ -1,5 +1,6 @@
 package dev.pet.pets.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -13,6 +14,7 @@ public class CreateHealthRecordRequest {
     @NotEmpty
     private List<Long> symptomIds;
 
+    @JsonAlias("comments")
     private String notes;
 
     private Double weightKg;

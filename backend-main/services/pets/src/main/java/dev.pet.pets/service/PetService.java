@@ -35,9 +35,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import dev.pet.pets.dto.CreatePetPhotoUploadUrlRequest;
@@ -417,7 +419,7 @@ public class PetService {
             "{\"petId\":\"" + petId + "\",\"healthRecordId\":\"" + savedRecord.getId() + "\"}"
         ));
 
-        return toHealthDto(savedRecord);
+        return toHealthDto(savedRecord, resolveOwnerName(ownerId, jwt));
     }
 
 
@@ -478,10 +480,14 @@ public class PetService {
             "{\"petId\":\"" + petId + "\",\"healthRecordId\":\"" + saved.getId() + "\"}"
         ));
 
-        return toHealthDto(saved);
+        return toHealthDto(saved, resolveOwnerName(ownerId, jwt));
     }
 
     private HealthRecordResponse toHealthDto(PetHealthRecord record) {
+        return toHealthDto(record, null);
+    }
+
+    private HealthRecordResponse toHealthDto(PetHealthRecord record, String ownerName) {
         HealthRecordResponse response = new HealthRecordResponse();
 
         Pet pet = record.getPet();
@@ -515,12 +521,30 @@ public class PetService {
         response.setPassportId(pet.getPassportId());
         response.setWeightKg(record.getWeightKg());
         response.setPhotoObjectKey(pet.getPhotoObjectKey());
+        response.setComments(record.getNotes());
+        response.setOwnerName(ownerName);
 
         return response;
     }
 
+    private String resolveOwnerName(UUID ownerId, Jwt jwt) {
+        if (jwt == null || ownerId == null) {
+            return null;
+        }
+        try {
+            AccountClient.InternalUserEmailResponse owner =
+                accountClient.getOwnerEmail(ownerId, jwt.getTokenValue());
+            if (owner != null && owner.fullName() != null && !owner.fullName().isBlank()) {
+                return owner.fullName().trim();
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to resolve owner name for ownerId={}", ownerId, e);
+        }
+        return null;
+    }
+
     @Transactional(readOnly = true)
-    public List<HealthRecordResponse> listHealthRecords(UUID petId, UUID ownerId) {
+    public List<HealthRecordResponse> listHealthRecords(UUID petId, UUID ownerId, Jwt jwt) {
         Pet pet = pets.findById(petId)
             .orElseThrow(() -> new NotFoundException("Pet not found"));
 
@@ -531,8 +555,9 @@ public class PetService {
         List<PetHealthRecord> records =
             healthRepo.findByPetIdAndOwnerIdWithSymptoms(petId, ownerId);
 
+        String ownerName = resolveOwnerName(ownerId, jwt);
         return records.stream()
-            .map(this::toHealthDto)
+            .map(r -> toHealthDto(r, ownerName))
             .toList();
     }
 
@@ -575,19 +600,23 @@ public class PetService {
         requireVet(jwt);
 
         List<PetHealthRecord> records = healthRepo.findAllWithSymptoms();
+        Map<UUID, String> ownerNames = new HashMap<>();
 
         return records.stream()
-            .map(this::toHealthDto)
+            .map(r -> toHealthDto(
+                r,
+                ownerNames.computeIfAbsent(r.getOwnerId(), id -> resolveOwnerName(id, jwt))
+            ))
             .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<HealthRecordResponse> listHealthRecordsByOwner(UUID ownerId) {
-
+    public List<HealthRecordResponse> listHealthRecordsByOwner(UUID ownerId, Jwt jwt) {
         List<PetHealthRecord> records = healthRepo.findByOwnerId(ownerId);
+        String ownerName = resolveOwnerName(ownerId, jwt);
 
         return records.stream()
-            .map(this::toHealthDto)
+            .map(r -> toHealthDto(r, ownerName))
             .toList();
     }
 

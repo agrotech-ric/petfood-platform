@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
 import { apiClient } from '../utils/apiClient';
-import { useRequests } from '../../context/RequestContext';
 import type { OptimizationResult } from '../../context/RequestContext';
+import { RecommendationExportButton } from '../components/RecommendationExportButton';
+import { buildExportMeta } from '../utils/recommendationReport';
 import styles from '../styles/VetRecommendationView.module.css';
 
 const COLORS = ['#4A90E2', '#7FDB6A', '#FF9F5A', '#E74C3C', '#9B59B6'];
@@ -20,7 +21,6 @@ type SavedRecommendation = {
 export const UserRecommendationDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fetchRequestById } = useRequests();
   const [recommendation, setRecommendation] = useState<SavedRecommendation | null>(null);
   const [request, setRequest] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +31,20 @@ export const UserRecommendationDetail = () => {
       fetchData();
     }
   }, [id]);
+
+  const fetchRequestFromApi = async (recordId: string) => {
+    try {
+      const records = await apiClient.get<Record<string, unknown>[]>(
+        '/api/v1/pets/health-records/my'
+      );
+      const found = records.find((r) => r.id === recordId);
+      if (found) {
+        setRequest(found);
+      }
+    } catch (err) {
+      console.warn('Could not load health record context for PDF:', err);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -48,13 +62,7 @@ export const UserRecommendationDetail = () => {
       );
       setRecommendation(recommendationData);
 
-      try {
-        const requestData = await fetchRequestById(id);
-        setRequest(requestData);
-      } catch (err) {
-        console.warn('Could not fetch request details:', err);
-        setRequest(null);
-      }
+      await fetchRequestFromApi(id);
     } catch (err) {
       console.error('Failed to fetch recommendation:', err);
       setError('Не удалось загрузить рекомендацию');
@@ -264,6 +272,10 @@ export const UserRecommendationDetail = () => {
           Назад
         </button>
         <h1 className={styles.title}>Рекомендация от {formattedDate}</h1>
+        <RecommendationExportButton
+          optimizationResult={optimizationResult}
+          meta={buildExportMeta(petName, formattedDate, { recordId: id, request })}
+        />
       </div>
 
       <main className={styles.main}>
@@ -294,7 +306,7 @@ export const UserRecommendationDetail = () => {
         <div className={styles.chartsContainer}>
           <div className={styles.chartSection}>
             <h2 className={styles.sectionTitle}>Состав рациона</h2>
-            <div className={styles.chartWithTable}>
+            <div className={styles.chartWithTable} data-pdf-chart="composition">
               <div className={styles.pieChartContainer}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -348,7 +360,7 @@ export const UserRecommendationDetail = () => {
 
           <div className={styles.chartSection}>
             <h2 className={styles.sectionTitle}>Питательная ценность</h2>
-            <div className={styles.nutritionContent}>
+            <div className={styles.nutritionContent} data-pdf-chart="nutrition">
               <div className={styles.pieChartContainer}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -395,7 +407,7 @@ export const UserRecommendationDetail = () => {
 
         {macroMineralsData.length > 0 && traceMineralsData.length > 0 && (
           <div className={styles.balanceChartsRow}>
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="macro-minerals">
               <h2 className={styles.sectionTitle}>Баланс макроминералов</h2>
               <ResponsiveContainer width="100%" height={500}>
                 <BarChart
@@ -425,7 +437,7 @@ export const UserRecommendationDetail = () => {
               </ResponsiveContainer>
             </div>
 
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="trace-minerals">
               <h2 className={styles.sectionTitle}>Баланс микроэлементов</h2>
               <ResponsiveContainer width="100%" height={500}>
                 <BarChart
@@ -459,7 +471,7 @@ export const UserRecommendationDetail = () => {
 
         {vitaminsData.length > 0 && fattyAcidsData.length > 0 && (
           <div className={styles.balanceChartsRow}>
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="vitamins">
               <h2 className={styles.sectionTitle}>Баланс витаминов</h2>
               <ResponsiveContainer width="100%" height={600}>
                 <BarChart
@@ -489,7 +501,7 @@ export const UserRecommendationDetail = () => {
               </ResponsiveContainer>
             </div>
 
-            <div className={styles.balanceChart}>
+            <div className={styles.balanceChart} data-pdf-chart="fatty-acids">
               <h2 className={styles.sectionTitle}>Баланс жирных кислот</h2>
               <ResponsiveContainer width="100%" height={600}>
                 <BarChart

@@ -1,0 +1,44 @@
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  padding: 0.5rem 1rem;
+  background-color: #ffffff;
+  color: #F28C4C;
+  border: 2px solid #F28C4C;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.exportBtn:hover:not(:disabled) {
+  background-color: #F28C4C;
+  color: #ffffff;
+}
+
+.exportBtn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.exportIcon {
+  font-size: 1.15rem;
+}
+
+.exportLabel {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .exportLabel {
+    display: none;
+  }
+
+  .exportBtn {
+    padding: 0.5rem 0.65rem;
+  }
+}
