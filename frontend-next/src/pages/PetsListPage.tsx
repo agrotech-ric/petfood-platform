@@ -20,6 +20,7 @@ export function PetsListPage() {
 
   const [pets, setPets] = useState<Pet[]>([])
   const [petsLoading, setPetsLoading] = useState(false)
+  const [likedById, setLikedById] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -95,31 +96,53 @@ export function PetsListPage() {
           <span>Все фильтры</span>
         </div>
 
-        <div className={styles.chipsRow}>
-          <div className={styles.chip}>Самец&nbsp;&nbsp;X</div>
-          <div className={styles.chip}>10 - 25 кг&nbsp;&nbsp;X</div>
-          <div className={styles.chip}>Кашель&nbsp;&nbsp;X</div>
-          <div className={styles.chip}>Зуд&nbsp;&nbsp;X</div>
-          <div className={styles.chip}>Аллергия&nbsp;&nbsp;X</div>
-        </div>
-
         <div className={styles.cardsRow}>
           {petsLoading || pets.length === 0 ? (
             <>
-              <PetCard image={dog1} heart={heartOrange} name="Фред" breed="Золотой ретривер" age="1 год" onClick={() => {}} />
-              <PetCard image={dog2} heart={heartWhite} name="Мухтар" breed="Немецкая овчарка" age="5 год" onClick={() => {}} />
-              <PetCard image={dog1} heart={heartWhite} name="Фред" breed="Золотой ретривер" age="1 год" onClick={() => {}} />
+              <PetCard
+                image={dog1}
+                liked={true}
+                name="Фред"
+                breed="Золотой ретривер"
+                age="1 год"
+                onClick={() => {}}
+                onToggleLike={() => {}}
+              />
+              <PetCard
+                image={dog2}
+                liked={false}
+                name="Мухтар"
+                breed="Немецкая овчарка"
+                age="5 год"
+                onClick={() => {}}
+                onToggleLike={() => {}}
+              />
+              <PetCard
+                image={dog1}
+                liked={false}
+                name="Фред"
+                breed="Золотой ретривер"
+                age="1 год"
+                onClick={() => {}}
+                onToggleLike={() => {}}
+              />
             </>
           ) : (
             pets.slice(0, 3).map((p, idx) => (
               <PetCard
                 key={p.id}
-                image={p.photo || (idx % 2 === 0 ? dog1 : dog2)}
-                heart={idx === 0 ? heartOrange : heartWhite}
+                image={idx % 2 === 0 ? dog1 : dog2}
+                liked={Boolean(likedById[p.id])}
                 name={p.name}
                 breed={p.breedName}
                 age={formatAgeShort(p.birthDate)}
                 onClick={() => navigate(`/pet-profile/${p.id}`)}
+                onToggleLike={() =>
+                  setLikedById((prev) => ({
+                    ...prev,
+                    [p.id]: !prev[p.id],
+                  }))
+                }
               />
             ))
           )}
@@ -146,12 +169,31 @@ function formatAgeShort(birthDateIso: string): string {
   return `${years} год`
 }
 
-function PetCard(props: { image: string; heart: string; name: string; breed: string; age: string; onClick: () => void }) {
+function PetCard(props: {
+  image: string
+  liked: boolean
+  name: string
+  breed: string
+  age: string
+  onClick: () => void
+  onToggleLike: () => void
+}) {
   return (
     <button className={styles.petCard} type="button" onClick={props.onClick}>
       <div className={styles.petImageWrap}>
         <img alt="" src={props.image} className={styles.petImage} />
-        <img alt="" src={props.heart} className={styles.petHeart} />
+        <button
+          className={styles.heartButton}
+          type="button"
+          aria-label={props.liked ? 'Unlike' : 'Like'}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            props.onToggleLike()
+          }}
+        >
+          <img alt="" src={props.liked ? heartOrange : heartWhite} className={styles.heartIcon} />
+        </button>
       </div>
       <div className={styles.petMeta}>
         <div className={styles.petName}>{props.name}</div>
