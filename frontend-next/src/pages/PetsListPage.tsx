@@ -1,6 +1,8 @@
 import styles from './PetsListPage.module.css'
 import { Sidebar } from '../components/sidebar/Sidebar'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { apiClient } from '../utils/apiClient'
 
 import iconSearchBg from '../assets/figma/pets-list/icon-search.png'
 import iconMagnifier from '../assets/figma/pets-list/icon-magnifier.png'
@@ -12,21 +14,73 @@ import heartOrange from '../assets/figma/pets-list/heart-orange.svg'
 import heartWhite from '../assets/figma/pets-list/heart-white.svg'
 
 export function PetsListPage() {
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const closeTimer = useRef<number | null>(null)
+
+  const [pets, setPets] = useState<Pet[]>([])
+  const [petsLoading, setPetsLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setPetsLoading(true)
+    apiClient
+      .get<any>('/api/v1/pets/me')
+      .then((data) => {
+        if (cancelled) return
+        let petsList: Pet[] = []
+        if (data?.content && Array.isArray(data.content)) {
+          petsList = data.content
+        } else if (Array.isArray(data)) {
+          petsList = data
+        } else if (data && typeof data === 'object' && data.id) {
+          petsList = [data]
+        }
+        setPets(petsList)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setPets([])
+      })
+      .finally(() => {
+        if (cancelled) return
+        setPetsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const openMenu = () => {
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+    setMenuOpen(true)
+  }
+
+  const scheduleCloseMenu = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current)
+    closeTimer.current = window.setTimeout(() => {
+      setMenuOpen(false)
+      closeTimer.current = null
+    }, 120)
+  }
 
   return (
     <div className={styles.outer}>
       <div className={styles.page} data-node-id="39:1197">
-        <Sidebar expanded={menuOpen} onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)} />
+        <Sidebar expanded={menuOpen} onMouseEnter={openMenu} onMouseLeave={scheduleCloseMenu} />
 
-        {menuOpen && <button className={styles.backdrop} type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)} />}
+        {menuOpen && <div className={styles.backdrop} aria-hidden="true" />}
 
         <div className={styles.headerCard} />
         <div className={styles.headerTitle}>Список питомцев</div>
 
-        <div className={styles.registerPetBtn}>
+        <button className={styles.registerPetBtn} type="button" onClick={() => navigate('/register-pet')}>
           <span>Зарегистрировать питомца</span>
-        </div>
+        </button>
 
         <div className={styles.contentCard} />
 
@@ -50,18 +104,51 @@ export function PetsListPage() {
         </div>
 
         <div className={styles.cardsRow}>
-          <PetCard image={dog1} heart={heartOrange} name="Фред" breed="Золотой ретривер" age="1 год" />
-          <PetCard image={dog2} heart={heartWhite} name="Мухтар" breed="Немецкая овчарка" age="5 год" />
-          <PetCard image={dog1} heart={heartWhite} name="Фред" breed="Золотой ретривер" age="1 год" />
+          {petsLoading || pets.length === 0 ? (
+            <>
+              <PetCard image={dog1} heart={heartOrange} name="Фред" breed="Золотой ретривер" age="1 год" onClick={() => {}} />
+              <PetCard image={dog2} heart={heartWhite} name="Мухтар" breed="Немецкая овчарка" age="5 год" onClick={() => {}} />
+              <PetCard image={dog1} heart={heartWhite} name="Фред" breed="Золотой ретривер" age="1 год" onClick={() => {}} />
+            </>
+          ) : (
+            pets.slice(0, 3).map((p, idx) => (
+              <PetCard
+                key={p.id}
+                image={p.photo || (idx % 2 === 0 ? dog1 : dog2)}
+                heart={idx === 0 ? heartOrange : heartWhite}
+                name={p.name}
+                breed={p.breedName}
+                age={formatAgeShort(p.birthDate)}
+                onClick={() => navigate(`/pet-profile/${p.id}`)}
+              />
+            ))
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-function PetCard(props: { image: string; heart: string; name: string; breed: string; age: string }) {
+type Pet = {
+  id: string
+  name: string
+  breedName: string
+  birthDate: string
+  photo?: string
+}
+
+function formatAgeShort(birthDateIso: string): string {
+  const birth = new Date(birthDateIso)
+  if (Number.isNaN(birth.getTime())) return ''
+  const now = new Date()
+  const years = now.getFullYear() - birth.getFullYear() - (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0)
+  if (years <= 0) return '0 год'
+  return `${years} год`
+}
+
+function PetCard(props: { image: string; heart: string; name: string; breed: string; age: string; onClick: () => void }) {
   return (
-    <div className={styles.petCard}>
+    <button className={styles.petCard} type="button" onClick={props.onClick}>
       <div className={styles.petImageWrap}>
         <img alt="" src={props.image} className={styles.petImage} />
         <img alt="" src={props.heart} className={styles.petHeart} />
@@ -71,7 +158,7 @@ function PetCard(props: { image: string; heart: string; name: string; breed: str
         <div className={styles.petAge}>{props.age}</div>
         <div className={styles.petBreed}>{props.breed}</div>
       </div>
-    </div>
+    </button>
   )
 }
 

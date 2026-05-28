@@ -5,13 +5,20 @@ import iconFork from '../../assets/figma/pets-list/icon-fork.png'
 import iconRecipe from '../../assets/figma/pets-list/icon-recipe.png'
 import iconCat from '../../assets/figma/pets-list/icon-cat.png'
 
-export function Sidebar(props: { expanded?: boolean; onOpen?: () => void; onClose?: () => void }) {
+export function Sidebar(props: {
+  expanded?: boolean
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
+}) {
   const expanded = props.expanded ?? false
 
   return (
-    <div className={styles.root} data-node-id="39:1201">
-      {/* Collapsed rail (always visible) */}
-      <button className={styles.railClickArea} type="button" onClick={props.onOpen} aria-label="Open menu" />
+    <div
+      className={`${styles.root} ${expanded ? styles.expanded : ''}`}
+      data-node-id="39:1201"
+      onMouseEnter={props.onMouseEnter}
+      onMouseLeave={props.onMouseLeave}
+    >
       <div className={styles.rail} />
 
       <img alt="" src={iconLogo} className={styles.logo} />
@@ -21,7 +28,6 @@ export function Sidebar(props: { expanded?: boolean; onOpen?: () => void; onClos
 
       {expanded && (
         <div className={styles.flyout}>
-          <button className={styles.flyoutCloseArea} type="button" onClick={props.onClose} aria-label="Close menu" />
           <div className={styles.flyoutPanel} />
 
           {/* re-render icons above flyout panel */}
