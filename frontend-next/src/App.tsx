@@ -1,31 +1,73 @@
-import { Link, Route, Routes } from 'react-router-dom'
-import { HealthPage } from './pages/HealthPage'
-import { HomePage } from './pages/HomePage'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AuthProvider from '../context/AuthContext'
+import PrivateRoute from './components/PrivateRoute'
+import Login from './pages/Login'
+import Register from './pages/UserRegister'
+import ResetPassword from './pages/ResetPassword'
+import { DashboardStub } from './pages/stubs/DashboardStub'
+import { AdminStub } from './pages/stubs/AdminStub'
+import { VetStub } from './pages/stubs/VetStub'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 export function App() {
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brandMark">PF</span>
-          <span>PetFood Next</span>
-        </div>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <nav className="nav">
-          <Link to="/">Главная</Link>
-          <Link to="/health">Health</Link>
-        </nav>
-      </header>
+        <Route
+          path="/login"
+          element={
+            <div className="auth-wrapper">
+              <Login />
+            </div>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <div className="auth-wrapper">
+              <Register />
+            </div>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <div className="auth-wrapper">
+              <ResetPassword />
+            </div>
+          }
+        />
 
-      <main className="content">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/health" element={<HealthPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </main>
-    </div>
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute allowedRoles={['USER']}>
+              <DashboardStub />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/vet/dashboard"
+          element={
+            <PrivateRoute allowedRoles={['VET']}>
+              <VetStub />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <PrivateRoute allowedRoles={['ADMIN']}>
+              <AdminStub />
+            </PrivateRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </AuthProvider>
   )
 }
 

@@ -1,0 +1,162 @@
+.authContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  padding: 20px;
+}
+
+.authCard {
+  display: flex;
+  background-color: #FFFFFF;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 660px;
+  width: 100%;
+}
+
+.authFormContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #FFFFFF;
+  border-radius: 24px;
+  width: 450px;
+  padding: 60px 50px;
+  box-shadow: none;
+}
+
+.authFormContainer h2 {
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.authFormContainer form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 460px;
+  color: #4A4A4A;
+}
+
+.formGroup {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  margin-top: 24px;
+  width: 100%;
+  height: 48px;
+  border-radius: 10px;
+  background-color: #F2704C;
+  color: #FFFFFF;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+  background-color: #e05a38;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.forgotPassword {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.forgotPasswordLink {
+  background: none;
+  border: none;
+  color: #C45734;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+
+.forgotPasswordLink:hover {
+  color: #A94A2C;
+  text-decoration: underline;
+}
+
+.links {
+  margin-top: 20px;
+  text-align: center;
+  width: 100%;
+  font-size: 14px;
+  color: #666;
+}
+
+.links span {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.link {
+  background: none;
+  border: none;
+  color: #C45734;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+
+.link:hover {
+  color: #A94A2C;
+  text-decoration: underline;
+}
+
+.error {
+  color: #EA584E;
+  font-weight: 500;
+  font-size: 14px;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+.passwordHint {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+  align-self: flex-start;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .authCard {
+    flex-direction: column;
+    border-radius: 16px;
+  }
+
+  .authFormContainer {
+    padding: 40px 30px;
+    max-width: 100%;
+  }
+
+  .authFormContainer form {
+    max-width: 100%;
+  }
+
+  .btn {
+    height: 44px;
+    font-size: 15px;
+  }
+}
