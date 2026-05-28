@@ -4,7 +4,7 @@ import PrivateRoute from './components/PrivateRoute'
 import Login from './pages/Login'
 import Register from './pages/UserRegister'
 import ResetPassword from './pages/ResetPassword'
-import { DashboardStub } from './pages/stubs/DashboardStub'
+import { PetsListPage } from './pages/PetsListPage'
 import { AdminStub } from './pages/stubs/AdminStub'
 import { VetStub } from './pages/stubs/VetStub'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -44,7 +44,7 @@ export function App() {
           path="/dashboard"
           element={
             <PrivateRoute allowedRoles={['USER']}>
-              <DashboardStub />
+              <PetsListPage />
             </PrivateRoute>
           }
         />
