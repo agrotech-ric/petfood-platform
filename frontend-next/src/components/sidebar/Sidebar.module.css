@@ -2,12 +2,42 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 267px;
+  width: 100px;
   height: 1024px;
-  z-index: 10;
+  z-index: 30;
 }
 
-.panel {
+.rail {
+  position: absolute;
+  left: -5px;
+  top: -26px;
+  width: 100px;
+  height: 1223px;
+  background: #ffffff;
+  border: 0.5px solid #bfbfbf;
+  border-radius: 10px;
+  box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.15);
+}
+
+.railClickArea {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.flyout {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 267px;
+  height: 1024px;
+  z-index: 40;
+}
+
+.flyoutPanel {
   position: absolute;
   left: -5px;
   top: -26px;
@@ -17,6 +47,15 @@
   border: 0.5px solid #bfbfbf;
   border-radius: 10px;
   box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.15);
+}
+
+.flyoutCloseArea {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: default;
 }
 
 .logo {
