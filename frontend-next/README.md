@@ -28,8 +28,15 @@ docker run --rm -it \
 ## Proxy
 
 Dev-proxy настроен в `vite.config.ts`:
-- `/api` → `http://10.1.10.144:8090`
-- `/recommender` → `http://10.1.10.144:8000`
+- `/api` → `http://10.1.10.144:5555`
+- `/recommender` → `http://10.1.10.144:5555`
+
+Если у тебя локально проброшены прямые порты (например, gateway на `:8090` и recommender на `:8000`), переопредели через env:
+
+```env
+VITE_API_PROXY_TARGET=http://10.1.10.144:8090
+VITE_RECOMMENDER_PROXY_TARGET=http://10.1.10.144:8000
+```
 
 Если нужно переопределить базовый URL (например, для prod), используй:
 

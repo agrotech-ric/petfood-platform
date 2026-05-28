@@ -7,8 +7,10 @@ export default defineConfig(({ mode }) => {
   const port = Number(env.VITE_DEV_PORT || env.PORT || 5174)
   const strictPort = env.VITE_STRICT_PORT === 'true'
 
-  const apiTarget = env.VITE_API_PROXY_TARGET || 'http://10.1.10.144:8090'
-  const recommenderTarget = env.VITE_RECOMMENDER_PROXY_TARGET || 'http://10.1.10.144:8000'
+  // On the server, the gateway/recommender are usually available via nginx (5555),
+  // while direct service ports (8090/8000) may not be published.
+  const apiTarget = env.VITE_API_PROXY_TARGET || 'http://10.1.10.144:5555'
+  const recommenderTarget = env.VITE_RECOMMENDER_PROXY_TARGET || 'http://10.1.10.144:5555'
 
   return {
     plugins: [react()],
