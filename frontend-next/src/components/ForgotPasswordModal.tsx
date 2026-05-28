@@ -8,7 +8,7 @@ type ForgotPasswordModalProps = {
   onClose: () => void;
 };
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
   const navigate = useNavigate();

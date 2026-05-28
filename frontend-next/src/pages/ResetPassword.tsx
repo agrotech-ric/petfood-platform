@@ -7,7 +7,7 @@ import InputField from '../components/InputField';
 import PasswordInputField from '../components/PasswordInputField';
 import styles from '../styles/ResetPassword.module.css';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
