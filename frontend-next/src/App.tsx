@@ -8,6 +8,8 @@ import { PetsListPage } from './pages/PetsListPage'
 import { AdminStub } from './pages/stubs/AdminStub'
 import { VetStub } from './pages/stubs/VetStub'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { RegisterPetPlaceholder } from './pages/placeholders/RegisterPetPlaceholder'
+import { PetProfilePlaceholder } from './pages/placeholders/PetProfilePlaceholder'
 
 export function App() {
   return (
@@ -45,6 +47,22 @@ export function App() {
           element={
             <PrivateRoute allowedRoles={['USER']}>
               <PetsListPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/register-pet"
+          element={
+            <PrivateRoute allowedRoles={['USER']}>
+              <RegisterPetPlaceholder />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-profile/:id"
+          element={
+            <PrivateRoute allowedRoles={['USER']}>
+              <PetProfilePlaceholder />
             </PrivateRoute>
           }
         />
