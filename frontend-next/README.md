@@ -27,11 +27,17 @@ docker run --rm -it \
 
 ## Proxy
 
-Dev-proxy настроен в `vite.config.ts`:
-- `/api` → `http://10.1.10.144:5555`
-- `/recommender` → `http://10.1.10.144:5555`
+Dev-proxy настроен в `vite.config.ts` (см. `frontend-next/.env`):
+- `/api` → по умолчанию **sandbox gateway** `http://10.1.10.144:18190`
+- `/recommender` → main nginx `http://10.1.10.144:5555`
 
-Если у тебя локально проброшены прямые порты (например, gateway на `:8090` и recommender на `:8000`), переопредели через env:
+Переключение на **main** backend:
+
+```env
+VITE_API_PROXY_TARGET=http://10.1.10.144:5555
+```
+
+Прямые порты main (без nginx):
 
 ```env
 VITE_API_PROXY_TARGET=http://10.1.10.144:8090

@@ -1,125 +1,129 @@
-.root {
-  position: absolute;
+/* ── Fixed sidebar panel ─────────────────────────────── */
+.sidebar {
+  position: fixed;
   left: 0;
   top: 0;
-  width: 100px;
-  height: 1024px;
-  z-index: 30;
-}
-
-.expanded {
-  width: 267px;
-}
-
-.rail {
-  position: absolute;
-  left: -5px;
-  top: -26px;
-  width: 100px;
-  height: 1223px;
+  height: 100vh;
+  width: 90px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
   background: #ffffff;
-  border: 0.5px solid #bfbfbf;
-  border-radius: 10px;
+  border-right: 0.5px solid #bfbfbf;
+  border-radius: 0 10px 10px 0;
   box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.15);
+  transition: width 0.2s ease;
+  overflow: hidden;
+  padding-top: 40px; /* Space at the top */
 }
 
-.flyout {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 267px;
-  height: 1024px;
-  z-index: 40;
+.sidebarExpanded {
+  width: 240px;
 }
 
-.flyoutPanel {
-  position: absolute;
-  left: -5px;
-  top: -26px;
-  width: 267px;
-  height: 1223px;
-  background: #ffffff;
-  border: 0.5px solid #bfbfbf;
-  border-radius: 10px;
-  box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.15);
+/* Dim backdrop when expanded */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 99;
+  pointer-events: none;
 }
 
-.logo {
-  position: absolute;
-  left: 16px;
-  top: 44px;
-  width: 58px;
-  height: 73px;
-  object-fit: cover;
+/* ── Top navigation ───────────────────────────────────── */
+.navTop {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 21px; /* Centers the 48px icon wrap in the 90px sidebar */
 }
 
-.iconFork {
-  position: absolute;
-  left: 13px;
-  top: 126px;
-  width: 64px;
-  height: 67px;
-  object-fit: cover;
+/* ── Unified Nav Item ─────────────────────────────────── */
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: #626D77; /* Default icon color */
+  transition: color 0.12s;
 }
 
-.iconRecipe {
-  position: absolute;
-  left: 30px;
-  top: 192px;
-  width: 39px;
-  height: 39px;
-  object-fit: cover;
-  opacity: 0.6;
+.navItem:hover {
+  color: #333333;
 }
 
-.iconCat {
-  position: absolute;
-  left: 5px;
-  top: 675px;
-  width: 80px;
-  height: 240px;
-  object-fit: cover;
+.navItemActive {
+  color: #F28C4C; /* Active icon color */
 }
 
-.labelPets,
-.labelIngredients,
-.labelRecipes,
-.labelProfile,
-.labelSettings,
-.labelLogout {
-  position: absolute;
-  left: 85px;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+.navItemActive:hover {
+  color: #e07e40;
+}
+
+/* ── Unified Icon Wrapper (Active Background here) ────── */
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+}
+
+/* The active state styling shown in the screenshot */
+.navItemActive .iconWrap {
+  background: #FFF1E6;
+  border-left: 2px solid #F28C4C;
+}
+
+.navIcon {
+  width: 24px;
+  height: 24px;
+  /* SVG inherits color via currentColor */
+}
+
+/* ── Text Label ───────────────────────────────────────── */
+.navLabel {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 16px;
   font-weight: 400;
-  font-size: 18px;
-  line-height: 45px;
-  color: #000000;
-  width: 150px;
-  height: 43px;
+  color: #333333; /* Text is always dark, never orange */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.labelPets {
-  top: 52px;
+/* ── Spacer (pushes bottom nav down) ──────────────────── */
+.spacer {
+  flex: 1;
+  min-height: 20px;
 }
 
-.labelIngredients {
-  top: 131px;
+/* ── Separator (short line before bottom nav) ─────────── */
+.separator {
+  width: 48px;
+  height: 1px;
+  background: #EAEAEA;
+  margin: 0 0 16px 21px; /* Align perfectly with icons */
 }
 
-.labelRecipes {
-  top: 185px;
+/* ── Bottom navigation ────────────────────────────────── */
+.navBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 21px 32px 21px;
+  flex-shrink: 0;
 }
 
-.labelProfile {
-  top: 713px;
+.navBottom .navItem:last-child:hover {
+  color: #d94f2a;
 }
-
-.labelSettings {
-  left: 84px;
-  top: 780px;
-}
-
-.labelLogout {
-  top: 852px;
-}
-

@@ -1,0 +1,248 @@
+name: pets_sandbox
+
+services:
+  # ============ SANDBOX INFRA ============
+  postgres-sandbox:
+    image: postgres:16-alpine
+    container_name: pets_sandbox_postgres
+    environment:
+      POSTGRES_DB: pets_db_sandbox
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - postgres_data_sandbox:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pets_db_sandbox"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  redis-sandbox:
+    image: redis:7.2-alpine
+    container_name: pets_sandbox_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data_sandbox:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  rabbitmq-sandbox:
+    image: rabbitmq:3.13-management
+    container_name: pets_sandbox_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    command: >
+      sh -c "echo 'loopback_users.guest = false' > /etc/rabbitmq/rabbitmq.conf &&
+             rabbitmq-server"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - rabbitmq_data_sandbox:/var/lib/rabbitmq
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  minio-sandbox:
+    image: minio/minio:latest
+    container_name: pets_sandbox_minio
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data_sandbox:/data
+    ports:
+      - "19100:9000"
+      - "19101:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  # ============ SANDBOX BACKEND ============
+  auth-service-sandbox:
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/auth/Dockerfile
+    container_name: pets_sandbox_auth_service
+    depends_on:
+      postgres-sandbox:
+        condition: service_healthy
+      redis-sandbox:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres-sandbox
+      DB_PORT: 5432
+      DB_NAME: pets_db_sandbox
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres123
+      REDIS_HOST: redis-sandbox
+      REDIS_PORT: 6379
+      JWT_ISSUER: http://auth-service-sandbox:8082
+      JWT_TTL_SECONDS: 300
+      JWT_KID_TTL_SECONDS: 3600
+    ports:
+      - "18182:8082"
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  account-service-sandbox:
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/account/Dockerfile
+    container_name: pets_sandbox_account_service
+    depends_on:
+      postgres-sandbox:
+        condition: service_healthy
+      redis-sandbox:
+        condition: service_healthy
+      auth-service-sandbox:
+        condition: service_started
+      rabbitmq-sandbox:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres-sandbox
+      DB_PORT: 5432
+      DB_NAME: pets_db_sandbox
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres123
+      REDIS_HOST: redis-sandbox
+      REDIS_PORT: 6379
+      JWK_SET_URI: http://auth-service-sandbox:8082/.well-known/jwks.json
+      RABBITMQ_HOST: rabbitmq-sandbox
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    ports:
+      - "18181:8081"
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  pets-service-sandbox:
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/pets/Dockerfile
+    container_name: pets_sandbox_pets_service
+    depends_on:
+      postgres-sandbox:
+        condition: service_healthy
+      auth-service-sandbox:
+        condition: service_started
+      minio-sandbox:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres-sandbox
+      DB_PORT: 5432
+      DB_NAME: pets_db_sandbox
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres123
+      # Important: browser must reach MinIO for presigned PUT/GET
+      PETS_MINIO_ENDPOINT: http://10.1.10.144:19100
+      PETS_MINIO_ACCESS_KEY: minioadmin
+      PETS_MINIO_SECRET_KEY: minioadmin
+      PETS_MINIO_BUCKET: pets-sandbox
+      PETS_MINIO_UPLOAD_TTL_SECONDS: 3600
+      PETS_MINIO_DOWNLOAD_TTL_SECONDS: 3600
+      ACCOUNT_SERVICE_URL: http://account-service-sandbox:8081
+      JWK_SET_URI: http://auth-service-sandbox:8082/.well-known/jwks.json
+      RABBITMQ_HOST: rabbitmq-sandbox
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      PETS_PHOTO_DIR: /data/pets-photos
+    volumes:
+      - pets_photos_sandbox:/data/pets-photos
+    ports:
+      - "18183:8083"
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  notifications-service-sandbox:
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/notifications/Dockerfile
+    container_name: pets_sandbox_notifications_service
+    depends_on:
+      rabbitmq-sandbox:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      RABBITMQ_HOST: rabbitmq-sandbox
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      SMTP_HOST: ${SMTP_HOST:-smtp-relay.brevo.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_SSL: ${SMTP_SSL:-false}
+      SMTP_GMAIL_USER: ${SMTP_GMAIL_USER}
+      SMTP_GMAIL_PASS: ${SMTP_GMAIL_PASS}
+      SMTP_GMAIL_FROM: ${SMTP_GMAIL_FROM}
+    ports:
+      - "18184:8084"
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+  gateway-service-sandbox:
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: platform/gateway/Dockerfile
+    container_name: pets_sandbox_gateway_service
+    depends_on:
+      auth-service-sandbox:
+        condition: service_started
+      account-service-sandbox:
+        condition: service_started
+      pets-service-sandbox:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8090
+      AUTH_BASE_URL: http://auth-service-sandbox:8082
+      AUTH_EXCHANGE_PATH: /api/v1/auth/sid/exchange
+      ACCOUNT_SERVICE_URL: http://account-service-sandbox:8081
+      PETS_SERVICE_URL: http://pets-service-sandbox:8083
+      AUTH_SERVICE_URL: http://auth-service-sandbox:8082
+      REDIS_HOST: redis-sandbox
+      REDIS_PORT: 6379
+    ports:
+      - "18190:8090"
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
+networks:
+  pets_network_sandbox:
+    driver: bridge
+
+volumes:
+  postgres_data_sandbox:
+  redis_data_sandbox:
+  rabbitmq_data_sandbox:
+  minio_data_sandbox:
+  pets_photos_sandbox:
+

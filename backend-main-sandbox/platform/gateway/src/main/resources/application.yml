@@ -1,0 +1,34 @@
+spring:
+  profiles:
+    default: dev
+
+server:
+  port: ${SERVER_PORT:8090}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  auth:
+    base-url: ${AUTH_BASE_URL:http://127.0.0.1:8082}
+    exchange-path: ${AUTH_EXCHANGE_PATH:/api/v1/auth/sid/exchange}
+    connect-timeout-ms: 1000
+    read-timeout-ms: 2000
+
+  security:
+    public-paths:
+      - /ping
+      - /.well-known/jwks.json
+
+      - /api/v1/account/register
+      - /api/v1/account/register/confirm
+      - /api/v1/account/login/email
+      - /api/v1/account/login/email/confirm
+      - /api/v1/account/login/phone
+      - /api/v1/account/login/phone/confirm
+
+      - /api/v1/account/password/reset/**
+      - /api/v1/account/email/**

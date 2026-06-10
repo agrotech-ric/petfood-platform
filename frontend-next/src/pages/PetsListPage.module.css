@@ -1,236 +1,325 @@
-.outer {
-  min-height: 100vh;
+/* ── Page structure ────────────────────────────────── */
+.layout {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 16px 0;
+  min-height: 100vh;
   background: #f0f1f3;
 }
 
-.page {
-  position: relative;
-  width: min(1440px, calc(100vw - 32px));
-  height: 1024px;
-  background: #f0f1f3;
-  border: 1px solid #b4b4b4;
-  overflow: hidden;
+/* Main area starts after the 90px fixed sidebar */
+.main {
+  flex: 1;
+  margin-left: 90px;
+  padding: 40px 32px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
 }
 
-.backdrop {
-  position: absolute;
-  left: 100px;
-  top: 0;
-  width: calc(100% - 100px);
-  height: 100%;
-  background: rgba(0, 0, 0, 0.12);
-  border: 0;
-  padding: 0;
-  z-index: 20;
-}
-
-.headerCard {
-  position: absolute;
-  left: 180px;
-  top: 39px;
-  width: 1176px;
-  height: 83px;
+/* ── Top bar card ─────────────────────────────────── */
+.topBar {
+  width: 100%;
+  max-width: 1176px;
   background: #ffffff;
-  border: 0.5px solid #bfbfbf;
-  border-radius: 10px;
-  box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
-.headerTitle {
-  position: absolute;
-  left: 624px;
-  top: 66px;
+.pageTitle {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 28px;
   font-weight: 600;
-  font-size: 24px;
   color: #f28c4c;
-  line-height: normal;
-  white-space: nowrap;
+  margin: 0;
 }
 
-.registerPetBtn {
-  position: absolute;
-  left: 1071px;
-  top: 63px;
-  width: 233px;
-  height: 37px;
+.registerBtn {
   background: #f28c4c;
-  border-radius: 6px;
+  color: #ffffff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.registerBtn:hover {
+  background: #e07e40;
+}
+
+/* ── Content card ─────────────────────────────────── */
+.contentCard {
+  width: 100%;
+  max-width: 1176px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 24px 28px 32px;
+}
+
+/* ── Search and Filters Container ─────────────────── */
+.searchContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* ── Search row ───────────────────────────────────── */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchInputWrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 200px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f9f9f9;
+}
+
+.searchInput {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 10px 14px;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  color: #333;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #aaa;
+}
+
+.searchBtn {
+  background: #f28c4c;
+  border: 0;
+  padding: 10px 14px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  border: 0;
-  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.contentCard {
-  position: absolute;
-  left: 180px;
-  top: 147px;
-  width: 1176px;
-  height: 816px;
-  background: #ffffff;
-  border: 0.5px solid #bfbfbf;
-  border-radius: 10px;
-  box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.15);
-}
-
-.searchBar {
-  position: absolute;
-  left: 235px;
-  top: 195px;
-  width: 791px;
-  height: 41px;
-  background: #f0f1f3;
-  border-radius: 10px;
-}
-
-.searchButton {
-  position: absolute;
-  left: 981px;
-  top: 195px;
-  width: 46px;
-  height: 41px;
-  background: #f28c4c;
-  border-radius: 10px;
-}
-
-.searchButtonBg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 9px;
-  top: 5px;
-  width: 29px;
-  height: 29px;
-  object-fit: cover;
+.searchBtn:hover {
+  background: #e07e40;
 }
 
 .allFiltersBtn {
-  position: absolute;
-  left: 1047px;
-  top: 195px;
-  width: 210px;
-  height: 41px;
-  background: #ffffff;
-  border: 1px solid #b4b4b4;
-  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-left: 20px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 9px 18px;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
   font-weight: 400;
-  font-size: 18px;
-  color: #000000;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.allFiltersBtn:hover {
+  border-color: #f28c4c;
+  color: #f28c4c;
 }
 
 .filtersIcon {
-  width: 28px;
-  height: 21px;
+  width: 24px;
+  height: auto;
+  color: #534C4C; /* default stroke color matching figma */
+  transition: color 0.15s;
 }
 
-.cardsRow {
-  position: absolute;
-  left: 236px;
-  top: 320px;
+.allFiltersBtn:hover .filtersIcon {
+  color: #f28c4c;
+}
+
+/* ── Active Filters Chips ─────────────────────────── */
+.activeFiltersRow {
   display: flex;
-  gap: 34px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.petCard {
-  width: 319.904px;
-  height: 312.164px;
+.filterChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
   background: #ffffff;
-  border: 1px solid #b4b4b4;
-  border-radius: 10px;
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  position: relative;
-  padding: 0;
-  text-align: left;
-  cursor: pointer;
+  border: 1px solid #bfbfbf;
+  border-radius: 20px;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
 }
 
-.petImageWrap {
-  width: 320px;
-  height: 235px;
-  border-radius: 10px;
+.chipCloseBtn {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.chipCloseBtn:hover {
+  color: #333;
+}
+
+/* ── Cards grid ───────────────────────────────────── */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.empty {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  color: #888;
+  margin: 32px 0;
+  text-align: center;
+}
+
+/* ── Pet card ─────────────────────────────────────── */
+.petCard {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #ebebeb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.18s, transform 0.18s;
+  text-decoration: none;
+  display: block;
+}
+
+.petCard:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Image zone */
+.petImageWrap {
   position: relative;
+  width: 100%;
+  height: 235px;
+  background: #f5f5f5;
+  overflow: hidden;
 }
 
 .petImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-.petHeart {
+.petImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  background: #f0efed;
+}
+
+/* Heart button — no circle, just icon floating over photo */
+.heartBtn {
   position: absolute;
-  right: 18px;
-  top: 18px;
-  width: 40px;
-  height: 32px;
-}
-
-.petMeta {
-  position: relative;
-  padding: 12px 16px;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-}
-
-.petName {
-  font-weight: 600;
-  font-size: 24px;
-  color: #000000;
-}
-
-.petAge {
-  position: absolute;
-  right: 16px;
-  top: 18px;
-  font-weight: 400;
-  font-size: 18px;
-  color: #878787;
-}
-
-.petBreed {
-  margin-top: 10px;
-  font-weight: 400;
-  font-size: 18px;
-  line-height: 24px;
-  color: #000000;
-}
-
-.heartButton {
-  position: absolute;
-  right: 18px;
-  top: 18px;
-  width: 40px;
-  height: 32px;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  background: transparent;
   border: 0;
   padding: 0;
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+}
+
+.heartBtn:hover {
+  transform: scale(1.15);
 }
 
 .heartIcon {
-  width: 40px;
-  height: 32px;
-  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* Meta zone — left/right padding matches Figma (≈25px), bottom 10px */
+.petMeta {
+  padding: 14px 25px 10px 25px;
+}
+
+.petMetaRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.petName {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.petAge {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.petBreed {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 22px;
+  color: #000000;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

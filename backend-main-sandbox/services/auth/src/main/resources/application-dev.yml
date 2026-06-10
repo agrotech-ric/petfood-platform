@@ -1,0 +1,11 @@
+server:
+  port: 8082
+
+app:
+  jwt:
+    issuer: ${JWT_ISSUER:http://localhost:8082}
+    ttlSeconds: ${JWT_TTL_SECONDS:3600}
+
+logging:
+  level:
+    org.springframework: INFO

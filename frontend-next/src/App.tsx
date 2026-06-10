@@ -8,7 +8,7 @@ import { PetsListPage } from './pages/PetsListPage'
 import { AdminStub } from './pages/stubs/AdminStub'
 import { VetStub } from './pages/stubs/VetStub'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { RegisterPetPlaceholder } from './pages/placeholders/RegisterPetPlaceholder'
+import { RegisterPetPage } from './pages/RegisterPetPage'
 import { PetProfilePlaceholder } from './pages/placeholders/PetProfilePlaceholder'
 
 export function App() {
@@ -54,7 +54,7 @@ export function App() {
           path="/register-pet"
           element={
             <PrivateRoute allowedRoles={['USER']}>
-              <RegisterPetPlaceholder />
+              <RegisterPetPage />
             </PrivateRoute>
           }
         />
