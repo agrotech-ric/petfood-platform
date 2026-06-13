@@ -3,5 +3,6 @@
 *.env
 !.env.example
 deploy.log
+.deploy-last-commit
 actions-runner/
 AGENTS.md
