@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import EditIcon from '../assets/icons/edit.svg?react';
 import { useAuth } from '../../context/AuthContext';
 import ProfileIcon from '../assets/icons/profile.svg?react';
+import { Sidebar } from '../components/sidebar/Sidebar';
 import styles from '../styles/Profile.module.css';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
@@ -116,78 +117,81 @@ export const Profile = () => {
   };
 
   return (
-    <>
-      <div className={styles.page}>
-        <header className={styles.header}>
-          <div className={styles.headerSpacer} />
-          <h1 className={styles.headerTitle}>Мой профиль</h1>
-          <button className={styles.editBtn} onClick={() => navigate('/settings/edit-profile')}>
-            <EditIcon size={16} />
-            Изменить
-          </button>
-        </header>
+    <div className={styles.layout}>
+      <Sidebar />
+      <main className={styles.main}>
+        <div className={styles.page}>
+          <header className={styles.header}>
+            <div className={styles.headerSpacer} />
+            <h1 className={styles.headerTitle}>Мой профиль</h1>
+            <button className={styles.editBtn} onClick={() => navigate('/settings/edit-profile')}>
+              <EditIcon size={16} />
+              Изменить
+            </button>
+          </header>
 
-        {loading && (
-          <p style={{ color: '#888', fontSize: 13, margin: '0 0 12px' }}>
-            Загрузка...
-          </p>
-        )}
+          {loading && (
+            <p style={{ color: '#888', fontSize: 13, margin: '0 0 12px' }}>
+              Загрузка...
+            </p>
+          )}
 
-        <div className={styles.card}>
-          <div className={styles.avatarFrame}>
-            <ProfileIcon className={styles.avatarIcon} width={96} height={96} />
-          </div>
-
-          <div className={styles.infoBlock}>
-            <h2 className={styles.fullName}>{fullName}</h2>
-
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>e-mail</span>
-              <span className={styles.infoValue}>{email}</span>
+          <div className={styles.card}>
+            <div className={styles.avatarFrame}>
+              <ProfileIcon className={styles.avatarIcon} width={96} height={96} />
             </div>
 
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Телефон</span>
-              <span className={styles.infoValue}>{display(phone)}</span>
-            </div>
+            <div className={styles.infoBlock}>
+              <h2 className={styles.fullName}>{fullName}</h2>
 
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Дата рождения</span>
-              <span className={styles.infoValue}>{formatBirthDate(birthDate)}</span>
-            </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>e-mail</span>
+                <span className={styles.infoValue}>{email}</span>
+              </div>
 
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Страна</span>
-              <span className={styles.infoValue}>{display(country)}</span>
-            </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Телефон</span>
+                <span className={styles.infoValue}>{display(phone)}</span>
+              </div>
 
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Город</span>
-              <span className={styles.infoValue}>{display(city)}</span>
-            </div>
-          </div>
-        </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Дата рождения</span>
+                <span className={styles.infoValue}>{formatBirthDate(birthDate)}</span>
+              </div>
 
-        <div className={styles.activityCard}>
-          <h3 className={styles.activityTitle}>История активности</h3>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Страна</span>
+                <span className={styles.infoValue}>{display(country)}</span>
+              </div>
 
-          {visibleActivity.map((item) => (
-            <div key={item.id} className={styles.activityItem}>
-              <span className={styles.activityDate}>{item.date}</span>
-              <div className={styles.activityContent}>
-                <p className={styles.activityName}>{item.title}</p>
-                <p className={styles.activityDesc}>{item.description}</p>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Город</span>
+                <span className={styles.infoValue}>{display(city)}</span>
               </div>
             </div>
-          ))}
+          </div>
 
-          {hasMore && (
-            <button className={styles.showMoreBtn} onClick={handleShowMore}>
-              Показать больше
-            </button>
-          )}
+          <div className={styles.activityCard}>
+            <h3 className={styles.activityTitle}>История активности</h3>
+
+            {visibleActivity.map((item) => (
+              <div key={item.id} className={styles.activityItem}>
+                <span className={styles.activityDate}>{item.date}</span>
+                <div className={styles.activityContent}>
+                  <p className={styles.activityName}>{item.title}</p>
+                  <p className={styles.activityDesc}>{item.description}</p>
+                </div>
+              </div>
+            ))}
+
+            {hasMore && (
+              <button className={styles.showMoreBtn} onClick={handleShowMore}>
+                Показать больше
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 };

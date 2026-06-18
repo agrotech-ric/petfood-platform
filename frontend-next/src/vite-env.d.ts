@@ -2,7 +2,10 @@
 
 declare module '*.svg?react' {
   import type { ComponentType, SVGProps } from 'react';
-  const ReactComponent: ComponentType<SVGProps<SVGSVGElement>>;
+  type SvgReactComponentProps = SVGProps<SVGSVGElement> & {
+    size?: string | number;
+  };
+  const ReactComponent: ComponentType<SvgReactComponentProps>;
   export default ReactComponent;
 }
 

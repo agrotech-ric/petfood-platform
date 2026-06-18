@@ -2,9 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdChevronLeft, MdPerson} from 'react-icons/md';
 import DeleteIcon from '../assets/icons/delete.svg?react';
-import EditIcon from '../assets/icons/edit.svg?react';
+import EditIcon from '../assets/icons/edit1.svg?react';
 import DateIcon from '../assets/icons/date.svg?react';
-import { Layout } from '../../layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../styles/EditProfile.module.css';
 

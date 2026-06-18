@@ -16,6 +16,7 @@ import DeleteAccountModal from '../components/settings/DeleteAccountModal';
 import ChangeCredentialsModal from '../components/settings/ChangeCredentialsModal';
 import ChangeLoginModal from '../components/settings/ChangeLoginModal';
 import ChangePasswordModal from '../components/settings/ChangePasswordModal';
+import { Sidebar } from '../components/sidebar/Sidebar';
 import styles from '../styles/Settings.module.css';
 
 type SettingsItemProps = {
@@ -82,76 +83,79 @@ export const Settings = () => {
   const close = () => setActiveModal('none');
 
   return (
-    <>
-      <div className={styles.page}>
-        <header className={styles.header}>
-          <h1>Настройки</h1>
-        </header>
+    <div className={styles.layout}>
+      <Sidebar />
+      <main className={styles.main}>
+        <div className={styles.page}>
+          <header className={styles.header}>
+            <h1>Настройки</h1>
+          </header>
 
-        <section className={styles.card} aria-labelledby="account-settings-title">
-          <h2 id="account-settings-title">Аккаунт</h2>
-          <div className={styles.list}>
-            <SettingsItem
-              icon={ProifileIcon}
-              title="Редактировать профиль"
-              description="Имя пользователя, дата рождения, номер телефона, страна, город"
-              onClick={() => navigate('/settings/edit-profile')}
-            />
-            <SettingsItem
-              icon={LockIcon}
-              title="Изменить логин и пароль"
-              description="Почта и пароль пользователя"
-              onClick={() => setActiveModal('credentials')}
-            />
-            <SettingsItem
-              icon={DeleteIcon}
-              title="Удалить аккаунт"
-              description="После удаления аккаунта пути назад нет. Пожалуйста, будьте уверены."
-              danger
-              onClick={() => setActiveModal('delete')}
-            />
+          <section className={styles.card} aria-labelledby="account-settings-title">
+            <h2 id="account-settings-title">Аккаунт</h2>
+            <div className={styles.list}>
+              <SettingsItem
+                icon={ProifileIcon}
+                title="Редактировать профиль"
+                description="Имя пользователя, дата рождения, номер телефона, страна, город"
+                onClick={() => navigate('/settings/edit-profile')}
+              />
+              <SettingsItem
+                icon={LockIcon}
+                title="Изменить логин и пароль"
+                description="Почта и пароль пользователя"
+                onClick={() => setActiveModal('credentials')}
+              />
+              <SettingsItem
+                icon={DeleteIcon}
+                title="Удалить аккаунт"
+                description="После удаления аккаунта пути назад нет. Пожалуйста, будьте уверены."
+                danger
+                onClick={() => setActiveModal('delete')}
+              />
+            </div>
+          </section>
+
+          <section className={styles.card} aria-labelledby="general-settings-title">
+            <h2 id="general-settings-title">Общее</h2>
+            <div className={styles.list}>
+              <SettingsItem
+                icon={ThemeIcon}
+                title="Тема"
+                description={isDarkTheme ? 'Темная' : 'Стандартная'}
+                trailing={
+                  <span
+                    className={`${styles.switch} ${isDarkTheme ? styles.switchOn : ''}`}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.switchThumb} />
+                  </span>
+                }
+                onClick={handleThemeChange}
+              />
+              <SettingsItem
+                icon={LanguageIcon}
+                title="Язык"
+                description={language}
+                onClick={() => setActiveModal('language')}
+              />
+              <SettingsItem
+                icon={HelpIcon}
+                title="Помощь"
+                description="Сведения и вопросы о платформе"
+                onClick={() => navigate('/help')}
+              />
+            </div>
+          </section>
+
+          <div className={styles.footer}>
+            <button className={styles.logoutButton} type="button" onClick={logout}>
+              <MdLogout className={styles.logoutIcon} />
+              Выйти из аккаунта
+            </button>
           </div>
-        </section>
-
-        <section className={styles.card} aria-labelledby="general-settings-title">
-          <h2 id="general-settings-title">Общее</h2>
-          <div className={styles.list}>
-            <SettingsItem
-              icon={ThemeIcon}
-              title="Тема"
-              description={isDarkTheme ? 'Темная' : 'Стандартная'}
-              trailing={
-                <span
-                  className={`${styles.switch} ${isDarkTheme ? styles.switchOn : ''}`}
-                  aria-hidden="true"
-                >
-                  <span className={styles.switchThumb} />
-                </span>
-              }
-              onClick={handleThemeChange}
-            />
-            <SettingsItem
-              icon={LanguageIcon}
-              title="Язык"
-              description={language}
-              onClick={() => setActiveModal('language')}
-            />
-            <SettingsItem
-              icon={HelpIcon}
-              title="Помощь"
-              description="Сведения и вопросы о платформе"
-              onClick={() => navigate('/help')}
-            />
-          </div>
-        </section>
-
-        <div className={styles.footer}>
-          <button className={styles.logoutButton} type="button" onClick={logout}>
-            <MdLogout className={styles.logoutIcon} />
-            Выйти из аккаунта
-          </button>
         </div>
-      </div>
+      </main>
 
       <LanguageModal
         isOpen={activeModal === 'language'}
@@ -186,6 +190,6 @@ export const Settings = () => {
         userEmail={user?.email ?? ''}
         onClose={close}
       />
-    </>
+    </div>
   );
 };
