@@ -134,14 +134,14 @@ export function Sidebar() {
 
         {/* Bottom nav items */}
         <nav className={styles.navBottom}>
-          <button className={styles.navItem} onClick={() => {}} type="button">
+          <button className={styles.navItem} onClick={() => navigate('/profile')} type="button">
             <div className={styles.iconWrap}>
               <IconProfile className={styles.navIcon} />
             </div>
             {expanded && <span className={styles.navLabel}>Мой профиль</span>}
           </button>
           
-          <button className={styles.navItem} onClick={() => {}} type="button">
+          <button className={styles.navItem} onClick={() => navigate('/settings')} type="button">
             <div className={styles.iconWrap}>
               <IconSettings className={styles.navIcon} />
             </div>
