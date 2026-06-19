@@ -119,7 +119,10 @@ export const Profile = () => {
           <header className={styles.header}>
             <div className={styles.headerSpacer} />
             <h1 className={styles.headerTitle}>Мой профиль</h1>
-            <button className={styles.editBtn} onClick={() => navigate('/settings/edit-profile')}>
+            <button
+              className={styles.editBtn}
+              onClick={() => navigate('/settings/edit-profile', { state: { returnTo: '/profile' } })}
+            >
               <EditIcon size={16} />
               Изменить
             </button>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MdChevronLeft, MdPerson} from 'react-icons/md';
 import DeleteIcon from '../assets/icons/delete.svg?react';
 import EditIcon from '../assets/icons/edit1.svg?react';
@@ -14,6 +14,8 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
 
 export const EditProfile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as { returnTo?: string } | null)?.returnTo ?? '/settings';
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -146,7 +148,7 @@ export const EditProfile = () => {
       }
 
       await profileService.updateProfile(payload);
-      navigate('/settings');
+      navigate(returnTo);
     } catch (err: any) {
       setFetchError(err.message || 'Произошла ошибка при сохранении');
     } finally {
@@ -155,7 +157,7 @@ export const EditProfile = () => {
   };
 
   const handleCancel = () => {
-    navigate('/settings');
+    navigate(returnTo);
   };
 
   return (
