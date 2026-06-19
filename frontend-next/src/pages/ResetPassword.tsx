@@ -77,7 +77,6 @@ const ResetPassword = () => {
 
   if (success) {
     return (
-      <div className={styles.container}>
         <div className={styles.card}>
           <svg className={styles.successIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -90,12 +89,10 @@ const ResetPassword = () => {
           <h1 className={styles.successTitle}>{RESET_PASSWORD_TEXT.SUCCESS_TITLE}</h1>
           <p className={styles.successSubtitle}>{RESET_PASSWORD_TEXT.SUCCESS_SUBTITLE}</p>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>{RESET_PASSWORD_TEXT.TITLE}</h1>
         <p className={styles.subtitle}>{RESET_PASSWORD_TEXT.SUBTITLE}</p>
@@ -149,7 +146,6 @@ const ResetPassword = () => {
           </button>
         </form>
       </div>
-    </div>
   );
 };
 

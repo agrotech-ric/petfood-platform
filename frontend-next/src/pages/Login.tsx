@@ -42,8 +42,6 @@ const Login = () => {
   };
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authCard}>
         <div className={styles.authFormContainer}>
           <h2>{t('auth.loginTitle')}</h2>
 
@@ -106,8 +104,6 @@ const Login = () => {
             onClose={() => setIsForgotPasswordOpen(false)}
           />
         </div>
-      </div>
-    </div>
   );
 };
 
