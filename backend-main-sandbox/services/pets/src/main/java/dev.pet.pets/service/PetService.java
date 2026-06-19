@@ -17,6 +17,7 @@ import dev.pet.pets.error.NotFoundException;
 import dev.pet.pets.mapper.PetMapper;
 import dev.pet.pets.repo.*;
 import dev.pet.pets.integration.AccountAuditClient;
+import dev.pet.pets.util.ActivityLogJson;
 import dev.pet.pets.domain.PetHealthRecommendation;
 import dev.pet.pets.dto.RecommendationRequest;
 import dev.pet.pets.dto.RecommendationResponse;
@@ -153,7 +154,7 @@ public class PetService {
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             saved.getOwnerId(),
             "PET_REGISTERED",
-            "{\"petId\":\"" + saved.getId() + "\"}"
+            ActivityLogJson.petEvent(saved)
         ));
         return PetMapper.toDto(saved);
     }
@@ -211,7 +212,7 @@ public class PetService {
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             saved.getOwnerId(),
             "PET_UPDATED",
-            "{\"petId\":\"" + saved.getId() + "\"}"
+            ActivityLogJson.petEvent(saved)
         ));
         return PetMapper.toDto(saved);
     }
@@ -416,7 +417,7 @@ public class PetService {
         auditClient.writeLog(jwt.getTokenValue(), new CreateAuditLogRequest(
             ownerId,
             "HEALTH_RECORD_CREATED",
-            "{\"petId\":\"" + petId + "\",\"healthRecordId\":\"" + savedRecord.getId() + "\"}"
+            ActivityLogJson.petEvent(pet, savedRecord.getActivityType())
         ));
 
         return toHealthDto(savedRecord, resolveOwnerName(ownerId, jwt));
@@ -477,7 +478,7 @@ public class PetService {
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             ownerId,
             "HEALTH_RECORD_UPDATED",
-            "{\"petId\":\"" + petId + "\",\"healthRecordId\":\"" + saved.getId() + "\"}"
+            ActivityLogJson.petEvent(pet, saved.getActivityType())
         ));
 
         return toHealthDto(saved, resolveOwnerName(ownerId, jwt));
@@ -671,12 +672,17 @@ public class PetService {
         PetHealthRecommendation saved = recommendationRepo.save(rec);
 
         UUID vetId = UUID.fromString(jwt.getSubject());
+        Pet pet = record.getPet();
 
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             vetId,
             "RECOMMENDATION_CREATED",
-            "{\"ownerId\":\"" + record.getOwnerId() + "\",\"petId\":\"" + record.getPet().getId() +
-                "\",\"healthRecordId\":\"" + record.getId() + "\",\"recommendationId\":\"" + saved.getId() + "\"}"
+            ActivityLogJson.petEvent(pet)
+        ));
+        auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
+            record.getOwnerId(),
+            "RECOMMENDATION_CREATED",
+            ActivityLogJson.petEvent(pet)
         ));
         createAndSendRecommendationNotification(jwt, record, saved.getId(), false);
         return toRecommendationResponse(saved);
@@ -720,12 +726,17 @@ public class PetService {
 
         PetHealthRecommendation saved = recommendationRepo.save(rec);
         UUID vetId = UUID.fromString(jwt.getSubject());
+        Pet pet = record.getPet();
 
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             vetId,
             "RECOMMENDATION_UPDATED",
-            "{\"ownerId\":\"" + record.getOwnerId() + "\",\"petId\":\"" + record.getPet().getId() +
-                "\",\"healthRecordId\":\"" + record.getId() + "\",\"recommendationId\":\"" + saved.getId() + "\"}"
+            ActivityLogJson.petEvent(pet)
+        ));
+        auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
+            record.getOwnerId(),
+            "RECOMMENDATION_UPDATED",
+            ActivityLogJson.petEvent(pet)
         ));
         createAndSendRecommendationNotification(jwt, record, saved.getId(), true);
         return toRecommendationResponse(saved);

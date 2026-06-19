@@ -29,7 +29,8 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.time.OffsetDateTime;
+import java.util.stream.Stream;
+import dev.pet.account.util.ActivityLogJson;
 
 
 import java.time.Duration;
@@ -255,6 +256,11 @@ public class AccountService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
+    public PageResponse<ActivityItemResponse> myActivity(UUID accountId, int page, int size) {
+        return auditLogService.myActivity(accountId, page, size);
+    }
+
 
     @Transactional
     public ProfileResponse updateProfile(UUID accountId, UpdateProfileRequest req) {
@@ -288,6 +294,16 @@ public class AccountService {
         }
 
         users.save(u);
+
+        var profileLog = new CreateAuditLogRequest();
+        profileLog.setUserId(accountId);
+        profileLog.setEventType("PROFILE_UPDATED");
+        String fullName = Stream.of(u.getFirstName(), u.getLastName())
+            .filter(part -> part != null && !part.isBlank())
+            .collect(Collectors.joining(" "));
+        profileLog.setEventInfo(ActivityLogJson.profileUpdated(fullName));
+        auditLogService.create(profileLog);
+
         return toProfile(u);
     }
 

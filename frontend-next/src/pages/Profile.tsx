@@ -1,62 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '../assets/icons/edit.svg?react';
 import { useAuth } from '../../context/AuthContext';
 import ProfileIcon from '../assets/icons/profile.svg?react';
-import { profileService } from '../../services/profileService';
+import { profileService, type ActivityItem } from '../../services/profileService';
 import { useTranslation } from '../../context/LanguageContext';
+import type { TranslationKey } from '../../i18n';
 import styles from '../styles/Profile.module.css';
 
-type ActivityItem = {
-  id: string;
-  date: string;
-  title: string;
-  description: string;
+const PAGE_SIZE = 3;
+
+const ACTIVITY_TITLE_KEYS: Record<string, TranslationKey> = {
+  PET_REGISTERED: 'activity.petRegistered',
+  PET_UPDATED: 'activity.petUpdated',
+  HEALTH_RECORD_CREATED: 'activity.healthRecordCreated',
+  HEALTH_RECORD_UPDATED: 'activity.healthRecordUpdated',
+  RECOMMENDATION_CREATED: 'activity.recommendationCreated',
+  RECOMMENDATION_UPDATED: 'activity.recommendationUpdated',
+  PROFILE_UPDATED: 'activity.profileUpdated',
+  PET_FAVORITE_ADDED: 'activity.petFavoriteAdded',
+  PET_FAVORITE_REMOVED: 'activity.petFavoriteRemoved',
 };
 
-const ACTIVITY_HISTORY: ActivityItem[] = [
-  {
-    id: '1',
-    date: '24.01.2026',
-    title: 'Добавление питомца',
-    description:
-      'Лаки / 12 лет / Немецкая овчарка / Активный / Служебная собака, работает в региональной полиции Казахстана и ...',
-  },
-  {
-    id: '2',
-    date: '13.01.2026',
-    title: 'Редактирование корма',
-    description:
-      'Пауч Royal Canine для щенков с курицей / коммерческий / влажный / для щенков / корм подходит при симптомах ...',
-  },
-  {
-    id: '3',
-    date: '09.01.2026',
-    title: 'Редактирование профиля питомца',
-    description: 'Алекс / 1 год / Золотой ретривер / Пасивный / живет на территории частного дома',
-  },
-  {
-    id: '4',
-    date: '02.01.2026',
-    title: 'Добавление питомца',
-    description: 'Алекс / 1 год / Золотой ретривер / Активный / живет на территории частного дома',
-  },
-  {
-    id: '5',
-    date: '28.12.2025',
-    title: 'Создание рекомендации',
-    description:
-      'Рекомендация по корму для Лаки / на основе анализа состояния здоровья и возраста питомца ...',
-  },
-];
-
-const PAGE_SIZE = 3;
+function activityTitleKey(eventType: string): TranslationKey {
+  return ACTIVITY_TITLE_KEYS[eventType] ?? 'activity.unknown';
+}
 
 export const Profile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, locale } = useTranslation();
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
@@ -66,6 +39,12 @@ export const Profile = () => {
   const [city, setCity] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [activityPage, setActivityPage] = useState(0);
+  const [hasMoreActivity, setHasMoreActivity] = useState(false);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityError, setActivityError] = useState('');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -93,24 +72,51 @@ export const Profile = () => {
     loadProfile();
   }, []);
 
+  const loadActivityPage = useCallback(async (page: number, append: boolean) => {
+    setActivityLoading(true);
+    setActivityError('');
+    try {
+      const data = await profileService.getActivity(page, PAGE_SIZE);
+      setActivities((prev) => (append ? [...prev, ...data.items] : data.items));
+      setActivityPage(page + 1);
+      setHasMoreActivity(page + 1 < data.totalPages);
+    } catch {
+      if (!append) {
+        setActivities([]);
+      }
+      setActivityError(t('profile.activityLoadError'));
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    loadActivityPage(0, false);
+  }, [loadActivityPage]);
+
   const fullName = `${firstName || user?.firstName || ''} ${lastName || user?.lastName || ''}`.trim();
-  const email = user?.email ?? 'user26@gmail.com';
+  const email = user?.email ?? '';
+
+  const dateLocale = locale === 'kz' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU';
 
   const formatBirthDate = (value: string) => {
     if (!value) return t('common.notSpecified');
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    const dateLocale = locale === 'kz' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU';
     return date.toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const formatActivityDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   const display = (value: string) => value || t('common.notSpecified');
 
-  const visibleActivity = ACTIVITY_HISTORY.slice(0, visibleCount);
-  const hasMore = visibleCount < ACTIVITY_HISTORY.length;
-
   const handleShowMore = () => {
-    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, ACTIVITY_HISTORY.length));
+    if (activityLoading || !hasMoreActivity) return;
+    loadActivityPage(activityPage, true);
   };
 
   return (
@@ -175,19 +181,44 @@ export const Profile = () => {
           <div className={styles.activityCard}>
             <h3 className={styles.activityTitle}>{t('profile.activityHistory')}</h3>
 
-            {visibleActivity.map((item) => (
+            {activityLoading && activities.length === 0 && (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: 0 }}>
+                {t('common.loading')}
+              </p>
+            )}
+
+            {activityError && (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: 0 }}>
+                {activityError}
+              </p>
+            )}
+
+            {!activityLoading && !activityError && activities.length === 0 && (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: 0 }}>
+                {t('profile.activityEmpty')}
+              </p>
+            )}
+
+            {activities.map((item) => (
               <div key={item.id} className={styles.activityItem}>
-                <span className={styles.activityDate}>{item.date}</span>
+                <span className={styles.activityDate}>{formatActivityDate(item.createdAt)}</span>
                 <div className={styles.activityContent}>
-                  <p className={styles.activityName}>{item.title}</p>
-                  <p className={styles.activityDesc}>{item.description}</p>
+                  <p className={styles.activityName}>{t(activityTitleKey(item.eventType))}</p>
+                  {item.description && (
+                    <p className={styles.activityDesc}>{item.description}</p>
+                  )}
                 </div>
               </div>
             ))}
 
-            {hasMore && (
-              <button className={styles.showMoreBtn} onClick={handleShowMore}>
-                {t('common.showMore')}
+            {hasMoreActivity && (
+              <button
+                className={styles.showMoreBtn}
+                onClick={handleShowMore}
+                disabled={activityLoading}
+                type="button"
+              >
+                {activityLoading ? t('common.loading') : t('common.showMore')}
               </button>
             )}
           </div>

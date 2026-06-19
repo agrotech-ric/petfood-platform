@@ -5,7 +5,10 @@ import dev.pet.pets.domain.PetFavorite;
 import dev.pet.pets.domain.PetFavoriteId;
 import dev.pet.pets.dto.HealthConditionItem;
 import dev.pet.pets.dto.PetListItemResponse;
+import dev.pet.pets.dto.CreateAuditLogRequest;
 import dev.pet.pets.error.ForbiddenOperationException;
+import dev.pet.pets.integration.AccountAuditClient;
+import dev.pet.pets.util.ActivityLogJson;
 import org.springframework.beans.BeanUtils;
 import dev.pet.pets.error.NotFoundException;
 import dev.pet.pets.mapper.PetMapper;
@@ -33,17 +36,20 @@ public class PetSearchService {
     private final PetRepository pets;
     private final PetFavoriteRepository favorites;
     private final HealthConditionRepository healthConditions;
+    private final AccountAuditClient auditClient;
 
     public PetSearchService(
         PetSearchDao searchDao,
         PetRepository pets,
         PetFavoriteRepository favorites,
-        HealthConditionRepository healthConditions
+        HealthConditionRepository healthConditions,
+        AccountAuditClient auditClient
     ) {
         this.searchDao = searchDao;
         this.pets = pets;
         this.favorites = favorites;
         this.healthConditions = healthConditions;
+        this.auditClient = auditClient;
     }
 
     @Transactional(readOnly = true)
@@ -95,13 +101,29 @@ public class PetSearchService {
             PetFavorite fav = new PetFavorite();
             fav.setId(new PetFavoriteId(ownerId, petId));
             favorites.save(fav);
+            auditClient.writeLog(jwt.getTokenValue(), new CreateAuditLogRequest(
+                ownerId,
+                "PET_FAVORITE_ADDED",
+                ActivityLogJson.petEvent(pet)
+            ));
         }
     }
 
     @Transactional
     public void removeFavorite(Jwt jwt, UUID petId) {
         UUID ownerId = UUID.fromString(jwt.getSubject());
+        if (!favorites.existsByIdOwnerIdAndIdPetId(ownerId, petId)) {
+            return;
+        }
+        Pet pet = pets.findById(petId).orElse(null);
         favorites.deleteByIdOwnerIdAndIdPetId(ownerId, petId);
+        if (pet != null) {
+            auditClient.writeLog(jwt.getTokenValue(), new CreateAuditLogRequest(
+                ownerId,
+                "PET_FAVORITE_REMOVED",
+                ActivityLogJson.petEvent(pet)
+            ));
+        }
     }
 
     private PetListItemResponse toListItem(Pet pet, PetSearchRow row) {

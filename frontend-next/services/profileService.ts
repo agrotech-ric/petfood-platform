@@ -16,8 +16,28 @@ export type ProfileData = {
   createdAt?: string
 }
 
+export type ActivityItem = {
+  id: string
+  createdAt: string
+  eventType: string
+  description: string
+}
+
+type ActivityPage = {
+  items: ActivityItem[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
 export const profileService = {
   getProfile: () => apiClient.get<ProfileData>('/api/v1/account/profile/me'),
+
+  getActivity: (page = 0, size = 10) =>
+    apiClient.get<ActivityPage>(
+      `/api/v1/account/profile/me/activity?page=${page}&size=${size}`,
+    ),
 
   updateProfile: (data: Record<string, unknown>) =>
     apiClient.patch<ProfileData>('/api/v1/account', data),
