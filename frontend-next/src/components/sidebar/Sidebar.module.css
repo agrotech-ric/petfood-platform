@@ -8,10 +8,10 @@
   z-index: 100;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-right: 0.5px solid #bfbfbf;
+  background: var(--color-surface);
+  border-right: 0.5px solid var(--color-border-strong);
   border-radius: 0 10px 10px 0;
-  box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0px 1px 6px var(--color-shadow-strong);
   transition: width 0.2s ease;
   overflow: hidden;
   padding-top: 40px; /* Space at the top */
@@ -25,7 +25,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--color-overlay);
   z-index: 99;
   pointer-events: none;
 }
@@ -49,20 +49,20 @@
   background: transparent;
   cursor: pointer;
   text-align: left;
-  color: #626D77; /* Default icon color */
+  color: var(--color-nav);
   transition: color 0.12s;
 }
 
 .navItem:hover {
-  color: #333333;
+  color: var(--color-nav-hover);
 }
 
 .navItemActive {
-  color: #F28C4C; /* Active icon color */
+  color: var(--color-nav-active);
 }
 
 .navItemActive:hover {
-  color: #e07e40;
+  color: var(--color-accent-alt-hover);
 }
 
 /* ── Unified Icon Wrapper (Active Background here) ────── */
@@ -80,8 +80,8 @@
 
 /* The active state styling shown in the screenshot */
 .navItemActive .iconWrap {
-  background: #FFF1E6;
-  border-left: 2px solid #F28C4C;
+  background: var(--color-accent-soft-bg);
+  border-left: 2px solid var(--color-nav-active);
 }
 
 .navIcon {
@@ -95,7 +95,7 @@
   font-family: Inter, system-ui, sans-serif;
   font-size: 16px;
   font-weight: 400;
-  color: #333333; /* Text is always dark, never orange */
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -111,7 +111,7 @@
 .separator {
   width: 48px;
   height: 1px;
-  background: #EAEAEA;
+  background: var(--color-border-muted);
   margin: 0 0 16px 21px; /* Align perfectly with icons */
 }
 
@@ -125,5 +125,5 @@
 }
 
 .navBottom .navItem:last-child:hover {
-  color: #d94f2a;
+  color: var(--color-danger);
 }

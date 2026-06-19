@@ -170,7 +170,7 @@ export const EditProfile = () => {
           <h1 className={styles.headerTitle}>Редактирование профиля</h1>
         </header>
 
-        {initialLoading && <p style={{ color: '#888', fontSize: 13, margin: '0 0 12px' }}>Загрузка...</p>}
+        {initialLoading && <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: '0 0 12px' }}>Загрузка...</p>}
         {fetchError && <p className={styles.errorText}>{fetchError}</p>}
 
         <div className={styles.card}>

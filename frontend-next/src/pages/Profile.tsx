@@ -129,7 +129,7 @@ export const Profile = () => {
           </header>
 
           {loading && (
-            <p style={{ color: '#888', fontSize: 13, margin: '0 0 12px' }}>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 13, margin: '0 0 12px' }}>
               Загрузка...
             </p>
           )}

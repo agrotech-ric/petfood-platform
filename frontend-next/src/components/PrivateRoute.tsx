@@ -23,7 +23,7 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
         alignItems: 'center',
         height: '100vh',
         fontSize: '18px',
-        color: '#666'
+        color: 'var(--color-text-muted)'
       }}>
         Загрузка...
       </div>
