@@ -2,6 +2,8 @@ import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MdChevronRight,
+  MdDarkMode,
+  MdLightMode,
   MdLogout,
 } from 'react-icons/md';
 import LockIcon from '../assets/icons/lock.svg?react';
@@ -11,6 +13,7 @@ import ThemeIcon from '../assets/icons/theme.svg?react';
 import LanguageIcon from '../assets/icons/language.svg?react';
 import HelpIcon from '../assets/icons/help.svg?react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import LanguageModal from '../components/settings/LanguageModal';
 import DeleteAccountModal from '../components/settings/DeleteAccountModal';
 import ChangeCredentialsModal from '../components/settings/ChangeCredentialsModal';
@@ -53,21 +56,17 @@ type Modal = 'none' | 'language' | 'delete' | 'credentials' | 'login' | 'passwor
 export const Settings = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const { isDarkTheme, toggleTheme } = useTheme();
   const [language, setLanguage] = useState('Русский');
   const [activeModal, setActiveModal] = useState<Modal>('none');
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem('settings.theme');
     const storedLanguage = localStorage.getItem('settings.language');
-    if (storedTheme) setIsDarkTheme(storedTheme === 'dark');
     if (storedLanguage) setLanguage(storedLanguage);
   }, []);
 
   const handleThemeChange = () => {
-    const nextTheme = !isDarkTheme;
-    setIsDarkTheme(nextTheme);
-    localStorage.setItem('settings.theme', nextTheme ? 'dark' : 'standard');
+    toggleTheme();
   };
 
   const handleLanguageSave = (_code: string, label: string) => {
@@ -128,6 +127,8 @@ export const Settings = () => {
                     className={`${styles.switch} ${isDarkTheme ? styles.switchOn : ''}`}
                     aria-hidden="true"
                   >
+                    <MdLightMode className={styles.switchSun} />
+                    <MdDarkMode className={styles.switchMoon} />
                     <span className={styles.switchThumb} />
                   </span>
                 }
