@@ -21,7 +21,6 @@ import DeleteAccountModal from '../components/settings/DeleteAccountModal';
 import ChangeCredentialsModal from '../components/settings/ChangeCredentialsModal';
 import ChangeLoginModal from '../components/settings/ChangeLoginModal';
 import ChangePasswordModal from '../components/settings/ChangePasswordModal';
-import { Sidebar } from '../components/sidebar/Sidebar';
 import styles from '../styles/Settings.module.css';
 
 type SettingsItemProps = {
@@ -78,9 +77,7 @@ export const Settings = () => {
   const close = () => setActiveModal('none');
 
   return (
-    <div className={styles.layout}>
-      <Sidebar />
-      <main className={styles.main}>
+    <>
         <div className={styles.page}>
           <header className={styles.header}>
             <h1>{t('settings.title')}</h1>
@@ -152,7 +149,6 @@ export const Settings = () => {
             </button>
           </div>
         </div>
-      </main>
 
       <LanguageModal
         isOpen={activeModal === 'language'}
@@ -185,6 +181,6 @@ export const Settings = () => {
         userEmail={user?.email ?? ''}
         onClose={close}
       />
-    </div>
+    </>
   );
 };

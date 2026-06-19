@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthProvider from '../context/AuthContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import PrivateRoute from './components/PrivateRoute'
+import { PrivateLayoutRoute } from './layout/PrivateLayoutRoute'
 import Login from './pages/Login'
 import Register from './pages/UserRegister'
 import ResetPassword from './pages/ResetPassword'
@@ -48,14 +49,15 @@ export function App() {
           }
         />
 
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute allowedRoles={['USER']}>
-              <PetsListPage />
-            </PrivateRoute>
-          }
-        />
+        <Route element={<PrivateLayoutRoute allowedRoles={['USER']} />}>
+          <Route path="/dashboard" element={<PetsListPage />} />
+        </Route>
+
+        <Route element={<PrivateLayoutRoute allowedRoles={['USER', 'VET']} />}>
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+
         <Route
           path="/register-pet"
           element={
@@ -74,14 +76,6 @@ export function App() {
         />
 
         <Route
-          path="/settings"
-          element={
-            <PrivateRoute allowedRoles={['USER', 'VET']}>
-              <Settings />
-            </PrivateRoute>
-          }
-        />
-        <Route
           path="/help"
           element={
             <PrivateRoute allowedRoles={['USER', 'VET']}>
@@ -94,14 +88,6 @@ export function App() {
           element={
             <PrivateRoute allowedRoles={['USER', 'VET']}>
               <EditProfile />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute allowedRoles={['USER', 'VET']}>
-              <Profile />
             </PrivateRoute>
           }
         />

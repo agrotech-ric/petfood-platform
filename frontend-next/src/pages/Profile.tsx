@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import ProfileIcon from '../assets/icons/profile.svg?react';
 import { profileService } from '../../services/profileService';
 import { useTranslation } from '../../context/LanguageContext';
-import { Sidebar } from '../components/sidebar/Sidebar';
 import styles from '../styles/Profile.module.css';
 
 type ActivityItem = {
@@ -115,9 +114,6 @@ export const Profile = () => {
   };
 
   return (
-    <div className={styles.layout}>
-      <Sidebar />
-      <main className={styles.main}>
         <div className={styles.page}>
           <header className={styles.header}>
             <div className={styles.headerSpacer} />
@@ -196,7 +192,5 @@ export const Profile = () => {
             )}
           </div>
         </div>
-      </main>
-    </div>
   );
 };

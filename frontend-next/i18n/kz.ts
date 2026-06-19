@@ -26,7 +26,7 @@ export const kz: Record<keyof typeof ru, string> = {
   'language.kz': 'Қазақша',
   'language.kzSub': 'Kazakh',
 
-  'sidebar.pets': 'Менің жanuarlarıм',
+  'sidebar.pets': 'Менің жануарларым',
   'sidebar.ingredients': 'Ингредиенттер',
   'sidebar.recipes': 'Менің рецепттерім',
   'sidebar.profile': 'Менің профилім',
