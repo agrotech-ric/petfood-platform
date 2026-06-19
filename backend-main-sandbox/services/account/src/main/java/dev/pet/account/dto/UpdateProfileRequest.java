@@ -18,5 +18,6 @@ public record UpdateProfileRequest(
     @Email String newEmail,
     LocalDate birthDate,
     @Size(max = 100) String country,
-    @Size(max = 100) String city
+    @Size(max = 100) String city,
+    @Size(max = 512) String avatarUrl
 ) {}

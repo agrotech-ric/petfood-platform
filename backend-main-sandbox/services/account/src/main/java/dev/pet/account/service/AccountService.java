@@ -261,7 +261,11 @@ public class AccountService {
         if (req.birthDate() != null) u.setBirthDate(req.birthDate());
         if (req.country()   != null) u.setCountry(req.country());
         if (req.city()      != null) u.setCity(req.city());
-        
+        if (req.avatarUrl() != null) {
+            String avatar = req.avatarUrl().isBlank() ? null : req.avatarUrl().trim();
+            u.setAvatarUrl(avatar);
+        }
+
         if (req.newEmail() != null && !req.newEmail().isBlank()) {
             var newEmail = req.newEmail().trim().toLowerCase();
             if (newEmail.equals(u.getEmail()))

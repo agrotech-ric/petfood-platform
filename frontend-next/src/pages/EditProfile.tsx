@@ -5,11 +5,12 @@ import DeleteIcon from '../assets/icons/delete.svg?react';
 import EditIcon from '../assets/icons/edit1.svg?react';
 import DateIcon from '../assets/icons/date.svg?react';
 import { useAuth } from '../../context/AuthContext';
+import { profileService } from '../../services/profileService';
 import styles from '../styles/EditProfile.module.css';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
 const COUNTRIES = ['Казахстан', 'Россия', 'Узбекистан', 'Кыргызстан', 'Беларусь'];
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
 
 export const EditProfile = () => {
   const navigate = useNavigate();
@@ -22,7 +23,10 @@ export const EditProfile = () => {
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [savedAvatarObjectKey, setSavedAvatarObjectKey] = useState<string | null>(null);
+  const [avatarRemoved, setAvatarRemoved] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -32,21 +36,7 @@ export const EditProfile = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/api/v1/account/profile/me`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          throw new Error('Не удалось загрузить данные профиля');
-        }
-
-        const contentType = response.headers.get('content-type') ?? '';
-        if (!contentType.includes('application/json')) {
-          throw new Error('Не удалось загрузить данные профиля');
-        }
-
-        const data = await response.json();
+        const data = await profileService.getProfile();
 
         setFirstName(data.firstName ?? '');
         setLastName(data.lastName ?? '');
@@ -54,6 +44,12 @@ export const EditProfile = () => {
         setBirthDate(data.birthDate ?? '');
         setCountry(data.country ?? '');
         setCity(data.city ?? '');
+
+        if (data.avatarUrl) {
+          setSavedAvatarObjectKey(data.avatarUrl);
+          const downloadUrl = await profileService.getAvatarDownloadUrl(data.avatarUrl);
+          if (downloadUrl) setAvatarPreview(downloadUrl);
+        }
       } catch (err: any) {
         setFetchError(err.message || 'Произошла ошибка при загрузке профиля');
       } finally {
@@ -64,6 +60,14 @@ export const EditProfile = () => {
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
   const handleAvatarPick = () => {
     fileInputRef.current?.click();
   };
@@ -71,12 +75,33 @@ export const EditProfile = () => {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setAvatarUrl(url);
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setErrors((prev) => ({ ...prev, avatar: 'Формат JPEG или PNG' }));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, avatar: 'Максимум 10 МБ' }));
+      return;
+    }
+
+    if (avatarPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarRemoved(false);
+    setErrors((prev) => ({ ...prev, avatar: undefined }));
   };
 
   const handleAvatarDelete = () => {
-    setAvatarUrl(null);
+    if (avatarPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setAvatarRemoved(true);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -105,25 +130,22 @@ export const EditProfile = () => {
     setFetchError('');
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/account`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          phone,
-          birthDate,
-          country,
-          city,
-        }),
-      });
+      const payload: Record<string, unknown> = {
+        firstName,
+        lastName,
+        phone,
+        birthDate,
+        country,
+        city,
+      };
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || 'Не удалось сохранить профиль');
+      if (avatarRemoved) {
+        payload.avatarUrl = '';
+      } else if (avatarFile) {
+        payload.avatarUrl = await profileService.uploadAvatar(avatarFile);
       }
 
+      await profileService.updateProfile(payload);
       navigate('/settings');
     } catch (err: any) {
       setFetchError(err.message || 'Произошла ошибка при сохранении');
@@ -152,8 +174,8 @@ export const EditProfile = () => {
         <div className={styles.card}>
           <div className={styles.avatarBlock}>
             <div className={styles.avatarFrame}>
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Аватар" className={styles.avatarPhoto} />
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Аватар" className={styles.avatarPhoto} />
               ) : (
                 <MdPerson size={80} className={styles.avatarIcon} />
               )}
@@ -172,6 +194,7 @@ export const EditProfile = () => {
                 className={`${styles.avatarActionBtn} ${styles.danger}`}
                 onClick={handleAvatarDelete}
                 title="Удалить фото"
+                disabled={!avatarPreview && !savedAvatarObjectKey}
               >
                 <DeleteIcon width={20} height={20} />
               </button>
@@ -179,10 +202,11 @@ export const EditProfile = () => {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png"
               className={styles.hiddenInput}
               onChange={handleAvatarChange}
             />
+            {errors.avatar && <p className={styles.errorText}>{errors.avatar}</p>}
           </div>
 
           <div className={styles.form}>

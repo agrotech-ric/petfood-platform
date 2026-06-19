@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import EditIcon from '../assets/icons/edit.svg?react';
 import { useAuth } from '../../context/AuthContext';
 import ProfileIcon from '../assets/icons/profile.svg?react';
+import { profileService } from '../../services/profileService';
 import { Sidebar } from '../components/sidebar/Sidebar';
 import styles from '../styles/Profile.module.css';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 type ActivityItem = {
   id: string;
@@ -64,22 +63,13 @@ export const Profile = () => {
   const [birthDate, setBirthDate] = useState('');
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/api/v1/account/profile/me`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (!response.ok) return;
-
-        const contentType = response.headers.get('content-type') ?? '';
-        if (!contentType.includes('application/json')) return;
-
-        const data = await response.json();
+        const data = await profileService.getProfile();
 
         setFirstName(data.firstName ?? '');
         setLastName(data.lastName ?? '');
@@ -87,6 +77,11 @@ export const Profile = () => {
         setBirthDate(data.birthDate ?? '');
         setCountry(data.country ?? '');
         setCity(data.city ?? '');
+
+        if (data.avatarUrl) {
+          const downloadUrl = await profileService.getAvatarDownloadUrl(data.avatarUrl);
+          if (downloadUrl) setAvatarPreview(downloadUrl);
+        }
       } catch {
         // профиль не загрузился — оставляем значения по умолчанию
       } finally {
@@ -138,7 +133,11 @@ export const Profile = () => {
 
           <div className={styles.card}>
             <div className={styles.avatarFrame}>
-              <ProfileIcon className={styles.avatarIcon} width={96} height={96} />
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Аватар" className={styles.avatarPhoto} />
+              ) : (
+                <ProfileIcon className={styles.avatarIcon} width={96} height={96} />
+              )}
             </div>
 
             <div className={styles.infoBlock}>
