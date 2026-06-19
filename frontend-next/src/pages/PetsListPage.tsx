@@ -184,7 +184,7 @@ export function PetsListPage() {
       }
     } catch {
       setPets((prev) =>
-        prev.map((p) => (p.id === pet.id ? { ...p, favorite: pet.favorite } : p))
+        prev.map((p) => (p.id === pet.id ? { ...p, favorite: !next } : p))
       )
     }
   }

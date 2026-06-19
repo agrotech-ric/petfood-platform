@@ -26,6 +26,17 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 150
   }
 }
 
+async function parseJsonBody<T>(response: Response): Promise<T> {
+  if (response.status === 204) {
+    return undefined as T
+  }
+  const text = await response.text()
+  if (!text.trim()) {
+    return undefined as T
+  }
+  return JSON.parse(text) as T
+}
+
 export const apiClient = {
   get: async <T>(endpoint: string, timeout = 15000): Promise<T> => {
     const fullUrl = `${apiBaseUrl}${endpoint}`
@@ -45,7 +56,7 @@ export const apiClient = {
       throw new Error(`API Error: ${response.status} - ${errorText}`)
     }
 
-    return response.json()
+    return parseJsonBody<T>(response)
   },
 
   post: async <T>(endpoint: string, data: any, timeout = 15000): Promise<T> => {
@@ -68,7 +79,7 @@ export const apiClient = {
       throw new Error(errorMessage)
     }
 
-    return response.json()
+    return parseJsonBody<T>(response)
   },
 
   patch: async <T>(endpoint: string, data: any, timeout = 15000): Promise<T> => {
@@ -90,7 +101,7 @@ export const apiClient = {
       throw new Error(errorData.message || 'Update failed')
     }
 
-    return response.json()
+    return parseJsonBody<T>(response)
   },
 
   delete: async (endpoint: string, timeout = 15000): Promise<void> => {
