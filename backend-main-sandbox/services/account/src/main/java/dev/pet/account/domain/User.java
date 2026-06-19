@@ -52,6 +52,9 @@ public class User extends BaseEntity {
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
 
+    @Column(nullable = false, length = 8)
+    private String language = "ru";
+
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
@@ -102,5 +105,10 @@ public class User extends BaseEntity {
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getLanguage() { return language; }
+    public void setLanguage(String language) {
+        this.language = (language == null || language.isBlank()) ? "ru" : language.trim().toLowerCase();
+    }
 
 }

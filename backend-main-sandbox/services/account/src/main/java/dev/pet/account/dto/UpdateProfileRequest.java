@@ -19,5 +19,7 @@ public record UpdateProfileRequest(
     LocalDate birthDate,
     @Size(max = 100) String country,
     @Size(max = 100) String city,
-    @Size(max = 512) String avatarUrl
+    @Size(max = 512) String avatarUrl,
+    @Pattern(regexp = "^(ru|en|kz)$", message = "Unsupported language")
+    String language
 ) {}

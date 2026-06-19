@@ -91,6 +91,7 @@ public class AccountService {
             u.getCountry(),
             u.getCity(),
             u.getAvatarUrl(),
+            u.getLanguage(),
             role,
             u.getCreatedAt()
         );
@@ -269,6 +270,9 @@ public class AccountService {
         if (req.avatarUrl() != null) {
             String avatar = req.avatarUrl().isBlank() ? null : req.avatarUrl().trim();
             u.setAvatarUrl(avatar);
+        }
+        if (req.language() != null && !req.language().isBlank()) {
+            u.setLanguage(req.language());
         }
 
         if (req.newEmail() != null && !req.newEmail().isBlank()) {

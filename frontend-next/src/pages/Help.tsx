@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdChevronLeft } from 'react-icons/md';
-import { Layout } from '../../layout/Layout';
+import { useTranslation } from '../../context/LanguageContext';
 import styles from '../styles/Help.module.css';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 export const Help = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [titleError, setTitleError] = useState('');
@@ -20,14 +21,14 @@ export const Help = () => {
     let valid = true;
 
     if (!title.trim()) {
-      setTitleError('Введите название проблемы');
+      setTitleError(t('help.titleRequired'));
       valid = false;
     } else {
       setTitleError('');
     }
 
     if (!description.trim()) {
-      setDescError('Опишите вашу проблему');
+      setDescError(t('help.descRequired'));
       valid = false;
     } else {
       setDescError('');
@@ -48,12 +49,12 @@ export const Help = () => {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || 'Не удалось отправить запрос');
+        throw new Error(data.message || t('help.sendError'));
       }
 
       setSubmitted(true);
     } catch (err: any) {
-      setSubmitError(err.message || 'Произошла ошибка. Попробуйте ещё раз');
+      setSubmitError(err.message || t('help.genericError'));
     } finally {
       setLoading(false);
     }
@@ -72,33 +73,28 @@ export const Help = () => {
         <header className={styles.header}>
           <button className={styles.backBtn} onClick={() => navigate('/settings')}>
             <MdChevronLeft size={16} />
-            Назад
+            {t('common.back')}
           </button>
-          <h1 className={styles.headerTitle}>Помощь</h1>
+          <h1 className={styles.headerTitle}>{t('help.title')}</h1>
         </header>
 
         <div className={styles.card}>
           {submitted ? (
             <>
-              <p className={styles.successTitle}>Запрос отправлен</p>
-              <p className={styles.successSubtitle}>
-                Постараемся рассмотреть ваш запрос в ближайшее время. Приносим
-                извинения за неудобства
-              </p>
+              <p className={styles.successTitle}>{t('help.requestSent')}</p>
+              <p className={styles.successSubtitle}>{t('help.successSubtitle')}</p>
               <button className={styles.submitBtn} onClick={handleAnother}>
-                Отправить ещё один запрос
+                {t('help.sendAnother')}
               </button>
             </>
           ) : (
             <>
-              <p className={styles.formTitle}>Опишите вашу проблему в запросе</p>
-              <p className={styles.formSubtitle}>
-                Мы свяжемся с вами по электронной почте после рассмотрения.
-              </p>
+              <p className={styles.formTitle}>{t('help.formTitle')}</p>
+              <p className={styles.formSubtitle}>{t('help.formDesc')}</p>
 
               <input
                 className={`${styles.inputField} ${titleError ? styles.inputError : ''}`}
-                placeholder="Название проблемы"
+                placeholder={t('help.problemTitle')}
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
@@ -109,7 +105,7 @@ export const Help = () => {
 
               <textarea
                 className={`${styles.textarea} ${descError ? styles.inputError : ''}`}
-                placeholder="Опишите вашу проблему"
+                placeholder={t('help.problemDescription')}
                 value={description}
                 onChange={(e) => {
                   setDescription(e.target.value);
@@ -120,7 +116,7 @@ export const Help = () => {
               {submitError && <p className={styles.errorText}>{submitError}</p>}
 
               <button className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
-                {loading ? 'Отправка...' : 'Отправить'}
+                {loading ? t('common.sending') : t('common.send')}
               </button>
             </>
           )}

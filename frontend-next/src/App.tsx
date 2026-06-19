@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthProvider from '../context/AuthContext'
+import { LanguageProvider } from '../context/LanguageContext'
 import PrivateRoute from './components/PrivateRoute'
 import Login from './pages/Login'
 import Register from './pages/UserRegister'
@@ -18,6 +19,7 @@ import { Profile } from './pages/Profile'
 export function App() {
   return (
     <AuthProvider>
+      <LanguageProvider>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -123,6 +125,7 @@ export function App() {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </LanguageProvider>
     </AuthProvider>
   )
 }

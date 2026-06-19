@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth, UserRole } from '../../context/AuthContext';
+import { useTranslation } from '../../context/LanguageContext';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ const DEV_MODE = true;
 
 const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { t } = useTranslation();
 
   if (DEV_MODE) {
     return <>{children}</>;
@@ -25,7 +27,7 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
         fontSize: '18px',
         color: 'var(--color-text-muted)'
       }}>
-        Загрузка...
+        {t('common.loading')}
       </div>
     );
   }

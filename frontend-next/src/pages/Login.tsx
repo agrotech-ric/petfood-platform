@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../context/LanguageContext';
 import InputField from '../components/InputField';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import styles from '../styles/Auth.module.css';
 
 const Login = () => {
   const { loginAction } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ const Login = () => {
     setLoginError('');
 
     if (!email.trim() || !password.trim()) {
-      setLoginError('*Пожалуйста, заполните все поля');
+      setLoginError(`*${t('auth.fillAllFields')}`);
       return;
     }
 
@@ -30,8 +32,8 @@ const Login = () => {
       await loginAction({ email, password });
     } catch (err: any) {
       const errorMessage = ['Invalid credentials', 'Validation failed'].includes(err.message)
-      ? '*Неверный адрес электронной почты или пароль'
-      : (err.message || '*Неверный адрес электронной почты или пароль');
+        ? `*${t('auth.invalidCredentials')}`
+        : (err.message || `*${t('auth.invalidCredentials')}`);
 
       setLoginError(errorMessage);
     } finally {
@@ -43,13 +45,13 @@ const Login = () => {
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
         <div className={styles.authFormContainer}>
-          <h2>Вход test 1</h2>
+          <h2>{t('auth.loginTitle')}</h2>
 
           <form onSubmit={handleSubmit} noValidate>
             <InputField
-              label="Email"
+              label={t('common.email')}
               type="email"
-              placeholder="Введите"
+              placeholder={t('auth.enter')}
               value={email}
               onChange={(value) => {
                 setEmail(value);
@@ -58,9 +60,9 @@ const Login = () => {
             />
 
             <InputField
-              label="Пароль"
+              label={t('common.password')}
               type="password"
-              placeholder="Введите"
+              placeholder={t('auth.enter')}
               value={password}
               onChange={(value) => {
                 setPassword(value);
@@ -75,7 +77,7 @@ const Login = () => {
                 onClick={() => setIsForgotPasswordOpen(true)}
                 className={styles.forgotPasswordLink}
               >
-                Забыли пароль?
+                {t('auth.forgotPassword')}
               </button>
             </div>
 
@@ -84,17 +86,17 @@ const Login = () => {
               className={styles.btn}
               disabled={isLoading}
             >
-              {isLoading ? 'Вход...' : 'Войти'}
+              {isLoading ? t('auth.loggingIn') : t('auth.login')}
             </button>
 
             <div className={styles.links}>
-              <span>Еще нет аккаунта?</span>
+              <span>{t('auth.noAccount')}</span>
               <button
                 type="button"
                 onClick={() => navigate('/register')}
                 className={styles.link}
               >
-                Зарегистрироваться
+                {t('auth.register')}
               </button>
             </div>
           </form>
@@ -110,4 +112,3 @@ const Login = () => {
 };
 
 export default Login;
-

@@ -11,6 +11,7 @@ export type ProfileData = {
   country?: string
   city?: string
   avatarUrl?: string | null
+  language?: string | null
   role?: string
   createdAt?: string
 }

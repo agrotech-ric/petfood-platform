@@ -9,6 +9,8 @@
         try {
           var theme = localStorage.getItem('settings.theme') === 'dark' ? 'dark' : 'standard';
           document.documentElement.setAttribute('data-theme', theme);
+          var lang = localStorage.getItem('settings.language') || 'ru';
+          document.documentElement.lang = lang === 'kz' ? 'kk' : lang;
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'standard');
         }
