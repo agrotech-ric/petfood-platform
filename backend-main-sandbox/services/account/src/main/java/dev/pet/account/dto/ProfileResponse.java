@@ -14,6 +14,7 @@ public record ProfileResponse(
     String country,
     String city,
     String avatarUrl,
+    String language,
     String role,
     OffsetDateTime createdAt
 ) { }

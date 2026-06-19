@@ -1,0 +1,16 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg-muted);
+}
+
+.main {
+  flex: 1;
+  margin-left: 90px;
+  padding: 40px 32px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+}

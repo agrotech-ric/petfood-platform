@@ -72,7 +72,6 @@ const Register: React.FC = () => {
 
   return (
     <>
-      <div className={styles.authContainer}>
         <div className={styles.authFormContainer}>
           <h2>Регистрация</h2>
           <form onSubmit={handleSubmit} noValidate>
@@ -133,8 +132,6 @@ const Register: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-
       <EmailConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}

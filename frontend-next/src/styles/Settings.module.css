@@ -1,17 +1,3 @@
-.layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f0f1f3;
-}
-
-.main {
-  flex: 1;
-  margin-left: 90px;
-  padding: 40px 32px 60px;
-  display: flex;
-  justify-content: center;
-}
-
 .page {
   width: 100%;
   max-width: 1080px;
@@ -25,36 +11,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  border: 1px solid #dddddd;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow);
   margin-bottom: 1.5rem;
 }
 
 .header h1 {
   margin: 0;
-  color: #f47f4b;
+  color: var(--color-accent);
   font-size: 18px;
   font-weight: 700;
 }
 
 .card {
-  background: #ffffff;
-  border: 1px solid #dddddd;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow);
   padding: 2rem 4rem;
   margin-bottom: 1.5rem;
 }
 
 .card h2 {
-  color: #f47f4b;
+  color: var(--color-accent);
   font-size: 18px;
   font-weight: 700;
   margin: 0;
   padding: 0 0 1.1rem 1.5rem;
-  border-bottom: 1px solid #cfcfcf;
+  border-bottom: 1px solid var(--color-border-muted);
 }
 
 .list {
@@ -71,7 +57,7 @@
   width: 100%;
   padding: 0 1.25rem;
   border: 0;
-  border-bottom: 1px solid #d8d8d8;
+  border-bottom: 1px solid var(--color-border-muted);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -84,7 +70,7 @@
 }
 
 .item:hover {
-  background: #fff7f2;
+  background: var(--color-accent-soft-bg);
 }
 
 .item:active {
@@ -95,11 +81,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8c8c8c;
+  color: var(--color-icon-muted);
 }
 
 .dangerIcon {
-  color: #7f7f7f;
+  color: var(--color-icon-muted);
 }
 
 .icon {
@@ -115,14 +101,14 @@
 }
 
 .itemTitle {
-  color: #242424;
+  color: var(--color-text-heading);
   font-size: 17px;
   font-weight: 500;
   line-height: 1.2;
 }
 
 .itemDescription {
-  color: #858585;
+  color: var(--color-text-secondary);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -130,7 +116,7 @@
 .chevron {
   width: 36px;
   height: 36px;
-  color: #8c8c8c;
+  color: var(--color-icon-muted);
   justify-self: end;
 }
 
@@ -140,12 +126,45 @@
   width: 62px;
   height: 32px;
   border-radius: 999px;
-  background: #f47f4b;
+  background: var(--color-switch-on);
   transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .switchOn {
-  background: #6b7280;
+  background: var(--color-switch-off);
+}
+
+.switchSun,
+.switchMoon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.2s ease;
+}
+
+.switchSun {
+  left: 8px;
+  color: #fbbf24;
+  opacity: 1;
+}
+
+.switchMoon {
+  right: 8px;
+  color: #dbeafe;
+  opacity: 0.45;
+}
+
+.switchOn .switchSun {
+  opacity: 0.45;
+}
+
+.switchOn .switchMoon {
+  opacity: 1;
 }
 
 .switchThumb {
@@ -155,23 +174,11 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #f4f4f4;
-  border: 1px solid #d0d0d0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  background: var(--color-switch-thumb);
+  border: 1px solid var(--color-switch-thumb-border);
+  box-shadow: 0 1px 2px var(--color-shadow);
   transition: transform 0.2s ease;
-}
-
-.switchThumb::before,
-.switchThumb::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border-top: 2px solid #b4b4b4;
-  transform: rotate(45deg);
-}
-
-.switchThumb::after {
-  transform: rotate(-45deg);
+  z-index: 1;
 }
 
 .switchOn .switchThumb {
@@ -195,8 +202,8 @@
   padding: 0 1.25rem;
   border: 0;
   border-radius: 5px;
-  background: #ff854f;
-  color: #ffffff;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -204,7 +211,7 @@
 }
 
 .logoutButton:hover {
-  background: #f06f3c;
+  background: var(--color-accent-hover);
 }
 
 .logoutIcon {
@@ -214,7 +221,7 @@
 
 .notice {
   margin: 0;
-  color: #666666;
+  color: var(--color-text-secondary);
   font-size: 14px;
 }
 

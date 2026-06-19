@@ -1,28 +1,10 @@
-/* ── Page structure ────────────────────────────────── */
-.layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f0f1f3;
-}
-
-/* Main area starts after the 90px fixed sidebar */
-.main {
-  flex: 1;
-  margin-left: 90px;
-  padding: 40px 32px 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-}
-
 /* ── Top bar card ─────────────────────────────────── */
 .topBar {
   width: 100%;
   max-width: 1176px;
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow);
   padding: 20px 28px;
   display: flex;
   align-items: center;
@@ -36,13 +18,13 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 28px;
   font-weight: 600;
-  color: #f28c4c;
+  color: var(--color-accent-alt);
   margin: 0;
 }
 
 .registerBtn {
-  background: #f28c4c;
-  color: #ffffff;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
   border: 0;
   border-radius: 10px;
   padding: 10px 24px;
@@ -55,16 +37,16 @@
 }
 
 .registerBtn:hover {
-  background: #e07e40;
+  background: var(--color-accent-alt-hover);
 }
 
 /* ── Content card ─────────────────────────────────── */
 .contentCard {
   width: 100%;
   max-width: 1176px;
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px var(--color-shadow);
   padding: 24px 28px 32px;
 }
 
@@ -89,10 +71,10 @@
   align-items: center;
   flex: 1;
   min-width: 200px;
-  border: 1.5px solid #e0e0e0;
+  border: 1.5px solid var(--color-border-muted);
   border-radius: 10px;
   overflow: hidden;
-  background: #f9f9f9;
+  background: var(--color-input-bg);
 }
 
 .searchInput {
@@ -102,16 +84,16 @@
   padding: 10px 14px;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 15px;
-  color: #333;
+  color: var(--color-text);
   outline: none;
 }
 
 .searchInput::placeholder {
-  color: #aaa;
+  color: var(--color-input-placeholder);
 }
 
 .searchBtn {
-  background: #f28c4c;
+  background: var(--color-accent-alt);
   border: 0;
   padding: 10px 14px;
   cursor: pointer;
@@ -122,40 +104,40 @@
 }
 
 .searchBtn:hover {
-  background: #e07e40;
+  background: var(--color-accent-alt-hover);
 }
 
 .allFiltersBtn {
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1.5px solid #e0e0e0;
+  border: 1.5px solid var(--color-border-muted);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--color-surface);
   padding: 9px 18px;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 15px;
   font-weight: 400;
-  color: #333;
+  color: var(--color-text);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
 }
 
 .allFiltersBtn:hover {
-  border-color: #f28c4c;
-  color: #f28c4c;
+  border-color: var(--color-accent-alt);
+  color: var(--color-accent-alt);
 }
 
 .filtersIcon {
   width: 24px;
   height: auto;
-  color: #534C4C; /* default stroke color matching figma */
+  color: var(--color-icon);
   transition: color 0.15s;
 }
 
 .allFiltersBtn:hover .filtersIcon {
-  color: #f28c4c;
+  color: var(--color-accent-alt);
 }
 
 /* ── Active Filters Chips ─────────────────────────── */
@@ -170,18 +152,18 @@
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
-  background: #ffffff;
-  border: 1px solid #bfbfbf;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
   border-radius: 20px;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 14px;
-  color: #333;
+  color: var(--color-text);
 }
 
 .chipCloseBtn {
   background: transparent;
   border: none;
-  color: #888;
+  color: var(--color-icon-muted);
   cursor: pointer;
   padding: 0;
   display: flex;
@@ -191,7 +173,7 @@
 }
 
 .chipCloseBtn:hover {
-  color: #333;
+  color: var(--color-text);
 }
 
 /* ── Cards grid ───────────────────────────────────── */
@@ -204,17 +186,17 @@
 .empty {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 15px;
-  color: #888;
+  color: var(--color-text-muted);
   margin: 32px 0;
   text-align: center;
 }
 
 /* ── Pet card ─────────────────────────────────────── */
 .petCard {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 14px;
-  border: 1px solid #ebebeb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  border: 1px solid var(--color-border-muted);
+  box-shadow: 0 2px 8px var(--color-shadow);
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.18s, transform 0.18s;
@@ -223,7 +205,7 @@
 }
 
 .petCard:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 20px var(--color-shadow-strong);
   transform: translateY(-2px);
 }
 
@@ -232,7 +214,7 @@
   position: relative;
   width: 100%;
   height: 235px;
-  background: #f5f5f5;
+  background: var(--color-bg-muted);
   overflow: hidden;
 }
 
@@ -250,7 +232,7 @@
   align-items: center;
   justify-content: center;
   font-size: 52px;
-  background: #f0efed;
+  background: var(--color-bg);
 }
 
 /* Heart button — no circle, just icon floating over photo */
@@ -267,7 +249,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 1px 3px var(--color-shadow-strong));
 }
 
 .heartBtn:hover {
@@ -297,7 +279,7 @@
   font-weight: 600;
   font-size: 22px;
   line-height: 28px;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -307,7 +289,7 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-weight: 400;
   font-size: 15px;
-  color: #888;
+  color: var(--color-text-muted);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -317,7 +299,7 @@
   font-weight: 400;
   font-size: 16px;
   line-height: 22px;
-  color: #000000;
+  color: var(--color-text-heading);
   margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;

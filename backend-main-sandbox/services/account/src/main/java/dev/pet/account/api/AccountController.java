@@ -177,6 +177,16 @@ public class AccountController {
         return accounts.myLogins(accountId);
     }
 
+    @GetMapping("/profile/me/activity")
+    public PageResponse<ActivityItemResponse> myActivity(
+        @AuthenticationPrincipal Jwt jwt,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        var accountId = UUID.fromString(jwt.getSubject());
+        return accounts.myActivity(accountId, page, size);
+    }
+
     @PatchMapping
     public ProfileResponse updateProfile(
         @AuthenticationPrincipal Jwt jwt,

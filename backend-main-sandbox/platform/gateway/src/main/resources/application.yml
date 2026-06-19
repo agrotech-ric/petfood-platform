@@ -31,4 +31,3 @@ app:
       - /api/v1/account/login/phone/confirm
 
       - /api/v1/account/password/reset/**
-      - /api/v1/account/email/**

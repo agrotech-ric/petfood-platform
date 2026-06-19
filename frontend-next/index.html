@@ -4,10 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PetFood — Frontend Next</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('settings.theme') === 'dark' ? 'dark' : 'standard';
+          document.documentElement.setAttribute('data-theme', theme);
+          var lang = localStorage.getItem('settings.language') || 'ru';
+          document.documentElement.lang = lang === 'kz' ? 'kk' : lang;
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'standard');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

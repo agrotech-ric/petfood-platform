@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.45);
+  background-color: var(--color-overlay-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,12 +12,12 @@
 }
 
 .modal {
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 12px;
   padding: 28px 32px 24px;
   width: 90%;
   max-width: 420px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 8px 24px var(--color-shadow-strong);
   box-sizing: border-box;
   max-height: 90vh;
   overflow-y: auto;
@@ -38,14 +38,14 @@
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: #f47f4b;
+  color: var(--color-accent);
   text-align: center;
   margin: 0 0 16px;
 }
 
 .subtitle {
   font-size: 14px;
-  color: #555;
+  color: var(--color-text-secondary);
   text-align: center;
   margin: 0 0 16px;
   line-height: 1.5;
@@ -63,8 +63,8 @@
   height: 42px;
   border: none;
   border-radius: 8px;
-  background: #f47f4b;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -72,7 +72,7 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #e06030;
+  background: var(--color-accent-hover);
 }
 
 .btnPrimary:disabled {
@@ -83,10 +83,10 @@
 .btnSecondary {
   flex: 1;
   height: 42px;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--color-border-muted);
   border-radius: 8px;
-  background: #fff;
-  color: #555;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -94,7 +94,7 @@
 }
 
 .btnSecondary:hover {
-  background: #f5f5f5;
+  background: var(--color-bg-muted);
 }
 
 .btnFullWidth {
@@ -102,8 +102,8 @@
   height: 42px;
   border: none;
   border-radius: 8px;
-  background: #f47f4b;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -112,7 +112,7 @@
 }
 
 .btnFullWidth:hover:not(:disabled) {
-  background: #e06030;
+  background: var(--color-accent-hover);
 }
 
 .btnFullWidth:disabled {
@@ -125,8 +125,8 @@
   height: 42px;
   border: none;
   border-radius: 8px;
-  background: #f0f0f0;
-  color: #444;
+  background: var(--color-surface-hover);
+  color: var(--color-text);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -135,40 +135,40 @@
 }
 
 .btnGhost:hover {
-  background: #e4e4e4;
+  background: var(--color-border-muted);
 }
 
 /* ---- Input ---- */
 .inputLabel {
   font-size: 13px;
-  color: #555;
+  color: var(--color-text-secondary);
   margin: 0 0 6px;
 }
 
 .input {
   width: 100%;
   height: 40px;
-  border: 1px solid #d8d8d8;
+  border: 1px solid var(--color-border-muted);
   border-radius: 8px;
   padding: 0 12px;
   font-size: 14px;
-  color: #242424;
+  color: var(--color-text);
   box-sizing: border-box;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .input:focus {
-  border-color: #f47f4b;
+  border-color: var(--color-accent);
 }
 
 .inputError {
-  border-color: #e53e3e;
+  border-color: var(--color-error);
 }
 
 .errorText {
   font-size: 12px;
-  color: #e53e3e;
+  color: var(--color-error);
   margin: 4px 0 0;
 }
 
@@ -177,14 +177,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid #d8d8d8;
+  border: 1px solid var(--color-border-muted);
   border-radius: 8px;
   padding: 0 10px;
   margin-bottom: 12px;
 }
 
 .searchIcon {
-  color: #aaa;
+  color: var(--color-icon-muted);
   flex-shrink: 0;
   width: 18px;
   height: 18px;
@@ -196,7 +196,7 @@
   border: none;
   outline: none;
   font-size: 14px;
-  color: #242424;
+  color: var(--color-text);
   background: transparent;
 }
 
@@ -213,7 +213,7 @@
   align-items: center;
   gap: 12px;
   padding: 11px 4px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-muted);
   cursor: pointer;
 }
 
@@ -225,7 +225,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 2px solid #d0d0d0;
+  border: 2px solid var(--color-border-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -234,14 +234,14 @@
 }
 
 .langRadioSelected {
-  border-color: #f47f4b;
+  border-color: var(--color-accent);
 }
 
 .langRadioDot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #f47f4b;
+  background: var(--color-accent);
 }
 
 .langNames {
@@ -252,12 +252,12 @@
 .langNamePrimary {
   font-size: 14px;
   font-weight: 500;
-  color: #242424;
+  color: var(--color-text);
 }
 
 .langNameSecondary {
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 /* ---- Credentials menu ---- */
@@ -266,7 +266,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 4px;
-  border-bottom: 1px solid #ebebeb;
+  border-bottom: 1px solid var(--color-border-muted);
   cursor: pointer;
   transition: background-color 0.15s;
   border-radius: 4px;
@@ -277,7 +277,7 @@
 }
 
 .menuItem:hover {
-  background: #fff7f2;
+  background: var(--color-accent-soft-bg);
 }
 
 .menuItemText {
@@ -289,18 +289,18 @@
 .menuItemTitle {
   font-size: 15px;
   font-weight: 500;
-  color: #242424;
+  color: var(--color-text);
 }
 
 .menuItemDesc {
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .menuChevron {
   width: 20px;
   height: 20px;
-  color: #aaa;
+  color: var(--color-icon-muted);
 }
 
 /* ---- Validation indicator ---- */
@@ -310,7 +310,7 @@
   gap: 6px;
   margin-top: 6px;
   font-size: 13px;
-  color: #38a169;
+  color: var(--color-success);
 }
 
 /* ---- Result modal ---- */
@@ -325,41 +325,41 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #f0fff4;
+  background: var(--color-accent-soft-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #38a169;
+  color: var(--color-success);
 }
 
 .iconError {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #fff5f5;
+  background: var(--color-error-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e53e3e;
+  color: var(--color-error);
 }
 
 /* ---- Code confirm ---- */
 .codeSubtitle {
   font-size: 13px;
-  color: #555;
+  color: var(--color-text-secondary);
   text-align: center;
   margin: 0 0 16px;
   line-height: 1.5;
 }
 
 .codeSubtitle strong {
-  color: #242424;
+  color: var(--color-text);
   font-weight: 600;
 }
 
 .resendLabel {
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-muted);
   text-align: center;
   margin: 12px 0 0;
 }

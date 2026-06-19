@@ -1,5 +1,4 @@
 import styles from './PetsListPage.module.css'
-import { Sidebar } from '../components/sidebar/Sidebar'
 import { FiltersSidebar, type FilterRefs } from '../components/FiltersSidebar'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -185,14 +184,13 @@ export function PetsListPage() {
       }
     } catch {
       setPets((prev) =>
-        prev.map((p) => (p.id === pet.id ? { ...p, favorite: pet.favorite } : p))
+        prev.map((p) => (p.id === pet.id ? { ...p, favorite: !next } : p))
       )
     }
   }
 
   return (
-    <div className={styles.layout}>
-      <Sidebar />
+    <>
       <FiltersSidebar
         isOpen={filtersOpen}
         onClose={() => setFiltersOpen(false)}
@@ -201,7 +199,6 @@ export function PetsListPage() {
         refs={filterRefs}
       />
 
-      <div className={styles.main}>
         <div className={styles.topBar}>
           <h1 className={styles.pageTitle}>Список питомцев</h1>
           <button
@@ -286,8 +283,7 @@ export function PetsListPage() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </>
   )
 }
 

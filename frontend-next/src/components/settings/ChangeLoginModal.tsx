@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MdCheckCircle, MdCancel } from 'react-icons/md';
+import { useAuth } from '../../../context/AuthContext';
 import styles from '../../styles/SettingsModals.module.css';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
@@ -12,6 +13,7 @@ type Props = {
 };
 
 const ChangeLoginModal = ({ isOpen, onClose }: Props) => {
+  const { fetchUserProfile } = useAuth();
   const [step, setStep] = useState<Step>('input');
   const [newEmail, setNewEmail] = useState('');
   const [code, setCode] = useState('');
@@ -88,10 +90,10 @@ const ChangeLoginModal = ({ isOpen, onClose }: Props) => {
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         setCodeError(data.message || 'Неверный код');
-        setStep('error');
         return;
       }
 
+      await fetchUserProfile().catch(() => undefined);
       setStep('success');
     } catch {
       setCodeError('Произошла ошибка. Попробуйте ещё раз');
@@ -141,6 +143,7 @@ const ChangeLoginModal = ({ isOpen, onClose }: Props) => {
       <div className={styles.overlay} onClick={handleClose}>
         <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
           <h2 className={styles.title}>Логин не изменен</h2>
+          {codeError && <p className={styles.errorText}>{codeError}</p>}
           <div className={styles.resultIcon}>
             <div className={styles.iconError}>
               <MdCancel size={32} />

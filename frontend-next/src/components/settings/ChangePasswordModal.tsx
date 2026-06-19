@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MdCheckCircle, MdCancel } from 'react-icons/md';
 import { Eye, EyeOff } from 'lucide-react';
+import { validatePassword } from '../../utils/userFormValidator';
 import styles from '../../styles/SettingsModals.module.css';
 import inputStyles from '../../styles/InputField.module.css';
 
@@ -12,6 +13,30 @@ type Props = {
   isOpen: boolean;
   userEmail: string;
   onClose: () => void;
+};
+
+const mapPasswordError = (message?: string, violations?: Array<{ field?: string; message?: string }>) => {
+  if (message === 'New password must be different') {
+    return 'Новый пароль должен отличаться от текущего';
+  }
+  if (message === 'Password does not meet requirements') {
+    return 'Пароль не соответствует требованиям безопасности';
+  }
+  if (message === 'Invalid or expired code') {
+    return 'Неверный или просроченный код';
+  }
+  if (message === 'Validation failed' && violations?.length) {
+    return violations
+      .map((item) => item.message || item.field)
+      .filter(Boolean)
+      .join('. ');
+  }
+  return message || 'Произошла ошибка';
+};
+
+const parseApiError = async (response: Response) => {
+  const data = await response.json().catch(() => ({}));
+  return mapPasswordError(data.message, data.violations);
 };
 
 const ChangePasswordModal = ({ isOpen, userEmail, onClose }: Props) => {
@@ -42,8 +67,10 @@ const ChangePasswordModal = ({ isOpen, userEmail, onClose }: Props) => {
       setPasswordError('Введите новый пароль');
       return;
     }
-    if (newPassword.length < 6) {
-      setPasswordError('Пароль должен быть не менее 6 символов');
+
+    const validationError = validatePassword(newPassword);
+    if (validationError) {
+      setPasswordError(validationError.replace(/^\*/, ''));
       return;
     }
 
@@ -55,12 +82,11 @@ const ChangePasswordModal = ({ isOpen, userEmail, onClose }: Props) => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail }),
+        body: JSON.stringify({ email: userEmail, newPassword }),
       });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        setPasswordError(data.message || 'Не удалось отправить код');
+        setPasswordError(await parseApiError(response));
         return;
       }
 
@@ -90,9 +116,7 @@ const ChangePasswordModal = ({ isOpen, userEmail, onClose }: Props) => {
       });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        setCodeError(data.message || 'Неверный код');
-        setStep('error');
+        setCodeError(await parseApiError(response));
         return;
       }
 
@@ -113,7 +137,7 @@ const ChangePasswordModal = ({ isOpen, userEmail, onClose }: Props) => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail }),
+        body: JSON.stringify({ email: userEmail, newPassword }),
       });
     } finally {
       setLoading(false);
@@ -145,6 +169,7 @@ const ChangePasswordModal = ({ isOpen, userEmail, onClose }: Props) => {
       <div className={styles.overlay} onClick={handleClose}>
         <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
           <h2 className={styles.title}>Пароль не изменен</h2>
+          {codeError && <p className={styles.errorText}>{codeError}</p>}
           <div className={styles.resultIcon}>
             <div className={styles.iconError}>
               <MdCancel size={32} />

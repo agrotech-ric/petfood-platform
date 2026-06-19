@@ -1,6 +1,9 @@
 package dev.pet.account.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.pet.account.domain.AuditLog;
+import dev.pet.account.dto.ActivityItemResponse;
 import dev.pet.account.dto.AuditLogItemResponse;
 import dev.pet.account.dto.CreateAuditLogRequest;
 import dev.pet.account.dto.PageResponse;
@@ -9,15 +12,20 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class AuditLogService {
 
-    private final AuditLogRepository repo;
+    private static final List<String> PROFILE_HIDDEN_EVENTS = List.of("LOGIN");
 
-    public AuditLogService(AuditLogRepository repo) {
+    private final AuditLogRepository repo;
+    private final ObjectMapper objectMapper;
+
+    public AuditLogService(AuditLogRepository repo, ObjectMapper objectMapper) {
         this.repo = repo;
+        this.objectMapper = objectMapper;
     }
 
     public void create(CreateAuditLogRequest req) {
@@ -33,6 +41,23 @@ public class AuditLogService {
         e.setEventInfo(req.getEventInfo());
 
         repo.save(e);
+    }
+
+    public PageResponse<ActivityItemResponse> myActivity(UUID userId, int page, int size) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        Pageable pageable = PageRequest.of(Math.max(page, 0), clampSize(size), sort);
+        Page<AuditLog> p = repo.findByUserIdAndEventTypeNotIn(userId, PROFILE_HIDDEN_EVENTS, pageable);
+
+        var items = p.getContent().stream()
+            .map(x -> new ActivityItemResponse(
+                x.getId(),
+                x.getCreatedAt(),
+                x.getEventType(),
+                extractDescription(x.getEventInfo())
+            ))
+            .toList();
+
+        return new PageResponse<>(items, p.getNumber(), p.getSize(), p.getTotalElements(), p.getTotalPages());
     }
 
     public PageResponse<AuditLogItemResponse> adminList(
@@ -72,6 +97,21 @@ public class AuditLogService {
             .toList();
 
         return new PageResponse<>(items, p.getNumber(), p.getSize(), p.getTotalElements(), p.getTotalPages());
+    }
+
+    private String extractDescription(String eventInfo) {
+        if (eventInfo == null || eventInfo.isBlank()) {
+            return "";
+        }
+        try {
+            JsonNode node = objectMapper.readTree(eventInfo);
+            if (node.hasNonNull("description")) {
+                return node.get("description").asText("");
+            }
+        } catch (Exception ignored) {
+            // legacy rows without JSON description
+        }
+        return "";
     }
 
     private int clampSize(int size) {

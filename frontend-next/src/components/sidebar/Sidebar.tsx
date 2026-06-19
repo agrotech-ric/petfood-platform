@@ -2,6 +2,7 @@ import styles from './Sidebar.module.css'
 import { useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
+import { useTranslation } from '../../../context/LanguageContext'
 
 // ── SVG Components ──────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ export function Sidebar() {
   const [expanded, setExpanded] = useState(false)
   const closeTimer = useRef<number | null>(null)
   const { logout } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -100,7 +102,7 @@ export function Sidebar() {
             <div className={styles.iconWrap}>
               <IconPaw className={styles.navIcon} />
             </div>
-            {expanded && <span className={styles.navLabel}>Мои питомцы</span>}
+            {expanded && <span className={styles.navLabel}>{t('sidebar.pets')}</span>}
           </button>
 
           <button
@@ -111,7 +113,7 @@ export function Sidebar() {
             <div className={styles.iconWrap}>
               <IconIngredients className={styles.navIcon} />
             </div>
-            {expanded && <span className={styles.navLabel}>Ингредиенты</span>}
+            {expanded && <span className={styles.navLabel}>{t('sidebar.ingredients')}</span>}
           </button>
 
           <button
@@ -122,7 +124,7 @@ export function Sidebar() {
             <div className={styles.iconWrap}>
               <IconRecipe className={styles.navIcon} />
             </div>
-            {expanded && <span className={styles.navLabel}>Мои рецепты</span>}
+            {expanded && <span className={styles.navLabel}>{t('sidebar.recipes')}</span>}
           </button>
         </nav>
 
@@ -138,21 +140,21 @@ export function Sidebar() {
             <div className={styles.iconWrap}>
               <IconProfile className={styles.navIcon} />
             </div>
-            {expanded && <span className={styles.navLabel}>Мой профиль</span>}
+            {expanded && <span className={styles.navLabel}>{t('sidebar.profile')}</span>}
           </button>
           
           <button className={styles.navItem} onClick={() => navigate('/settings')} type="button">
             <div className={styles.iconWrap}>
               <IconSettings className={styles.navIcon} />
             </div>
-            {expanded && <span className={styles.navLabel}>Настройки</span>}
+            {expanded && <span className={styles.navLabel}>{t('sidebar.settings')}</span>}
           </button>
           
           <button className={styles.navItem} onClick={logout} type="button">
             <div className={styles.iconWrap}>
               <IconLogout className={styles.navIcon} />
             </div>
-            {expanded && <span className={styles.navLabel}>Выйти</span>}
+            {expanded && <span className={styles.navLabel}>{t('sidebar.logout')}</span>}
           </button>
         </nav>
       </aside>

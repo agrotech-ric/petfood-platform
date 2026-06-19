@@ -1,0 +1,109 @@
+name: Deploy beta (self-hosted, smart)
+
+on:
+  push:
+    branches:
+      - beta
+  workflow_dispatch:
+
+concurrency:
+  group: beta-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, petfood-prod]
+    timeout-minutes: 30
+
+    steps:
+      - name: Smart deploy beta
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT_DIR="/home/iot/PetFood/petfood_platforma-beta"
+          COMPOSE="docker compose -f $PROJECT_DIR/docker-compose.sandbox.yml"
+
+          cd "$PROJECT_DIR"
+
+          # Remember current HEAD before update
+          BEFORE=$(git rev-parse HEAD 2>/dev/null || echo "")
+
+          git fetch origin beta
+          git reset --hard origin/beta
+
+          AFTER=$(git rev-parse HEAD)
+
+          # Determine list of changed files
+          if [ -n "$BEFORE" ] && [ "$BEFORE" != "$AFTER" ]; then
+            CHANGED=$(git diff --name-only "$BEFORE" "$AFTER")
+          else
+            # workflow_dispatch with no new commits — treat all tracked files as changed
+            CHANGED=$(git ls-files)
+          fi
+
+          echo "=== Changed files ==="
+          echo "$CHANGED"
+          echo "====================="
+
+          # Helper: true if any changed file starts with the given prefix
+          changed_in() {
+            echo "$CHANGED" | grep -q "^${1}" && echo "true" || echo "false"
+          }
+
+          CHANGED_AUTH=$(changed_in "backend-main-sandbox/services/auth/")
+          CHANGED_ACCOUNT=$(changed_in "backend-main-sandbox/services/account/")
+          CHANGED_PETS=$(changed_in "backend-main-sandbox/services/pets/")
+          CHANGED_NOTIFICATIONS=$(changed_in "backend-main-sandbox/services/notifications/")
+          CHANGED_GATEWAY=$(changed_in "backend-main-sandbox/platform/gateway/")
+          CHANGED_COMPOSE=$(echo "$CHANGED" | grep -qE "^(docker-compose\.sandbox\.yml|\.env)$" \
+            && echo "true" || echo "false")
+          # Only restart frontend container if npm deps changed;
+          # plain source edits are picked up by Vite HMR via the mounted volume automatically.
+          CHANGED_FRONTEND_DEPS=$(echo "$CHANGED" | grep -qE "^frontend-next/package(-lock)?\.json$" \
+            && echo "true" || echo "false")
+
+          # ── Full rebuild when compose/env changes ──────────────────────────────
+          if [ "$CHANGED_COMPOSE" = "true" ]; then
+            echo "==> docker-compose.sandbox.yml or .env changed — full backend rebuild"
+            $COMPOSE up -d --build --remove-orphans
+            echo "✅ Full backend rebuild done"
+            $COMPOSE ps
+            exit 0
+          fi
+
+          # ── Selective rebuild of changed backend services ──────────────────────
+          SERVICES=()
+          [ "$CHANGED_AUTH" = "true" ]           && SERVICES+=(auth-service-sandbox)
+          [ "$CHANGED_ACCOUNT" = "true" ]         && SERVICES+=(account-service-sandbox)
+          [ "$CHANGED_PETS" = "true" ]            && SERVICES+=(pets-service-sandbox)
+          [ "$CHANGED_NOTIFICATIONS" = "true" ]   && SERVICES+=(notifications-service-sandbox)
+          [ "$CHANGED_GATEWAY" = "true" ]         && SERVICES+=(gateway-service-sandbox)
+
+          if [ "${#SERVICES[@]}" -gt 0 ]; then
+            echo "==> Rebuilding backend services: ${SERVICES[*]}"
+            $COMPOSE up -d --build --no-deps "${SERVICES[@]}"
+            echo "✅ Backend done"
+          else
+            echo "ℹ️  No backend changes detected"
+          fi
+
+          # ── Frontend: restart dev container only when npm deps change ──────────
+          if [ "$CHANGED_FRONTEND_DEPS" = "true" ]; then
+            echo "==> Frontend deps changed — restarting dev container (runs npm ci)"
+            if docker restart petfood_frontend_next_dev 2>/dev/null; then
+              echo "✅ Frontend restarted"
+            else
+              echo "⚠️  Frontend container not running — starting it"
+              docker run -d --name petfood_frontend_next_dev --restart unless-stopped \
+                -p 5174:5174 -v "$PROJECT_DIR:/app" -w /app/frontend-next node:20-bullseye \
+                bash -lc "npm ci && npm run dev -- --host 0.0.0.0 --port 5174"
+            fi
+          else
+            echo "ℹ️  Frontend source changes are picked up by Vite HMR automatically — no restart needed"
+          fi
+
+          # ── Final status ────────────────────────────────────────────────────────
+          echo ""
+          echo "=== Container status ==="
+          $COMPOSE ps
+          docker ps --filter name=petfood_frontend_next_dev --format "table {{.Names}}\t{{.Status}}"

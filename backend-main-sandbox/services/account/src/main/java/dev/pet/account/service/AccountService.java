@@ -29,14 +29,20 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.time.OffsetDateTime;
+import java.util.stream.Stream;
+import dev.pet.account.util.ActivityLogJson;
 
 
 import java.time.Duration;
+import java.util.regex.Pattern;
 
 
 @Service
 public class AccountService {
+
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+        "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^\\w\\s]).{8,}$"
+    );
 
     private final UserRepository users;
     private final PasswordEncoder encoder;
@@ -86,6 +92,7 @@ public class AccountService {
             u.getCountry(),
             u.getCity(),
             u.getAvatarUrl(),
+            u.getLanguage(),
             role,
             u.getCreatedAt()
         );
@@ -249,6 +256,11 @@ public class AccountService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
+    public PageResponse<ActivityItemResponse> myActivity(UUID accountId, int page, int size) {
+        return auditLogService.myActivity(accountId, page, size);
+    }
+
 
     @Transactional
     public ProfileResponse updateProfile(UUID accountId, UpdateProfileRequest req) {
@@ -261,7 +273,14 @@ public class AccountService {
         if (req.birthDate() != null) u.setBirthDate(req.birthDate());
         if (req.country()   != null) u.setCountry(req.country());
         if (req.city()      != null) u.setCity(req.city());
-        
+        if (req.avatarUrl() != null) {
+            String avatar = req.avatarUrl().isBlank() ? null : req.avatarUrl().trim();
+            u.setAvatarUrl(avatar);
+        }
+        if (req.language() != null && !req.language().isBlank()) {
+            u.setLanguage(req.language());
+        }
+
         if (req.newEmail() != null && !req.newEmail().isBlank()) {
             var newEmail = req.newEmail().trim().toLowerCase();
             if (newEmail.equals(u.getEmail()))
@@ -275,6 +294,16 @@ public class AccountService {
         }
 
         users.save(u);
+
+        var profileLog = new CreateAuditLogRequest();
+        profileLog.setUserId(accountId);
+        profileLog.setEventType("PROFILE_UPDATED");
+        String fullName = Stream.of(u.getFirstName(), u.getLastName())
+            .filter(part -> part != null && !part.isBlank())
+            .collect(Collectors.joining(" "));
+        profileLog.setEventInfo(ActivityLogJson.profileUpdated(fullName));
+        auditLogService.create(profileLog);
+
         return toProfile(u);
     }
 
@@ -675,6 +704,12 @@ public class AccountService {
 
         String email = req.email().trim().toLowerCase();
 
+        if (req.newPassword() != null && !req.newPassword().isBlank()) {
+            User user = users.findByEmail(email).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            validateNewPasswordCandidate(user, req.newPassword());
+        }
+
         String code = CodeGenerator.numeric6();
         redis.opsForValue().set(
             RedisKeys.passwordResetEmail(email),
@@ -711,11 +746,7 @@ public class AccountService {
             )
         );
 
-        if (encoder.matches(req.newPassword(), u.getPasswordHash())) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "New password must be different"
-            );
-        }
+        validateNewPasswordCandidate(u, req.newPassword());
 
         u.setPasswordHash(encoder.encode(req.newPassword()));
         users.save(u);
@@ -749,6 +780,18 @@ public class AccountService {
             u.getId(),
             fullName
         );
+    }
+
+    private void validateNewPasswordCandidate(User user, String rawPassword) {
+        if (rawPassword == null || rawPassword.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password is required");
+        }
+        if (!PASSWORD_PATTERN.matcher(rawPassword).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password does not meet requirements");
+        }
+        if (encoder.matches(rawPassword, user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different");
+        }
     }
 
 
