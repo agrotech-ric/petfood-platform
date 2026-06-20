@@ -107,7 +107,7 @@ export function Sidebar() {
 
           <button
             className={`${styles.navItem} ${isActive('/ingredients') ? styles.navItemActive : ''}`}
-            onClick={() => {}}
+            onClick={() => navigate('/ingredients')}
             type="button"
           >
             <div className={styles.iconWrap}>

@@ -16,6 +16,10 @@ import { Settings } from './pages/Settings'
 import { Help } from './pages/Help'
 import { EditProfile } from './pages/EditProfile'
 import { Profile } from './pages/Profile'
+import { IngredientsPage } from './pages/IngredientsPage'
+import { IngredientProfilePage } from './pages/IngredientProfilePage'
+import { IngredientEditPage } from './pages/IngredientEditPage'
+import { IngredientCreatePage } from './pages/IngredientCreatePage'
 
 export function App() {
   return (
@@ -56,6 +60,13 @@ export function App() {
         <Route element={<PrivateLayoutRoute allowedRoles={['USER', 'VET']} />}>
           <Route path="/settings" element={<Settings />} />
           <Route path="/profile" element={<Profile />} />
+        </Route>
+
+        <Route element={<PrivateLayoutRoute allowedRoles={['USER', 'VET']} />}>
+          <Route path="/ingredients" element={<IngredientsPage />} />
+          <Route path="/ingredients/create" element={<IngredientCreatePage />} />
+          <Route path="/ingredients/:id" element={<IngredientProfilePage />} />
+          <Route path="/ingredients/:id/edit" element={<IngredientEditPage />} />
         </Route>
 
         <Route
