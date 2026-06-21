@@ -49,7 +49,7 @@ export function RecipesPage() {
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       {/* Top bar */}
       <div className={styles.topBar}>
-        <div style={{ width: 140 }} />
+        <div className={styles.headerSpacer} />
         <h1 className={styles.pageTitle}>Список всех кормов</h1>
         <button className={styles.addBtn} onClick={handleAdd}>
           + Добавить корм

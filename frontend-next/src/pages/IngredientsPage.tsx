@@ -91,7 +91,7 @@ export function IngredientsPage() {
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       {/* Top bar */}
       <div className={styles.topBar}>
-        <div style={{ width: 160 }} />
+        <div className={styles.headerSpacer} />
         <h1 className={styles.pageTitle}>Ингредиенты</h1>
         <button className={styles.addBtn} onClick={() => navigate('/ingredients/create')}>
           + Добавить ингредиент

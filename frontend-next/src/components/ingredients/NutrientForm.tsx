@@ -115,7 +115,7 @@ export function NutrientForm({ title, initialValues, onSave, saveLabel = 'Сох
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>{title}</h1>
-        <div style={{ width: 80 }} />
+        <div className={styles.headerSpacer} />
       </div>
 
       {/* Form card */}
