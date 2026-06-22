@@ -1,0 +1,445 @@
+/* ── Top bar ───────────────────────────────────────── */
+.topBar {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-accent-alt);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.addBtn {
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.addBtn:hover {
+  background: var(--color-accent-alt-hover);
+}
+
+.headerSpacer {
+  width: 140px;
+  flex-shrink: 0;
+}
+
+/* ── Content card ──────────────────────────────────── */
+.contentCard {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px 32px;
+}
+
+/* ── Search + filters trigger row ─────────────────── */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  flex: 1;
+}
+
+.searchInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--color-text);
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+.searchBtn {
+  width: 36px;
+  height: 36px;
+  background: var(--color-accent-alt);
+  border: none;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  color: #fff;
+}
+
+.allFiltersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+
+.allFiltersBtn:hover {
+  border-color: var(--color-accent-alt);
+}
+
+/* ── Active filter chips ───────────────────────────── */
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.chipRemove {
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.chipRemove:hover {
+  color: var(--color-text);
+}
+
+/* ── Table ─────────────────────────────────────────── */
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
+  color: var(--color-text);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: var(--color-bg-muted);
+}
+
+.emptyRow {
+  text-align: center;
+  padding: 40px !important;
+  color: var(--color-text-muted);
+}
+
+.editIconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.editIconBtn:hover {
+  color: var(--color-accent-alt);
+}
+
+/* ── Filters drawer ────────────────────────────────── */
+.drawerOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: 340px;
+  max-width: 90vw;
+  height: 100%;
+  background: var(--color-surface);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.drawerTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.drawerCloseBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.drawerCloseBtn:hover {
+  color: var(--color-text);
+}
+
+.filterGroup {
+  border-bottom: 1px solid var(--color-border-light, #eee);
+  padding: 14px 0;
+}
+
+.filterGroup:first-of-type {
+  padding-top: 0;
+}
+
+.filterGroupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.filterGroupTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.filterGroupChevron {
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  transition: transform 0.15s;
+}
+
+.filterGroupChevronOpen {
+  transform: rotate(180deg);
+}
+
+.filterGroupBody {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filterSearchBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin-bottom: 4px;
+}
+
+.filterSearchInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--color-text);
+  width: 100%;
+}
+
+.filterOptionsList {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.filterOption {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+}
+
+.checkboxChecked {
+  background: var(--color-accent-alt);
+  border-color: var(--color-accent-alt);
+}
+
+/* ── collapsed list of group titles (recipe list page filter short) ── */
+.collapsedGroupRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-light, #eee);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.collapsedGroupRow:first-of-type {
+  padding-top: 0;
+}
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 700px) {
+  .topBar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .headerSpacer {
+    display: none;
+  }
+
+  .pageTitle {
+    order: 1;
+    flex: 1 1 100%;
+    text-align: left;
+    font-size: 18px;
+  }
+
+  .addBtn {
+    order: 2;
+    width: 100%;
+  }
+
+  .contentCard {
+    padding: 16px;
+  }
+
+  .searchRow {
+    flex-wrap: wrap;
+  }
+
+  .searchBox {
+    width: 100%;
+  }
+
+  .allFiltersBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .drawer {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableWrapper {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 640px;
+  }
+}
