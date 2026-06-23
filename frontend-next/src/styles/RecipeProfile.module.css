@@ -1,0 +1,675 @@
+/* ── Header ─────────────────────────────────────────── */
+.pageHeader {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.headerTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-accent-alt);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.backBtn:hover { background: var(--color-accent-alt-hover); }
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.editBtn:hover { background: var(--color-accent-alt-hover); }
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface);
+  color: #e53e3e;
+  border: 1px solid #e53e3e;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.deleteBtn:hover { background: #fff5f5; }
+
+/* ── Card base ──────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 28px 32px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+/* ── Recipe info card ───────────────────────────────── */
+.recipeTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.recipeName {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.shareActions {
+  display: flex;
+  gap: 12px;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.iconBtn:hover { color: var(--color-accent-alt); }
+
+.recipeMeta {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.recipeMetaGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metaLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.metaValue {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.descriptionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+
+.descriptionText {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Pet params ─────────────────────────────────────── */
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 16px;
+}
+
+.petGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.petField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.petLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.petValue {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.petRow2 {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.healthTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 6px;
+}
+
+.healthValue {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0 0 10px;
+}
+
+.symptomsLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+/* ── Metrics row ────────────────────────────────────── */
+.metricsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 1176px;
+}
+
+.metricCard {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.metricValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0;
+}
+
+.metricLabel {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ── Charts row ─────────────────────────────────────── */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 1176px;
+}
+
+.chartCard {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px;
+  box-sizing: border-box;
+}
+
+.chartTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 16px;
+}
+
+/* ── Donut chart ────────────────────────────────────── */
+.donutWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.donutLegend {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.donutLegendRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.compositionTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.compositionTable th {
+  text-align: left;
+  padding: 6px 0;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compositionTable td {
+  padding: 6px 0;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border-light, #f5f5f5);
+}
+
+/* ── Nutrients table ────────────────────────────────── */
+.nutrientsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 40px;
+}
+
+.nutrientRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border-light, #f5f5f5);
+  font-size: 13px;
+}
+
+.nutrientRow:last-child { border-bottom: none; }
+
+.nutrientName { color: var(--color-text); }
+
+.nutrientVal {
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* ── Bar charts (minerals/vitamins) ─────────────────── */
+.barChartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 1176px;
+}
+
+.barChartTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 16px;
+}
+
+.barItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.barLabel {
+  width: 100px;
+  flex-shrink: 0;
+  color: var(--color-text);
+  text-align: right;
+  font-size: 11px;
+}
+
+.barTrack {
+  flex: 1;
+  height: 16px;
+  background: var(--color-bg-muted);
+  border-radius: 4px;
+  position: relative;
+  overflow: visible;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.barFillOrange { background: var(--color-accent-alt); }
+.barFillBlue { background: #4a90d9; }
+
+.normLine {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #333;
+  left: 100%;
+}
+
+.barPercent {
+  width: 40px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.barAxisLabel {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.normHeader {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+  padding-right: 44px;
+}
+
+/* ── Digestion analysis ─────────────────────────────── */
+.digestionCard {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 28px 32px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-accent-alt);
+}
+
+.digestionTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.digestionSubtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0 0 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  transition: color 0.15s;
+}
+
+.tabActive {
+  color: var(--color-accent-alt);
+  border-bottom-color: var(--color-accent-alt);
+}
+
+.digestionContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.chartLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 12px;
+}
+
+.svgChart {
+  width: 100%;
+  height: 180px;
+  border-left: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.absorptionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.absorptionBarTrack {
+  height: 20px;
+  background: var(--color-bg-muted);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.absorptionBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a90d9, #5cb85c);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.forecastTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 10px;
+}
+
+.forecastTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.forecastTable td {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--color-border-light, #f5f5f5);
+  color: var(--color-text-muted);
+}
+
+.forecastTable td:last-child {
+  text-align: right;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.forecastPercent {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.forecastPercentLow { background: #fff3e0; color: #e65100; }
+.forecastPercentMid { background: #e8f5e9; color: #2e7d32; }
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  .petGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .metricsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .chartsRow,
+  .barChartsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .nutrientsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .digestionContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .pageHeader {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .headerTitle {
+    order: 1;
+    flex: 1 1 100%;
+    text-align: left;
+    font-size: 16px;
+  }
+
+  .headerActions {
+    order: 2;
+    width: 100%;
+  }
+
+  .editBtn,
+  .deleteBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .card,
+  .chartCard,
+  .digestionCard {
+    padding: 16px;
+  }
+
+  .petGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .recipeMeta,
+  .petRow2 {
+    gap: 16px;
+  }
+
+  .nutrientsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .barLabel {
+    width: 70px;
+  }
+
+  .metricsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .metricValue {
+    font-size: 24px;
+  }
+}

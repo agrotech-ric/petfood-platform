@@ -18,6 +18,7 @@ import { EditProfile } from './pages/EditProfile'
 import { Profile } from './pages/Profile'
 import { IngredientsPage } from './pages/IngredientsPage'
 import { RecipesPage } from './pages/RecipesPage'
+import { RecipeProfilePage } from './pages/RecipeProfilePage'
 import { IngredientProfilePage } from './pages/IngredientProfilePage'
 import { IngredientEditPage } from './pages/IngredientEditPage'
 import { IngredientCreatePage } from './pages/IngredientCreatePage'
@@ -69,6 +70,7 @@ export function App() {
           <Route path="/ingredients/:id" element={<IngredientProfilePage />} />
           <Route path="/ingredients/:id/edit" element={<IngredientEditPage />} />
           <Route path="/recipes" element={<RecipesPage />} />
+          <Route path="/recipes/:id" element={<RecipeProfilePage />} />
         </Route>
 
         <Route

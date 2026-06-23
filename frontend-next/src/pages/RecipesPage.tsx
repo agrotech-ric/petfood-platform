@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MOCK_RECIPES, RECIPE_FILTER_GROUPS } from '../data/recipesMock'
 import { FiltersDrawer } from '../components/recipes/FiltersDrawer'
 import EditRecipeIcon from '../assets/icons/edit-recipe.svg?react'
@@ -8,6 +9,7 @@ import styles from '../styles/Recipes.module.css'
 type ActiveFilter = { groupKey: string; optionKey: string; label: string }
 
 export function RecipesPage() {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([])
@@ -41,8 +43,7 @@ export function RecipesPage() {
   }
 
   const handleEdit = (id: number) => {
-    // TODO: страница редактирования корма ещё не реализована
-    alert(`Редактирование корма #${id} — в разработке`)
+    navigate(`/recipes/${id}`)
   }
 
   return (
