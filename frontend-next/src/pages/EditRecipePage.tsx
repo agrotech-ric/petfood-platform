@@ -229,8 +229,17 @@ function EditStep2({ onNext }: { onNext: () => void }) {
     'Кукуруза — Обыкновенный', 'Животный Жир — Говяжий',
     'Вода — Обыкновенный', 'Курица — Мясо', 'Горох — Зелёный Горошек',
   ])
-  const [ingredientLimits, setIngredientLimits] = useState<Record<string, number>>({})
+  const allIngredients = INGREDIENT_CATEGORIES.flatMap(cat => cat.items)
+  const [ingredientLimits, setIngredientLimits] = useState<Record<string, { min: number; max: number }>>(
+    Object.fromEntries(allIngredients.map(item => [item, { min: 0, max: 100 }]))
+  )
+  const [nutrientRanges, setNutrientRanges] = useState<Record<string, { min: number; max: number }>>(
+    Object.fromEntries(NUTRIENT_LIMITS.map(n => [n.key, { min: n.defaultMin, max: n.defaultMax }]))
+  )
   const [maximize, setMaximize] = useState('')
+  const [nutrientValues, setNutrientValues] = useState<Record<string, number>>(
+    Object.fromEntries(NUTRIENT_LIMITS.map(n => [n.key, Math.round((n.defaultMin + n.defaultMax) / 2)]))
+  )
 
   const toggleCategory = (key: string) => {
     setOpenCategories(prev => {
@@ -246,7 +255,18 @@ function EditStep2({ onNext }: { onNext: () => void }) {
     )
   }
 
-  const getIngLimit = (name: string) => ingredientLimits[name] ?? 0
+  const getIngLimit = (name: string) => ingredientLimits[name]?.min ?? 0
+  const getIngLimitMax = (name: string) => ingredientLimits[name]?.max ?? 100
+  const getNutrientValue = (key: string, defaultValue: number) =>
+    nutrientRanges[key]?.min ?? defaultValue
+  const getNutrientValueMax = (key: string) =>
+    nutrientRanges[key]?.max ?? 0
+  const formatRangeBackground = (minValue: number, maxValue: number, lower: number, upper: number) => {
+    const total = upper - lower
+    const start = ((minValue - lower) / total) * 100
+    const end = ((maxValue - lower) / total) * 100
+    return `linear-gradient(90deg, #E7E7E7 0%, #E7E7E7 ${start}%, #F3703E ${start}%, #F3703E ${end}%, #E7E7E7 ${end}%, #E7E7E7 100%)`
+  }
 
   return (
     <div className={styles.card}>
@@ -314,14 +334,28 @@ function EditStep2({ onNext }: { onNext: () => void }) {
             <div key={ing} className={styles.sliderRow}>
               <span className={styles.sliderLabel}>{ing}:</span>
               <span className={styles.sliderMinVal}>{getIngLimit(ing)}</span>
-              <div className={styles.sliderTrack}>
-                <input type="range" className={styles.sliderRange}
+              <div className={styles.dualRangeTrack}
+                style={{ background: formatRangeBackground(getIngLimit(ing), getIngLimitMax(ing), 0, 100) }}>
+                <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMin}`}
                   min={0} max={100} value={getIngLimit(ing)}
-                  onChange={e => setIngredientLimits(prev => ({
-                    ...prev, [ing]: Number(e.target.value)
-                  }))} />
+                  onChange={e => {
+                    const value = Math.min(Number(e.target.value), getIngLimitMax(ing))
+                    setIngredientLimits(prev => ({
+                      ...prev,
+                      [ing]: { ...prev[ing], min: value }
+                    }))
+                  }} />
+                <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMax}`}
+                  min={0} max={100} value={getIngLimitMax(ing)}
+                  onChange={e => {
+                    const value = Math.max(Number(e.target.value), getIngLimit(ing))
+                    setIngredientLimits(prev => ({
+                      ...prev,
+                      [ing]: { ...prev[ing], max: value }
+                    }))
+                  }} />
               </div>
-              <span className={styles.sliderMaxVal}>100</span>
+              <span className={styles.sliderMaxVal}>{getIngLimitMax(ing)}</span>
             </div>
           ))}
         </>
@@ -330,25 +364,45 @@ function EditStep2({ onNext }: { onNext: () => void }) {
       <p className={styles.sectionTitle} style={{ marginTop: 20 }}>
         Ограничения по нутриентам:
       </p>
-      {NUTRIENT_LIMITS.map(n => (
-        <div key={n.key} className={styles.sliderRow}>
-          <span className={styles.sliderLabel}>{n.label}:</span>
-          <span className={styles.sliderMinVal}>{n.defaultMin}</span>
-          <div className={styles.sliderTrack}>
-            <input type="range" className={styles.sliderRange}
-              min={n.min} max={n.max} step={0.01}
-              defaultValue={(n.defaultMin + n.defaultMax) / 2} />
+      {NUTRIENT_LIMITS.map(n => {
+        const lowerValue = nutrientRanges[n.key]?.min ?? n.defaultMin
+        const upperValue = nutrientRanges[n.key]?.max ?? n.defaultMax
+        return (
+          <div key={n.key} className={styles.sliderRow}>
+            <span className={styles.sliderLabel}>{n.label}:</span>
+            <span className={styles.sliderMinVal}>{lowerValue}</span>
+            <div className={styles.dualRangeTrack}
+              style={{ background: formatRangeBackground(lowerValue, upperValue, n.min, n.max) }}>
+              <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMin}`}
+                min={n.min} max={n.max} step={0.01} value={lowerValue}
+                onChange={e => {
+                  const value = Math.min(Number(e.target.value), upperValue)
+                  setNutrientRanges(prev => ({
+                    ...prev,
+                    [n.key]: { ...prev[n.key], min: value }
+                  }))
+                }} />
+              <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMax}`}
+                min={n.min} max={n.max} step={0.01} value={upperValue}
+                onChange={e => {
+                  const value = Math.max(Number(e.target.value), lowerValue)
+                  setNutrientRanges(prev => ({
+                    ...prev,
+                    [n.key]: { ...prev[n.key], max: value }
+                  }))
+                }} />
+            </div>
+            <span className={styles.sliderMaxVal}>{upperValue}</span>
           </div>
-          <span className={styles.sliderMaxVal}>{n.defaultMax}</span>
-        </div>
-      ))}
+        )
+      })}
 
       <p className={styles.sectionTitle} style={{ marginTop: 20 }}>Максимизация</p>
       <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '0 0 8px' }}>
         Выберите нутриенты для максимизации:
       </p>
       <select className={styles.fieldSelect} value={maximize}
-        onChange={e => setMaximize(e.target.value)} style={{ maxWidth: 400 }}>
+        onChange={e => setMaximize(e.target.value)}>
         <option value="">Выберите нутриенты</option>
         {MAXIMIZE_OPTIONS.map(o => <option key={o}>{o}</option>)}
       </select>

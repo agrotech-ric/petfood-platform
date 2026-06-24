@@ -7,6 +7,7 @@ import {
   NUTRIENT_LIMITS, MAXIMIZE_OPTIONS, MOCK_RECIPE_RESULT,
 } from '../data/createRecipeMock'
 import styles from '../styles/CreateRecipe.module.css'
+import DeleteIcon from '../assets/icons/delete.svg?react'
 
 // ── Donut chart ─────────────────────────────────────────────────
 function DonutChart({ data }: { data: { percent: number; color: string }[] }) {
@@ -230,9 +231,24 @@ function Step2({ onNext }: { onNext: () => void }) {
     'Кукуруза — Обыкновенный', 'Животный Жир — Говяжий',
     'Вода — Обыкновенный', 'Курица — Мясо', 'Горох — Зелёный Горошек',
   ])
-  const [ingredientLimits, setIngredientLimits] = useState<Record<string, number>>({})
+  const allIngredients = INGREDIENT_CATEGORIES.flatMap(cat => cat.items)
+  const [ingredientLimits, setIngredientLimits] = useState<Record<string, { min: number; max: number }>>(
+    Object.fromEntries(allIngredients.map(item => [item, { min: 0, max: 100 }]))
+  )
   const [nutrientLimits] = useState(NUTRIENT_LIMITS)
+  const [nutrientRanges, setNutrientRanges] = useState<Record<string, { min: number; max: number }>>(
+    Object.fromEntries(NUTRIENT_LIMITS.map(n => [n.key, { min: n.defaultMin, max: n.defaultMax }]))
+  )
   const [maximize, setMaximize] = useState('')
+
+  const getIngLimit = (name: string) => ingredientLimits[name]?.min ?? 0
+  const getIngLimitMax = (name: string) => ingredientLimits[name]?.max ?? 100
+  const formatRangeBackground = (minValue: number, maxValue: number, lower: number, upper: number) => {
+    const total = upper - lower
+    const start = ((minValue - lower) / total) * 100
+    const end = ((maxValue - lower) / total) * 100
+    return `linear-gradient(90deg, #E7E7E7 0%, #E7E7E7 ${start}%, #F3703E ${start}%, #F3703E ${end}%, #E7E7E7 ${end}%, #E7E7E7 100%)`
+  }
 
   const toggleCategory = (key: string) => {
     setOpenCategories(prev => {
@@ -247,8 +263,6 @@ function Step2({ onNext }: { onNext: () => void }) {
       prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name]
     )
   }
-
-  const getIngLimit = (name: string) => ingredientLimits[name] ?? 0
 
   return (
     <>
@@ -333,15 +347,28 @@ function Step2({ onNext }: { onNext: () => void }) {
               <div key={ing} className={styles.sliderRow}>
                 <span className={styles.sliderLabel}>{ing}:</span>
                 <span className={styles.sliderMinVal}>{getIngLimit(ing)}</span>
-                <div className={styles.sliderTrack}>
-                  <input type="range" className={styles.sliderRange}
+                <div className={styles.dualRangeTrack}
+                  style={{ background: formatRangeBackground(getIngLimit(ing), getIngLimitMax(ing), 0, 100) }}>
+                  <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMin}`}
                     min={0} max={100} value={getIngLimit(ing)}
-                    onChange={e => setIngredientLimits(prev => ({
-                      ...prev, [ing]: Number(e.target.value)
-                    }))}
-                  />
+                    onChange={e => {
+                      const value = Math.min(Number(e.target.value), getIngLimitMax(ing))
+                      setIngredientLimits(prev => ({
+                        ...prev,
+                        [ing]: { ...prev[ing], min: value }
+                      }))
+                    }} />
+                  <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMax}`}
+                    min={0} max={100} value={getIngLimitMax(ing)}
+                    onChange={e => {
+                      const value = Math.max(Number(e.target.value), getIngLimit(ing))
+                      setIngredientLimits(prev => ({
+                        ...prev,
+                        [ing]: { ...prev[ing], max: value }
+                      }))
+                    }} />
                 </div>
-                <span className={styles.sliderMaxVal}>100</span>
+                <span className={styles.sliderMaxVal}>{getIngLimitMax(ing)}</span>
               </div>
             ))}
           </>
@@ -351,19 +378,38 @@ function Step2({ onNext }: { onNext: () => void }) {
         <p className={styles.sectionTitle} style={{ marginTop: 20 }}>
           Ограничения по нутриентам:
         </p>
-        {nutrientLimits.map(n => (
-          <div key={n.key} className={styles.sliderRow}>
-            <span className={styles.sliderLabel}>{n.label}:</span>
-            <span className={styles.sliderMinVal}>{n.defaultMin}</span>
-            <div className={styles.sliderTrack}>
-              <input type="range" className={styles.sliderRange}
-                min={n.min} max={n.max} step={0.01}
-                defaultValue={(n.defaultMin + n.defaultMax) / 2}
-              />
+        {nutrientLimits.map(n => {
+          const lowerValue = nutrientRanges[n.key]?.min ?? n.defaultMin
+          const upperValue = nutrientRanges[n.key]?.max ?? n.defaultMax
+          return (
+            <div key={n.key} className={styles.sliderRow}>
+              <span className={styles.sliderLabel}>{n.label}:</span>
+              <span className={styles.sliderMinVal}>{lowerValue}</span>
+              <div className={styles.dualRangeTrack}
+                style={{ background: formatRangeBackground(lowerValue, upperValue, n.min, n.max) }}>
+                <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMin}`}
+                  min={n.min} max={n.max} step={0.01} value={lowerValue}
+                  onChange={e => {
+                    const value = Math.min(Number(e.target.value), upperValue)
+                    setNutrientRanges(prev => ({
+                      ...prev,
+                      [n.key]: { ...prev[n.key], min: value }
+                    }))
+                  }} />
+                <input type="range" className={`${styles.dualRangeInput} ${styles.dualRangeMax}`}
+                  min={n.min} max={n.max} step={0.01} value={upperValue}
+                  onChange={e => {
+                    const value = Math.max(Number(e.target.value), lowerValue)
+                    setNutrientRanges(prev => ({
+                      ...prev,
+                      [n.key]: { ...prev[n.key], max: value }
+                    }))
+                  }} />
+              </div>
+              <span className={styles.sliderMaxVal}>{upperValue}</span>
             </div>
-            <span className={styles.sliderMaxVal}>{n.defaultMax}</span>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Maximize */}
         <p className={styles.sectionTitle} style={{ marginTop: 20 }}>Максимизация</p>
@@ -371,8 +417,7 @@ function Step2({ onNext }: { onNext: () => void }) {
           Выберите нутриенты для максимизации:
         </p>
         <select className={styles.fieldSelect} value={maximize}
-          onChange={e => setMaximize(e.target.value)}
-          style={{ maxWidth: 400 }}>
+          onChange={e => setMaximize(e.target.value)}>
           <option value="">Выберите нутриенты</option>
           {MAXIMIZE_OPTIONS.map(o => <option key={o}>{o}</option>)}
         </select>
@@ -515,11 +560,7 @@ export function CreateRecipePage() {
         </button>
         <h1 className={styles.headerTitle}>{stepTitles[step]}</h1>
         <button className={styles.deleteBtn}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14H6L5 6"/>
-            <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
-          </svg>
+          <DeleteIcon width="14" height="14" />
           Удалить
         </button>
       </div>
