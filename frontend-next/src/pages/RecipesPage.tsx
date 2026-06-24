@@ -38,8 +38,7 @@ export function RecipesPage() {
   }, [search])
 
   const handleAdd = () => {
-    // TODO: страница добавления корма ещё не реализована
-    alert('Добавление корма — в разработке')
+    navigate('/recipes/create')
   }
 
   const handleEdit = (id: number) => {
