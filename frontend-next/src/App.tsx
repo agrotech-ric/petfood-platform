@@ -20,6 +20,7 @@ import { IngredientsPage } from './pages/IngredientsPage'
 import { RecipesPage } from './pages/RecipesPage'
 import { RecipeProfilePage } from './pages/RecipeProfilePage'
 import { CreateRecipePage } from './pages/CreateRecipePage'
+import { EditRecipePage } from './pages/EditRecipePage'
 import { IngredientProfilePage } from './pages/IngredientProfilePage'
 import { IngredientEditPage } from './pages/IngredientEditPage'
 import { IngredientCreatePage } from './pages/IngredientCreatePage'
@@ -73,6 +74,7 @@ export function App() {
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/recipes/create" element={<CreateRecipePage />} />
           <Route path="/recipes/:id" element={<RecipeProfilePage />} />
+          <Route path="/recipes/:id/edit" element={<EditRecipePage />} />
         </Route>
 
         <Route
