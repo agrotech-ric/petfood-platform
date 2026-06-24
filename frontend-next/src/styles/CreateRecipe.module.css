@@ -1,0 +1,822 @@
+/* ── Header ─────────────────────────────────────────── */
+.pageHeader {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.headerTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-accent-alt);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.backBtn:hover { background: var(--color-accent-alt-hover); }
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E7E7E7;
+  color: #707070;
+  border: 1px solid #B4B4B4;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.deleteBtn:hover { background: #f5f5f5; }
+
+/* ── Card ───────────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 20px;
+}
+
+/* ── Form grid ──────────────────────────────────────── */
+.formGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.formGrid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.fieldInput {
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-bg-muted);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.fieldInput:focus { border-color: var(--color-accent-alt); background: var(--color-surface); }
+
+.fieldTextarea {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-bg-muted);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.fieldTextarea:focus { border-color: var(--color-accent-alt); background: var(--color-surface); }
+
+.fieldSelect {
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-bg-muted);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+/* ── Radio group ────────────────────────────────────── */
+.radioGroup {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.radioInput {
+  accent-color: var(--color-accent-alt);
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Symptoms ───────────────────────────────────────── */
+.symptomsRow {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.symptomsLeft {
+  flex: 1;
+}
+
+.symptomsRight {
+  flex: 1;
+}
+
+.symptomsLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--color-bg-muted);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.chipRemove {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.chipRemove:hover { color: var(--color-text); }
+
+/* ── Primary button ─────────────────────────────────── */
+.primaryBtn {
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 8px;
+}
+
+.primaryBtn:hover { background: var(--color-accent-alt-hover); }
+
+/* ── Step 2: energy ─────────────────────────────────── */
+.energyRow {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.energyInput {
+  height: 40px;
+  width: 100px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-bg-muted);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.energyHint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.energyFormula {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.formulaLink {
+  color: var(--color-accent-alt);
+  cursor: pointer;
+  text-decoration: underline;
+  margin-right: 8px;
+}
+
+.formulaText {
+  font-style: italic;
+}
+
+/* ── Step 2: ingredient accordion ──────────────────── */
+.accordionList {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.accordionItem {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.accordionItem:last-child { border-bottom: none; }
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.accordionHeader:hover { background: var(--color-bg-muted); }
+
+.accordionChevron {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+.accordionBody {
+  padding: 8px 16px 12px 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--color-bg-muted);
+}
+
+.ingredientTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.ingredientTag:hover { border-color: var(--color-accent-alt); }
+
+.ingredientTagActive {
+  background: var(--color-accent-alt);
+  border-color: var(--color-accent-alt);
+  color: #fff;
+}
+
+/* ── Step 2: selected ingredients ──────────────────── */
+.selectedBox {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--color-bg-muted);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selectedTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.selectedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--color-accent-alt);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.clearAllBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  margin-top: 4px;
+  align-self: flex-start;
+  transition: border-color 0.15s;
+}
+
+.clearAllBtn:hover { border-color: var(--color-accent-alt); color: var(--color-accent-alt); }
+
+/* ── Step 2: sliders ────────────────────────────────── */
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.sliderLabel {
+  width: 160px;
+  flex-shrink: 0;
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.sliderMinVal,
+.sliderMaxVal {
+  min-width: 44px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--color-text);
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid #D8D8D8;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.sliderTrack {
+  flex: 1;
+  position: relative;
+  height: 10px;
+  background: #E7E7E7;
+  border-radius: 999px;
+}
+
+.dualRangeTrack {
+  position: relative;
+  flex: 1;
+  height: 10px;
+  background: #E7E7E7;
+  border-radius: 999px;
+}
+
+.dualRangeInput {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0;
+  accent-color: #F3703E;
+  cursor: pointer;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  z-index: 1;
+}
+
+.dualRangeMin {
+  z-index: 1;
+}
+
+.dualRangeMax {
+  z-index: 2;
+}
+
+.dualRangeInput::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 2px;
+  background: transparent;
+  border-radius: 999px;
+}
+
+.dualRangeInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F3703E;
+  border: 3px solid #fff;
+  transform: translateY(-50%);
+  margin-top: 0;
+}
+
+.dualRangeInput::-moz-range-track {
+  width: 100%;
+  height: 2px;
+  background: transparent;
+  border-radius: 999px;
+}
+
+.dualRangeInput::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F3703E;
+  border: 3px solid #fff;
+  transform: translateY(-50%);
+}
+
+.dualRangeInput::-ms-track {
+  width: 100%;
+  height: 2px;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+.dualRangeInput::-ms-fill-lower {
+  background: transparent;
+}
+
+.dualRangeInput::-ms-fill-upper {
+  background: transparent;
+}
+
+.dualRangeInput::-ms-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F3703E;
+  border: 3px solid #fff;
+  transform: translateY(-50%);
+}
+
+.dualRangeInput:focus {
+  outline: none;
+}
+
+/* ── Step 2: Two-panel layout ───────────────────────── */
+.twoPanel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+/* ── Step 3: metrics ────────────────────────────────── */
+.metricsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 1176px;
+}
+
+.metricCard {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px;
+}
+
+.metricValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 4px;
+}
+
+.metricLabel {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Step 3: charts row ─────────────────────────────── */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 1176px;
+}
+
+.chartCard {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px;
+  box-sizing: border-box;
+}
+
+.chartTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 16px;
+}
+
+.donutWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.donutLegend {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.donutLegendRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.compositionTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.compositionTable th {
+  text-align: left;
+  padding: 6px 0;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.compositionTable td {
+  padding: 5px 0;
+  color: var(--color-text-muted);
+}
+
+/* ── Step 3: nutrients ──────────────────────────────── */
+.nutrientsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 40px;
+}
+
+.nutrientRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border-light, #f5f5f5);
+  font-size: 13px;
+}
+
+.nutrientRow:last-child { border-bottom: none; }
+
+/* ── Step 3: bar charts ─────────────────────────────── */
+.barChartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 1176px;
+}
+
+.barChartTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 12px;
+}
+
+.barItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.barLabel {
+  width: 110px;
+  flex-shrink: 0;
+  color: var(--color-text);
+  text-align: right;
+  font-size: 11px;
+}
+
+.barTrack {
+  flex: 1;
+  height: 16px;
+  background: var(--color-bg-muted);
+  border-radius: 4px;
+  position: relative;
+  overflow: visible;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.barFillOrange { background: var(--color-accent-alt); }
+.barFillBlue { background: #4a90d9; }
+
+.normLine {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #333;
+  left: 66.67%;
+}
+
+.barPercent {
+  width: 40px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.normHeader {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+  padding-right: 44px;
+}
+
+.barAxisLabel {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  .twoPanel,
+  .chartsRow,
+  .barChartsRow,
+  .nutrientsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .metricsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .formGrid3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .pageHeader {
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .headerTitle {
+    order: 1;
+    flex: 1 1 100%;
+    text-align: left;
+    font-size: 16px;
+  }
+
+  .deleteBtn {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card, .chartCard {
+    padding: 16px;
+  }
+
+  .formGrid2,
+  .formGrid3 {
+    grid-template-columns: 1fr;
+  }
+
+  .symptomsRow {
+    flex-direction: column;
+  }
+
+  .energyRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .energyFormula {
+    margin-left: 0;
+  }
+
+  .barLabel {
+    width: 70px;
+  }
+
+  .sliderLabel {
+    width: 110px;
+  }
+}
