@@ -1,0 +1,598 @@
+/* ── Header ─────────────────────────────────────────── */
+.pageHeader {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.headerTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-accent-alt);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.backBtn:hover { background: var(--color-accent-alt-hover); }
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.editBtn:hover { background: var(--color-accent-alt-hover); }
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E7E7E7;
+  color: #707070;
+  border: 1px solid #B4B4B4;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.deleteBtn:hover { background: #f5f5f5; }
+
+.heartBtn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.heartIcon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* ── Pet info card ───────────────────────────────────── */
+.petCard {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  display: flex;
+  gap: 24px;
+}
+
+.petPhoto {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-bg-muted);
+}
+
+.petPhotoPlaceholder {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  background: var(--color-bg-muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.petInfoMain {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+}
+
+.petInfoLeft {
+  flex: 1;
+}
+
+.petName {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.petAgeLine {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0 0 16px;
+}
+
+.petFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.petFieldRow {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.petFieldLabel {
+  font-weight: 700;
+  color: var(--color-text);
+  min-width: 160px;
+}
+
+.petFieldValue {
+  color: var(--color-text-muted);
+}
+
+.petInfoRight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.petActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.iconBtn:hover { color: var(--color-accent-alt); }
+
+.descriptionLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+
+.descriptionText {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Tabs card ───────────────────────────────────────── */
+.tabsCard {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 0;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tabsRow {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.tab:hover { color: var(--color-text); }
+
+.tabActive {
+  color: var(--color-accent-alt);
+  background: var(--color-accent-alt);
+  color: #fff;
+  border-bottom-color: var(--color-accent-alt);
+  border-radius: 0;
+}
+
+.tabContent {
+  padding: 24px 28px;
+}
+
+/* ── Table ───────────────────────────────────────────── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
+  color: var(--color-text-muted);
+}
+
+.table tr:last-child td { border-bottom: none; }
+
+.iconActionBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.15s;
+  margin-right: 4px;
+}
+
+.iconActionBtn:hover { color: var(--color-accent-alt); }
+
+.iconActionBtnDanger:hover { color: #e53e3e; }
+
+/* ── Primary / secondary buttons ────────────────────── */
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 12px;
+}
+
+.primaryBtn:hover { background: var(--color-accent-alt-hover); }
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.secondaryBtn:hover { border-color: var(--color-accent-alt); color: var(--color-accent-alt); }
+
+.conditionActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E7E7E7;
+  color: #707070;
+  border: 1px solid #B4B4B4;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.conditionActionBtn:hover { background: #f5f5f5; }
+
+.actionCardBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E7E7E7;
+  color: #707070;
+  border: 1px solid #B4B4B4;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.actionCardBtn:hover { background: #f5f5f5; }
+
+.dangerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E7E7E7;
+  color: #707070;
+  border: 1px solid #B4B4B4;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dangerBtn:hover { background: #f5f5f5; }
+
+/* ── Current condition ───────────────────────────────── */
+.conditionDate {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0 0 12px;
+}
+
+.conditionLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.conditionValue {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0 0 14px;
+}
+
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.conditionActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* ── Contraindications ───────────────────────────────── */
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 10px;
+}
+
+/* ── Charts (weight / activity) ─────────────────────── */
+.chartLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.chartSectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent-alt);
+  margin: 0 0 16px;
+}
+
+.svgChart {
+  width: 100%;
+  height: 200px;
+}
+
+.chartTableHeader {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.chartTableDateWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.chartTableDateIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.chartTableInput {
+  height: 34px;
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-bg-muted);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.chartTableInput:focus { border-color: var(--color-accent-alt); }
+
+.addRowBtn {
+  width: 30px;
+  height: 30px;
+  background: var(--color-accent-alt);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.addRowBtn:hover { background: var(--color-accent-alt-hover); }
+
+.chartTableHead {
+  display: grid;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.weightHead { grid-template-columns: 1fr 1fr 40px; }
+.activityHead { grid-template-columns: 1fr 1fr 40px; }
+
+.chartTableRow {
+  display: grid;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border-light, #f5f5f5);
+  align-items: center;
+}
+
+.chartTableRow:last-child { border-bottom: none; }
+
+.removeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.removeBtn:hover { color: #e53e3e; }
+
+/* ── Tooltip ─────────────────────────────────────────── */
+.tooltipBox {
+  position: absolute;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--color-text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  .petCard { flex-direction: column; }
+  .petInfoMain { flex-direction: column; }
+  .petPhoto, .petPhotoPlaceholder { width: 100%; max-width: 260px; }
+  .chartLayout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .pageHeader {
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  .headerTitle {
+    order: 1;
+    flex: 1 1 100%;
+    text-align: left;
+    font-size: 16px;
+  }
+  .headerActions {
+    order: 2;
+    width: 100%;
+  }
+  .editBtn, .deleteBtn { flex: 1; justify-content: center; }
+  .petCard, .tabContent { padding: 16px; }
+  .petName { font-size: 24px; }
+  .conditionActions { flex-direction: column; }
+  .tabsRow { overflow-x: auto; }
+}
