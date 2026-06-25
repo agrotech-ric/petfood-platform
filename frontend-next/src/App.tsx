@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Register from './pages/UserRegister'
 import ResetPassword from './pages/ResetPassword'
 import { PetsListPage } from './pages/PetsListPage'
+import { PetProfilePage } from './pages/PetProfilePage'
 import { AdminStub } from './pages/stubs/AdminStub'
 import { VetStub } from './pages/stubs/VetStub'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -89,7 +90,7 @@ export function App() {
           path="/pet-profile/:id"
           element={
             <PrivateRoute allowedRoles={['USER']}>
-              <PetProfilePlaceholder />
+              <PetProfilePage />
             </PrivateRoute>
           }
         />
