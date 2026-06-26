@@ -274,6 +274,9 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
+.tabActive:hover {
+  color: #E5E7EB;
+}
 .tabContent {
   position: relative;
   z-index: 1;
