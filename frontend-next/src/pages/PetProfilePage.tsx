@@ -132,6 +132,8 @@ function TabFood() {
 
 // ── Tab: Текущее состояние ──────────────────────────────────────
 function TabCondition() {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const c = MOCK_CURRENT_CONDITION
   return (
     <div>
@@ -145,7 +147,10 @@ function TabCondition() {
         {c.symptoms.map(s => <span key={s} className={styles.chip}>{s}</span>)}
       </div>
       <div className={styles.conditionActions}>
-        <button className={styles.conditionActionBtn}>
+        <button
+          className={styles.conditionActionBtn}
+          onClick={() => navigate(`/pet-profile/${id}/edit-current-condition`)}
+        >
           <EditIcon1 width={14} height={14} />
           Изменить
         </button>
@@ -164,6 +169,8 @@ function TabCondition() {
 
 // ── Tab: История болезней ───────────────────────────────────────
 function TabHistory() {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const [history, setHistory] = useState<PetDiseaseHistory[]>(MOCK_DISEASE_HISTORY)
   const removeEntry = (id: number) => setHistory(prev => prev.filter(h => h.id !== id))
 
@@ -187,11 +194,15 @@ function TabHistory() {
               <td>{h.symptoms}</td>
               <td>{h.description}</td>
               <td>
-                <button className={styles.iconActionBtn} title="Изменить">
-                  <EditIcon1 width={20} height={20} />
-                </button>
-                <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
-                  title="Удалить" onClick={() => removeEntry(h.id)}>
+                <button
+              className={styles.iconActionBtn}
+              title="Изменить"
+              onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`)}
+            >
+              <EditIcon1 width={20} height={20} />
+            </button>
+            <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
+              title="Удалить" onClick={() => removeEntry(h.id)}>
                   <DeleteIcon width={20} height={20} />
                 </button>
               </td>
@@ -199,13 +210,18 @@ function TabHistory() {
           ))}
         </tbody>
       </table>
-      <button className={styles.actionCardBtn}>+ Добавить запись</button>
+      <button
+        className={styles.actionCardBtn}
+        onClick={() => navigate(`/pet-profile/${id}/history/new`)}
+      >+ Добавить запись</button>
     </div>
   )
 }
 
 // ── Tab: Противопоказания ───────────────────────────────────────
 function TabContra() {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const c = MOCK_CONTRAINDICATIONS
   return (
     <div>
@@ -215,7 +231,10 @@ function TabContra() {
       </div>
       <p className={styles.conditionLabel}>Описание</p>
       <p className={styles.conditionValue}>{c.description}</p>
-      <button className={styles.actionCardBtn}>
+      <button
+        className={styles.actionCardBtn}
+        onClick={() => navigate(`/pet-profile/${id}/edit-contraindications`)}
+      >
         <EditIcon1 width={20} height={20} />
         Изменить
       </button>
@@ -354,7 +373,10 @@ export function PetProfilePage() {
         </button>
         <h1 className={styles.headerTitle}>Профиль питомца</h1>
         <div className={styles.headerActions}>
-          <button className={styles.editBtn}>
+          <button
+            className={styles.editBtn}
+            onClick={() => navigate(`/pet-profile/${id}/edit-profile`)}
+          >
             <EditIcon width={14} height={14} />
             Изменить
           </button>

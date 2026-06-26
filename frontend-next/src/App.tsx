@@ -25,6 +25,10 @@ import { EditRecipePage } from './pages/EditRecipePage'
 import { IngredientProfilePage } from './pages/IngredientProfilePage'
 import { IngredientEditPage } from './pages/IngredientEditPage'
 import { IngredientCreatePage } from './pages/IngredientCreatePage'
+import { EditContraindicationsPage } from './pages/EditContraindicationsPage'
+import { EditCurrentConditionPage } from './pages/EditCurrentConditionPage'
+import { EditDiseaseHistoryPage } from './pages/EditDiseaseHistoryPage'
+import { EditPetProfilePage } from './pages/EditPetProfilePage'
 
 export function App() {
   return (
@@ -91,6 +95,38 @@ export function App() {
           element={
             <PrivateRoute allowedRoles={['USER']}>
               <PetProfilePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-profile/:id/edit-profile"
+          element={
+            <PrivateRoute allowedRoles={['USER']}>
+              <EditPetProfilePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-profile/:id/edit-current-condition"
+          element={
+            <PrivateRoute allowedRoles={['USER']}>
+              <EditCurrentConditionPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-profile/:id/edit-contraindications"
+          element={
+            <PrivateRoute allowedRoles={['USER']}>
+              <EditContraindicationsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-profile/:id/history/:historyId"
+          element={
+            <PrivateRoute allowedRoles={['USER']}>
+              <EditDiseaseHistoryPage />
             </PrivateRoute>
           }
         />
