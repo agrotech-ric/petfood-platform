@@ -93,6 +93,9 @@ function LineChart({
 
 // ── Tab: Питание ────────────────────────────────────────────────
 function TabFood() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+
   return (
     <div>
       <table className={styles.table}>
@@ -115,7 +118,10 @@ function TabFood() {
               <td>{f.calories}</td>
               <td>{f.lastModified}</td>
               <td>
-                <button className={styles.iconActionBtn} title="Изменить">
+                <button
+                className={styles.iconActionBtn} title="Изменить"
+                onClick={() => navigate(`/recipes/${f.id}`)}
+                >
                   <EditIcon1 width={14} height={14} />
                 </button>
               </td>
@@ -123,7 +129,10 @@ function TabFood() {
           ))}
         </tbody>
       </table>
-      <button className={styles.primaryBtn}>
+      <button 
+        className={styles.primaryBtn}
+        onClick={() => navigate(`/recipes/create`)}
+        >
         + Рассчитать рецепт
       </button>
     </div>
