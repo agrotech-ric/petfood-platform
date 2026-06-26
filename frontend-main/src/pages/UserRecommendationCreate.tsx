@@ -164,12 +164,19 @@ export const UserRecommendationCreate = () => {
     calculateDailyKcal();
   }, [englishBreedName, request]);
 
-  const getActivityLevel = (activityTypeName: string): 'passive' | 'moderate' | 'active' => {
-    const name = activityTypeName.toLowerCase();
-    if (name.includes('низк')) return 'passive';
-    if (name.includes('средн')) return 'moderate';
-    return 'active';
-  };
+  const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
+  const name = activityTypeName.toLowerCase();
+
+  if (name.includes('пассивный')) return 'passive';
+  if (name.includes('средний1')) return 'low';
+  if (name.includes('средний2')) return 'moderate';
+  if (name.includes('активный')) return 'active';
+  if (name.includes('экстремальных условиях')) return 'extreme';
+  if (name.includes('склонные к ожирению')) return 'obesity_prone';
+
+  return 'moderate';
+};
+
 
   const handleRecalculateNutrients = async () => {
     if (!request || !targetKcal || !englishBreedName) return;
