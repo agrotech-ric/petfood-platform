@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { MOCK_PET } from '../data/petProfileMock'
 import { DOG_BREEDS, ACTIVITY_OPTIONS, GENDER_OPTIONS, REPRODUCTIVE_OPTIONS } from '../data/createRecipeMock'
 import styles from '../styles/EditPet.module.css'
@@ -9,6 +9,8 @@ import Edit1Icon from '../assets/icons/edit1.svg?react'
 export function EditPetProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTab = (location.state as any)?.fromTab ?? 'food'
   const pet = MOCK_PET
 
   const [name, setName] = useState(pet.name)
@@ -23,7 +25,7 @@ export function EditPetProfilePage() {
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       <div className={styles.pageHeader}>
-        <button className={styles.backBtn} onClick={() => navigate(`/pet-profile/${id}`)}>
+        <button className={styles.backBtn} onClick={() => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })}>
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>Редактирование профиля питомца</h1>
@@ -157,7 +159,10 @@ export function EditPetProfilePage() {
           </div>
         </div>
 
-        <button className={styles.saveBtn} onClick={() => navigate(`/pet-profile/${id}`)}>
+        <button
+          className={styles.saveBtn}
+          onClick={() => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })}
+        >
           Сохранить изменения
         </button>
       </div>

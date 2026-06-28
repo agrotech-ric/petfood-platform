@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { MOCK_RECIPE_PROFILE } from '../data/recipeProfileMock'
 import styles from '../styles/RecipeProfile.module.css'
 import DeleteIcon from '../assets/icons/delete.svg?react'
@@ -135,6 +135,9 @@ function BarItem({ label, percent, isBlue }: { label: string; percent: number; i
 export function RecipeProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const origin = (location.state as any)?.from as string | undefined
+  const originPetId = (location.state as any)?.petId as string | undefined
   const [activeTab, setActiveTab] = useState<'protein' | 'fat' | 'carbs'>('protein')
 
   const recipe = MOCK_RECIPE_PROFILE
@@ -166,12 +169,15 @@ export function RecipeProfilePage() {
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       {/* Header */}
       <div className={styles.pageHeader}>
-        <button className={styles.backBtn} onClick={() => navigate('/recipes')}>
+        <button className={styles.backBtn} onClick={() => {
+          if (origin === 'pet-profile' && originPetId) navigate(`/pet-profile/${originPetId}`, { state: { tab: (location.state as any)?.fromTab ?? 'food' } })
+          else navigate('/recipes')
+        }}>
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>Профиль корма</h1>
         <div className={styles.headerActions}>
-          <button className={styles.editBtn} onClick={() => navigate(`/recipes/${recipe.id}/edit`)}>
+          <button className={styles.editBtn} onClick={() => navigate(`/recipes/${recipe.id}/edit`, { state: { from: origin, petId: originPetId, fromTab: (location.state as any)?.fromTab } })}>
             <EditIcon width="14" height="14" />
             Изменить
           </button>

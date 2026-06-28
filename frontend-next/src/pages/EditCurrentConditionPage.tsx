@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { MOCK_CURRENT_CONDITION } from '../data/petProfileMock'
 import { SYMPTOMS_OPTIONS, HEALTH_CONDITIONS } from '../data/createRecipeMock'
 import styles from '../styles/EditPet.module.css'
@@ -7,6 +7,8 @@ import styles from '../styles/EditPet.module.css'
 export function EditCurrentConditionPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTab = (location.state as any)?.fromTab ?? 'food'
   const c = MOCK_CURRENT_CONDITION
 
   const [date, setDate] = useState('2025-01-01')
@@ -23,7 +25,7 @@ export function EditCurrentConditionPage() {
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       <div className={styles.pageHeader}>
-        <button className={styles.backBtn} onClick={() => navigate(`/pet-profile/${id}`)}>
+        <button className={styles.backBtn} onClick={() => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })}>
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>Текущее состояние здоровья питомца</h1>
@@ -80,7 +82,10 @@ export function EditCurrentConditionPage() {
           </div>
         </div>
 
-        <button className={styles.saveBtn} onClick={() => navigate(`/pet-profile/${id}`)}>
+        <button
+          className={styles.saveBtn}
+          onClick={() => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })}
+        >
           Сохранить изменения
         </button>
       </div>

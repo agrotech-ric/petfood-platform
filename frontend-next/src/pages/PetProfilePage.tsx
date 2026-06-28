@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import {
   MOCK_PET, MOCK_PET_FOODS, MOCK_CURRENT_CONDITION,
   MOCK_DISEASE_HISTORY, MOCK_CONTRAINDICATIONS,
@@ -120,7 +120,7 @@ function TabFood() {
               <td>
                 <button
                 className={styles.iconActionBtn} title="Изменить"
-                onClick={() => navigate(`/recipes/${f.id}`)}
+                onClick={() => navigate(`/recipes/${f.id}`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
                 >
                   <EditIcon1 width={14} height={14} />
                 </button>
@@ -131,7 +131,7 @@ function TabFood() {
       </table>
       <button 
         className={styles.primaryBtn}
-        onClick={() => navigate(`/recipes/create`)}
+        onClick={() => navigate(`/recipes/create`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
         >
         + Рассчитать рецепт
       </button>
@@ -158,7 +158,7 @@ function TabCondition() {
       <div className={styles.conditionActions}>
         <button
           className={styles.conditionActionBtn}
-          onClick={() => navigate(`/pet-profile/${id}/edit-current-condition`)}
+          onClick={() => navigate(`/pet-profile/${id}/edit-current-condition`, { state: { fromTab: 'condition' } })}
         >
           <EditIcon1 width={14} height={14} />
           Изменить
@@ -203,10 +203,10 @@ function TabHistory() {
               <td>{h.symptoms}</td>
               <td>{h.description}</td>
               <td>
-                <button
+            <button
               className={styles.iconActionBtn}
               title="Изменить"
-              onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`)}
+              onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`, { state: { fromTab: 'history' } })}
             >
               <EditIcon1 width={20} height={20} />
             </button>
@@ -221,7 +221,7 @@ function TabHistory() {
       </table>
       <button
         className={styles.actionCardBtn}
-        onClick={() => navigate(`/pet-profile/${id}/history/new`)}
+        onClick={() => navigate(`/pet-profile/${id}/history/new`, { state: { fromTab: 'history' } })}
       >+ Добавить запись</button>
     </div>
   )
@@ -242,7 +242,7 @@ function TabContra() {
       <p className={styles.conditionValue}>{c.description}</p>
       <button
         className={styles.actionCardBtn}
-        onClick={() => navigate(`/pet-profile/${id}/edit-contraindications`)}
+        onClick={() => navigate(`/pet-profile/${id}/edit-contraindications`, { state: { fromTab: 'contra' } })}
       >
         <EditIcon1 width={20} height={20} />
         Изменить
@@ -359,7 +359,9 @@ function TabActivity() {
 export function PetProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<Tab>('food')
+  const location = useLocation()
+  const initialTab = ((location.state as any)?.tab as Tab) ?? 'food'
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [liked, setLiked] = useState(false)
   const pet = MOCK_PET
   const onToggleLike = () => setLiked(prev => !prev)
@@ -384,7 +386,7 @@ export function PetProfilePage() {
         <div className={styles.headerActions}>
           <button
             className={styles.editBtn}
-            onClick={() => navigate(`/pet-profile/${id}/edit-profile`)}
+            onClick={() => navigate(`/pet-profile/${id}/edit-profile`, { state: { fromTab: activeTab } })}
           >
             <EditIcon width={14} height={14} />
             Изменить
