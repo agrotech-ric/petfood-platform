@@ -554,7 +554,7 @@ export function CreateRecipePage() {
   }
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div className={styles.page}>
       {/* Header */}
       <div className={styles.pageHeader}>
         <button className={styles.backBtn}

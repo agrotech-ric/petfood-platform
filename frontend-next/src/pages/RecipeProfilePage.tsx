@@ -166,7 +166,7 @@ export function RecipeProfilePage() {
     pct === 0 ? '' : pct < 50 ? styles.forecastPercentLow : styles.forecastPercentMid
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div className={styles.page}>
       {/* Header */}
       <div className={styles.pageHeader}>
         <button className={styles.backBtn} onClick={() => {
@@ -178,11 +178,11 @@ export function RecipeProfilePage() {
         <h1 className={styles.headerTitle}>Профиль корма</h1>
         <div className={styles.headerActions}>
           <button className={styles.editBtn} onClick={() => navigate(`/recipes/${recipe.id}/edit`, { state: { from: origin, petId: originPetId, fromTab: (location.state as any)?.fromTab } })}>
-            <EditIcon width="14" height="14" />
+            <EditIcon width="20" height="20" />
             Изменить
           </button>
           <button className={styles.deleteBtn}>
-            <DeleteIcon width="14" height="14" />
+            <DeleteIcon width="20" height="20" />
             Удалить
           </button>
         </div>

@@ -94,7 +94,10 @@ export const EditProfile = () => {
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
     setAvatarRemoved(false);
-    setErrors((prev) => ({ ...prev, avatar: undefined }));
+    setErrors((prev) => {
+      const { avatar, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleAvatarDelete = () => {
@@ -241,7 +244,6 @@ export const EditProfile = () => {
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                 />
-                <DateIcon size={18} className={styles.dateIcon} />
               </div>
               {errors.birthDate && <p className={styles.errorText}>{errors.birthDate}</p>}
             </div>

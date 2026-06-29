@@ -529,7 +529,7 @@ export function EditRecipePage() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div className={styles.page}>
       <div className={styles.pageHeader}>
         <button className={styles.backBtn}
           onClick={() => {
