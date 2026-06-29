@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   INGREDIENT_CATEGORIES, DOG_BREEDS, AGE_OPTIONS, ACTIVITY_OPTIONS,
   REPRODUCTIVE_OPTIONS, GENDER_OPTIONS, AGE_CATEGORY_OPTIONS,
@@ -542,6 +542,9 @@ function Step3({ onSave }: { onSave: () => void }) {
 // ── Main wizard ─────────────────────────────────────────────────
 export function CreateRecipePage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const origin = (location.state as any)?.from as string | undefined
+  const originPetId = (location.state as any)?.petId as string | undefined
   const [step, setStep] = useState<1 | 2 | 3>(1)
 
   const stepTitles = {
@@ -555,7 +558,11 @@ export function CreateRecipePage() {
       {/* Header */}
       <div className={styles.pageHeader}>
         <button className={styles.backBtn}
-          onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : navigate('/recipes')}>
+          onClick={() => {
+            if (step > 1) setStep(s => (s - 1) as 1 | 2 | 3)
+            else if (origin === 'pet-profile' && originPetId) navigate(`/pet-profile/${originPetId}`, { state: { tab: (location.state as any)?.fromTab ?? 'food' } })
+            else navigate('/recipes')
+          }}>
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>{stepTitles[step]}</h1>
@@ -567,7 +574,7 @@ export function CreateRecipePage() {
 
       {step === 1 && <Step1 onNext={() => setStep(2)} />}
       {step === 2 && <Step2 onNext={() => setStep(3)} />}
-      {step === 3 && <Step3 onSave={() => navigate('/recipes')} />}
+      {step === 3 && <Step3 onSave={() => { if (origin === 'pet-profile' && originPetId) navigate(`/pet-profile/${originPetId}`); else navigate('/recipes') }} />}
     </div>
   )
 }

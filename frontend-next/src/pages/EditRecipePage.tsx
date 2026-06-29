@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import {
   INGREDIENT_CATEGORIES, DOG_BREEDS, AGE_OPTIONS, ACTIVITY_OPTIONS,
   REPRODUCTIVE_OPTIONS, GENDER_OPTIONS, AGE_CATEGORY_OPTIONS,
@@ -523,13 +523,20 @@ function EditStep3({ onSave }: { onSave: () => void }) {
 export function EditRecipePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const origin = (location.state as any)?.from as string | undefined
+  const originPetId = (location.state as any)?.petId as string | undefined
   const [step, setStep] = useState<1 | 2 | 3>(1)
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       <div className={styles.pageHeader}>
         <button className={styles.backBtn}
-          onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : navigate(`/recipes/${id}`)}>
+          onClick={() => {
+            if (step > 1) setStep(s => (s - 1) as 1 | 2 | 3)
+            else if (origin === 'pet-profile' && originPetId) navigate(`/pet-profile/${originPetId}`, { state: { tab: (location.state as any)?.fromTab ?? 'food' } })
+            else navigate(`/recipes/${id}`)
+          }}>
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>Редактирование корма</h1>
@@ -538,7 +545,7 @@ export function EditRecipePage() {
 
       {step === 1 && <EditStep1 onNext={() => setStep(2)} />}
       {step === 2 && <EditStep2 onNext={() => setStep(3)} />}
-      {step === 3 && <EditStep3 onSave={() => navigate(`/recipes/${id}`)} />}
+      {step === 3 && <EditStep3 onSave={() => { if (origin === 'pet-profile' && originPetId) navigate(`/pet-profile/${originPetId}`, { state: { tab: (location.state as any)?.fromTab ?? 'food' } }); else navigate(`/recipes/${id}`) }} />}
     </div>
   )
 }

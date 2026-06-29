@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import {
   MOCK_PET, MOCK_PET_FOODS, MOCK_CURRENT_CONDITION,
   MOCK_DISEASE_HISTORY, MOCK_CONTRAINDICATIONS,
@@ -93,6 +93,9 @@ function LineChart({
 
 // ── Tab: Питание ────────────────────────────────────────────────
 function TabFood() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+
   return (
     <div>
       <table className={styles.table}>
@@ -115,7 +118,10 @@ function TabFood() {
               <td>{f.calories}</td>
               <td>{f.lastModified}</td>
               <td>
-                <button className={styles.iconActionBtn} title="Изменить">
+                <button
+                className={styles.iconActionBtn} title="Изменить"
+                onClick={() => navigate(`/recipes/${f.id}`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
+                >
                   <EditIcon1 width={14} height={14} />
                 </button>
               </td>
@@ -123,7 +129,10 @@ function TabFood() {
           ))}
         </tbody>
       </table>
-      <button className={styles.primaryBtn}>
+      <button 
+        className={styles.primaryBtn}
+        onClick={() => navigate(`/recipes/create`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
+        >
         + Рассчитать рецепт
       </button>
     </div>
@@ -132,6 +141,8 @@ function TabFood() {
 
 // ── Tab: Текущее состояние ──────────────────────────────────────
 function TabCondition() {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const c = MOCK_CURRENT_CONDITION
   return (
     <div>
@@ -145,7 +156,10 @@ function TabCondition() {
         {c.symptoms.map(s => <span key={s} className={styles.chip}>{s}</span>)}
       </div>
       <div className={styles.conditionActions}>
-        <button className={styles.conditionActionBtn}>
+        <button
+          className={styles.conditionActionBtn}
+          onClick={() => navigate(`/pet-profile/${id}/edit-current-condition`, { state: { fromTab: 'condition' } })}
+        >
           <EditIcon1 width={14} height={14} />
           Изменить
         </button>
@@ -164,6 +178,8 @@ function TabCondition() {
 
 // ── Tab: История болезней ───────────────────────────────────────
 function TabHistory() {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const [history, setHistory] = useState<PetDiseaseHistory[]>(MOCK_DISEASE_HISTORY)
   const removeEntry = (id: number) => setHistory(prev => prev.filter(h => h.id !== id))
 
@@ -187,11 +203,15 @@ function TabHistory() {
               <td>{h.symptoms}</td>
               <td>{h.description}</td>
               <td>
-                <button className={styles.iconActionBtn} title="Изменить">
-                  <EditIcon1 width={20} height={20} />
-                </button>
-                <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
-                  title="Удалить" onClick={() => removeEntry(h.id)}>
+            <button
+              className={styles.iconActionBtn}
+              title="Изменить"
+              onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`, { state: { fromTab: 'history' } })}
+            >
+              <EditIcon1 width={20} height={20} />
+            </button>
+            <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
+              title="Удалить" onClick={() => removeEntry(h.id)}>
                   <DeleteIcon width={20} height={20} />
                 </button>
               </td>
@@ -199,13 +219,18 @@ function TabHistory() {
           ))}
         </tbody>
       </table>
-      <button className={styles.actionCardBtn}>+ Добавить запись</button>
+      <button
+        className={styles.actionCardBtn}
+        onClick={() => navigate(`/pet-profile/${id}/history/new`, { state: { fromTab: 'history' } })}
+      >+ Добавить запись</button>
     </div>
   )
 }
 
 // ── Tab: Противопоказания ───────────────────────────────────────
 function TabContra() {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const c = MOCK_CONTRAINDICATIONS
   return (
     <div>
@@ -215,7 +240,10 @@ function TabContra() {
       </div>
       <p className={styles.conditionLabel}>Описание</p>
       <p className={styles.conditionValue}>{c.description}</p>
-      <button className={styles.actionCardBtn}>
+      <button
+        className={styles.actionCardBtn}
+        onClick={() => navigate(`/pet-profile/${id}/edit-contraindications`, { state: { fromTab: 'contra' } })}
+      >
         <EditIcon1 width={20} height={20} />
         Изменить
       </button>
@@ -331,7 +359,9 @@ function TabActivity() {
 export function PetProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<Tab>('food')
+  const location = useLocation()
+  const initialTab = ((location.state as any)?.tab as Tab) ?? 'food'
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [liked, setLiked] = useState(false)
   const pet = MOCK_PET
   const onToggleLike = () => setLiked(prev => !prev)
@@ -354,7 +384,10 @@ export function PetProfilePage() {
         </button>
         <h1 className={styles.headerTitle}>Профиль питомца</h1>
         <div className={styles.headerActions}>
-          <button className={styles.editBtn}>
+          <button
+            className={styles.editBtn}
+            onClick={() => navigate(`/pet-profile/${id}/edit-profile`, { state: { fromTab: activeTab } })}
+          >
             <EditIcon width={14} height={14} />
             Изменить
           </button>
