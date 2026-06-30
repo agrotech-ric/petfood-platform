@@ -127,11 +127,13 @@ async def calculate_calories(request: DogInfoRequest):
         reproductive_status = request.reproductive_status.value if request.reproductive_status else None
         pregnancy_period = request.pregnancy_period.value if request.pregnancy_period else None
         lactation_week = request.lactation_week.value if request.lactation_week else None
+        number_puppies = request.num_puppies if request.num_puppies else 0
+
 
         kcal, formula, page = kcal_calculate(
             reproductive_status=reproductive_status,
             berem_time=pregnancy_period,
-            num_pup=request.num_puppies,
+            num_pup= number_puppies ,
             L_time=lactation_week,
             age_type=age_type_categ,
             weight=request.weight,

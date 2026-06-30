@@ -1,13 +1,27 @@
-export const calculatePetAge = (birthDate: string): number => {
+export const calculatePetAge = ( birthDate: string): 
+{ age: number; age_metric: 'months' | 'years' } => {
   const birth = new Date(birthDate + 'T00:00:00');
   const today = new Date();
 
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
+  let totalMonths =
+    (today.getFullYear() - birth.getFullYear()) * 12 +
+    (today.getMonth() - birth.getMonth());
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
+  if (today.getDate() < birth.getDate()) {
+    totalMonths--;
   }
 
-  return Math.max(0, age);
+  totalMonths = Math.max(0, totalMonths);
+
+  if (totalMonths < 12) {
+    return {
+      age: totalMonths,
+      age_metric: 'months',
+    };
+  }
+
+  return {
+    age: Math.floor(totalMonths / 12),
+    age_metric: 'years',
+  };
 };
