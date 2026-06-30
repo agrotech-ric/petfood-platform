@@ -440,6 +440,8 @@
 
 .headerActions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 10px;
 }
 
@@ -684,7 +686,7 @@
 
   .headerActions .editBtn,
   .headerActions .deleteBtn {
-    flex: 1;
+    flex: 1 1 0;
     justify-content: center;
   }
 

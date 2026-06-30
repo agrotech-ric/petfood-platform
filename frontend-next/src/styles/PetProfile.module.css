@@ -289,6 +289,25 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
+.tableScroll,
+.chartTableScroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tableScroll {
+  margin-bottom: 12px;
+}
+
+.tableScroll > .table {
+  min-width: 760px;
+}
+
+.chartTableInner {
+  min-width: 420px;
+}
+
 /* ── Table ───────────────────────────────────────────── */
 .table {
   width: 100%;
@@ -621,4 +640,11 @@
   .petName { font-size: 24px; }
   .conditionActions { flex-direction: column; }
   .tabsRow { overflow-x: auto; }
+  .tableScroll,
+  .chartTableScroll {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
