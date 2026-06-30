@@ -1,17 +1,16 @@
 import textwrap
 
-metrics_age_types = ["years", "в месецах"]
-gender_types = ["male", "Самка"]
-rep_status_types = ["Нет", "Щенность (беременность)", "Период лактации"]
-berem_time_types = ["первые 4 недедели беременности", "последние 5 недель беременности"]
-lact_time_types = ["1 неделя", "2 неделя", "3 неделя", "4 неделя"]
+metrics_age_types = ["years", "months"]
+gender_types = ["male", "female"]
+rep_status_types = [ 'none' , 'pregnant' , 'lactating']
+berem_time_types = ["early_4_weeks", "last_5_weeks"]
+lact_time_types = ['week_1', 'week_2', 'week_3', 'week_4']
 age_category_types = ["puppy", "adult", "senior"]
 size_types = ["small", "medium", "large", "extra_large"]
 activity_level_cat_1 = ["passive", "low","moderate","active",
                         "extreme", "obesity_prone"]
 activity_level_cat_2 = ["passive", "moderate", "active"]
 
- 
 
 other_nutrients_1 = ["Зола, г", "Клетчатка, г", "Холестерин, мг", "Сахар общее, г"]
 other_nutrients_2 = ["Холин, мг", "Селен, мкг", "Йод, мкг", "Пантотеновая кислота, мг", "Линолевая кислота, г",

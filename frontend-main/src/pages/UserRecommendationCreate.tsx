@@ -127,6 +127,57 @@ export const UserRecommendationCreate = () => {
     loadDiseases();
   }, [englishBreedName]);
 
+
+  const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
+  const name = activityTypeName.toLowerCase();
+
+  if (name.includes('пассивный')) return 'passive';
+  if (name.includes('средний1')) return 'low';
+  if (name.includes('средний2')) return 'moderate';
+  if (name.includes('активный')) return 'active';
+  if (name.includes('экстремальных условиях')) return 'extreme';
+  if (name.includes('склонные к ожирению')) return 'obesity_prone';
+
+  return 'moderate';
+};
+
+  const pet = pets.find(p => p.id === request?.petId);
+  const getReproductiveStatus = ( status?: string): 'none' | 'pregnant' | 'lactating' => {
+  switch (status?.toLowerCase()) { case 'щенность (беременность)': 
+      return 'pregnant';
+    case 'период лактации': 
+      return 'lactating';
+    default:   
+      return 'none';
+  }
+};
+
+  const getPregnantPeriod = (  subStatus?: string ): 'none' | 'early_4_weeks' | 'last_5_weeks' => {
+    switch (subStatus?.toLowerCase()) {
+      case 'первые 4 недели беременности':
+        return 'early_4_weeks';
+      case 'последние 5 недель беременности':
+        return 'last_5_weeks';
+      default:
+        return 'none';
+    }
+  };
+
+const getLactationWeek = (  subStatus?: string): 'none' | 'week_1' | 'week_2' | 'week_3' | 'week_4' => {
+  switch (subStatus) {
+    case '1 неделя':
+      return 'week_1';
+    case '2 неделя':
+      return 'week_2';
+    case '3 неделя':
+      return 'week_3';
+    case '4 неделя':
+      return 'week_4';
+    default:
+      return 'none';
+  }
+};
+
   useEffect(() => {
     if (!englishBreedName || !request) {
       return;
@@ -137,16 +188,23 @@ export const UserRecommendationCreate = () => {
       setKcalError(null);
 
       try {
-        const petAge = request.birthDate ? calculatePetAge(request.birthDate) : 2;
+        const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
         const activityLevel = getActivityLevel(request.activityTypeName);
+        const reproductiveStatus = getReproductiveStatus( pet?.reproductiveStatusName);
 
         const result = await vetService.calculateCalories({
           weight: request.weightKg,
-          age: petAge,
-          age_metric: 'years',
+          age: petAge.age,
+          age_metric: petAge.age_metric,
           gender: request.gender || 'male',
           breed: englishBreedName,
-          activity_level: activityLevel
+          activity_level: activityLevel,
+
+          reproductive_status: reproductiveStatus,
+          pregnancy_period: reproductiveStatus === 'pregnant'  ? getPregnantPeriod(pet?.reproductiveSubStatusName): 'none',
+          lactation_week:  reproductiveStatus === 'lactating' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
+          num_puppies: pet?.puppiesCount ?? 0,
+
         });
 
         const calculatedKcal = Math.round(result.daily_kcal);
@@ -163,19 +221,6 @@ export const UserRecommendationCreate = () => {
 
     calculateDailyKcal();
   }, [englishBreedName, request]);
-
-  const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
-  const name = activityTypeName.toLowerCase();
-
-  if (name.includes('пассивный')) return 'passive';
-  if (name.includes('средний1')) return 'low';
-  if (name.includes('средний2')) return 'moderate';
-  if (name.includes('активный')) return 'active';
-  if (name.includes('экстремальных условиях')) return 'extreme';
-  if (name.includes('склонные к ожирению')) return 'obesity_prone';
-
-  return 'moderate';
-};
 
 
   const handleRecalculateNutrients = async () => {

@@ -101,10 +101,14 @@ export type CaloriesRequest = {
   age_metric: 'years' | 'months';
   gender: string;
   breed: string;
-  activity_level: 'passive' | 'moderate' | 'active';
+  activity_level: 'passive' |'low' |'moderate' | 'active'| 'extreme'| 'obesity_prone';
   reproductive_status?: 'none' | 'pregnant' | 'lactating';
+  pregnancy_period?: 'none' | 'early_4_weeks' | 'last_5_weeks';
+  lactation_week?: 'none' | 'week_1' | 'week_2'| 'week_3'| 'week_4';
+  num_puppies?: number | 0;
 };
 
+                       
 export type NutrientsRequest = CaloriesRequest & {
   target_kcal: number;
 };
@@ -128,6 +132,9 @@ const RECOMMENDER_OPTIMIZE_TIMEOUT_MS = 120000;
 const raiseUserError = (error: unknown, fallback: string): never => {
   throw new Error(toUserErrorMessage(error, fallback));
 };
+
+
+
 
 export const vetService = {
   async fetchAllHealthRecords(): Promise<VetPetRequest[]> {
@@ -181,18 +188,20 @@ export const vetService = {
 
   async calculateCalories(request: CaloriesRequest): Promise<CaloriesCalculation> {
     try {
-      const normalizedRequest: CaloriesRequest & { reproductive_status?: string } = {
+      const normalizedRequest: CaloriesRequest  = {
         weight: request.weight,
         age: request.age,
         age_metric: request.age_metric,
         gender: request.gender,
         breed: getEnglishBreedName(request.breed),
         activity_level: request.activity_level,
+
+        reproductive_status: request.reproductive_status ?? 'none' ,
+        pregnancy_period: request.pregnancy_period ?? 'none',
+        lactation_week: request.lactation_week ?? 'none',
+        num_puppies: request.num_puppies ?? 0,
       };
 
-      if (request.gender.toLowerCase() === 'female') {
-        normalizedRequest.reproductive_status = 'none';
-      }
 
       return await apiClient.post<CaloriesCalculation>(
         '/recommender/calculate/calories',
