@@ -46,7 +46,7 @@ export function RecipesPage() {
   }
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div className={styles.page}>
       {/* Top bar */}
       <div className={styles.topBar}>
         <div className={styles.headerSpacer} />

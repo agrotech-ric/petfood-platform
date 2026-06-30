@@ -200,6 +200,7 @@ export function PetsListPage() {
       />
 
         <div className={styles.topBar}>
+          <div className={styles.headerSpacer} aria-hidden="true" />
           <h1 className={styles.pageTitle}>Список питомцев</h1>
           <button
             className={styles.registerBtn}

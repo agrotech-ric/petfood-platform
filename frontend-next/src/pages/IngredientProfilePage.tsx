@@ -13,14 +13,14 @@ export function IngredientProfilePage() {
 
   if (!item) {
     return (
-      <div style={{ padding: '24px' }}>
+      <div className={styles.page}>
         <p>Ингредиент не найден</p>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+    <div className={styles.page}>
       {/* Header */}
       <div className={styles.pageHeader}>
         <button className={styles.backBtn} onClick={() => navigate('/ingredients')}>
@@ -29,11 +29,11 @@ export function IngredientProfilePage() {
         <h1 className={styles.headerTitle}>Профиль ингредиента</h1>
         <div className={styles.headerActions}>
           <button className={styles.editBtn} onClick={() => navigate(`/ingredients/${item.id}/edit`)}>
-            <EditIcon width={14} height={14} />
+            <EditIcon width={20} height={20} />
             Изменить
           </button>
           <button className={styles.deleteBtn}>
-            <DeleteIcon width={14} height={14} />
+            <DeleteIcon width={20} height={20} />
             Удалить
           </button>
         </div>
@@ -44,10 +44,10 @@ export function IngredientProfilePage() {
         {/* Share/download icons */}
         <div className={styles.profileActions}>
           <button className={styles.iconBtn} title="Поделиться">
-            <ShareIcon width={18} height={18} />
+            <ShareIcon width={30} height={30} />
           </button>
           <button className={styles.iconBtn} title="Скачать">
-            <DownloadIcon width={18} height={18} />
+            <DownloadIcon width={30} height={30} />
           </button>
         </div>
 

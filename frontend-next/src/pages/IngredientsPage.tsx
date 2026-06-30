@@ -88,7 +88,7 @@ export function IngredientsPage() {
   const isFilterActive = (key: string) => activeFilters.some(f => f.key === key)
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div className={styles.page}>
       {/* Top bar */}
       <div className={styles.topBar}>
         <div className={styles.headerSpacer} />

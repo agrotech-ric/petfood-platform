@@ -98,37 +98,39 @@ function TabFood() {
 
   return (
     <div>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Корм</th>
-            <th>Тип</th>
-            <th>Формат</th>
-            <th>Калорийность</th>
-            <th>Последнее изменения</th>
-            <th>Изменить</th>
-          </tr>
-        </thead>
-        <tbody>
-          {MOCK_PET_FOODS.map(f => (
-            <tr key={f.id}>
-              <td>{f.name}</td>
-              <td>{f.type}</td>
-              <td>{f.format}</td>
-              <td>{f.calories}</td>
-              <td>{f.lastModified}</td>
-              <td>
-                <button
-                className={styles.iconActionBtn} title="Изменить"
-                onClick={() => navigate(`/recipes/${f.id}`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
-                >
-                  <EditIcon1 width={14} height={14} />
-                </button>
-              </td>
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Корм</th>
+              <th>Тип</th>
+              <th>Формат</th>
+              <th>Калорийность</th>
+              <th>Последнее изменения</th>
+              <th>Изменить</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {MOCK_PET_FOODS.map(f => (
+              <tr key={f.id}>
+                <td>{f.name}</td>
+                <td>{f.type}</td>
+                <td>{f.format}</td>
+                <td>{f.calories}</td>
+                <td>{f.lastModified}</td>
+                <td>
+                  <button
+                  className={styles.iconActionBtn} title="Изменить"
+                  onClick={() => navigate(`/recipes/${f.id}`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
+                  >
+                    <EditIcon1 width={14} height={14} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <button 
         className={styles.primaryBtn}
         onClick={() => navigate(`/recipes/create`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
@@ -185,40 +187,42 @@ function TabHistory() {
 
   return (
     <div>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Дата</th>
-            <th>Заболевание</th>
-            <th>Симптомы</th>
-            <th>Описание</th>
-            <th>Изменить</th>
-          </tr>
-        </thead>
-        <tbody>
-          {history.map(h => (
-            <tr key={h.id}>
-              <td>{h.date}</td>
-              <td>{h.disease}</td>
-              <td>{h.symptoms}</td>
-              <td>{h.description}</td>
-              <td>
-            <button
-              className={styles.iconActionBtn}
-              title="Изменить"
-              onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`, { state: { fromTab: 'history' } })}
-            >
-              <EditIcon1 width={20} height={20} />
-            </button>
-            <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
-              title="Удалить" onClick={() => removeEntry(h.id)}>
-                  <DeleteIcon width={20} height={20} />
-                </button>
-              </td>
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Заболевание</th>
+              <th>Симптомы</th>
+              <th>Описание</th>
+              <th>Изменить</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {history.map(h => (
+              <tr key={h.id}>
+                <td>{h.date}</td>
+                <td>{h.disease}</td>
+                <td>{h.symptoms}</td>
+                <td>{h.description}</td>
+                <td>
+              <button
+                className={styles.iconActionBtn}
+                title="Изменить"
+                onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`, { state: { fromTab: 'history' } })}
+              >
+                <EditIcon1 width={20} height={20} />
+              </button>
+              <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
+                title="Удалить" onClick={() => removeEntry(h.id)}>
+                    <DeleteIcon width={20} height={20} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <button
         className={styles.actionCardBtn}
         onClick={() => navigate(`/pet-profile/${id}/history/new`, { state: { fromTab: 'history' } })}
@@ -275,28 +279,30 @@ function TabWeight() {
       <p className={styles.chartSectionTitle}>Изменение веса</p>
       <div className={styles.chartLayout}>
         <LineChart data={chartData} yLabel="Вес (кг)" color="#4a90d9" />
-        <div>
-          <div className={styles.chartTableHeader}>
-            <input className={styles.chartTableInput} type="date"
-              value={newDate} onChange={e => setNewDate(e.target.value)}
-              placeholder="Дата" />
-            <input className={styles.chartTableInput} type="number"
-              value={newWeight} onChange={e => setNewWeight(e.target.value)}
-              placeholder="Вес, кг" />
-            <button className={styles.addRowBtn} onClick={addEntry}>+</button>
-          </div>
-          <div className={`${styles.chartTableHead} ${styles.weightHead}`}>
-            <span>Дата</span>
-            <span>Вес, кг</span>
-            <span>Удалить</span>
-          </div>
-          {entries.map(e => (
-            <div key={e.id} className={`${styles.chartTableRow} ${styles.weightHead}`}>
-              <span>{e.date}</span>
-              <span>{e.weight}</span>
-              <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+        <div className={styles.chartTableScroll}>
+          <div className={styles.chartTableInner}>
+            <div className={styles.chartTableHeader}>
+              <input className={styles.chartTableInput} type="date"
+                value={newDate} onChange={e => setNewDate(e.target.value)}
+                placeholder="Дата" />
+              <input className={styles.chartTableInput} type="number"
+                value={newWeight} onChange={e => setNewWeight(e.target.value)}
+                placeholder="Вес, кг" />
+              <button className={styles.addRowBtn} onClick={addEntry}>+</button>
             </div>
-          ))}
+            <div className={`${styles.chartTableHead} ${styles.weightHead}`}>
+              <span>Дата</span>
+              <span>Вес, кг</span>
+              <span>Удалить</span>
+            </div>
+            {entries.map(e => (
+              <div key={e.id} className={`${styles.chartTableRow} ${styles.weightHead}`}>
+                <span>{e.date}</span>
+                <span>{e.weight}</span>
+                <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -327,28 +333,30 @@ function TabActivity() {
       <p className={styles.chartSectionTitle}>Прогулки</p>
       <div className={styles.chartLayout}>
         <LineChart data={chartData} yLabel="Время, ч" color="#4a90d9" />
-        <div>
-          <div className={styles.chartTableHeader}>
-            <input className={styles.chartTableInput} type="date"
-              value={newDate} onChange={e => setNewDate(e.target.value)}
-              placeholder="Дата" />
-            <input className={styles.chartTableInput} type="number"
-              value={newHours} onChange={e => setNewHours(e.target.value)}
-              placeholder="Время, ч" />
-            <button className={styles.addRowBtn} onClick={addEntry}>+</button>
-          </div>
-          <div className={`${styles.chartTableHead} ${styles.activityHead}`}>
-            <span>Дата</span>
-            <span>Время, ч</span>
-            <span>Удалить</span>
-          </div>
-          {entries.map(e => (
-            <div key={e.id} className={`${styles.chartTableRow} ${styles.activityHead}`}>
-              <span>{e.date}</span>
-              <span>{e.hours}</span>
-              <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+        <div className={styles.chartTableScroll}>
+          <div className={styles.chartTableInner}>
+            <div className={styles.chartTableHeader}>
+              <input className={styles.chartTableInput} type="date"
+                value={newDate} onChange={e => setNewDate(e.target.value)}
+                placeholder="Дата" />
+              <input className={styles.chartTableInput} type="number"
+                value={newHours} onChange={e => setNewHours(e.target.value)}
+                placeholder="Время, ч" />
+              <button className={styles.addRowBtn} onClick={addEntry}>+</button>
             </div>
-          ))}
+            <div className={`${styles.chartTableHead} ${styles.activityHead}`}>
+              <span>Дата</span>
+              <span>Время, ч</span>
+              <span>Удалить</span>
+            </div>
+            {entries.map(e => (
+              <div key={e.id} className={`${styles.chartTableRow} ${styles.activityHead}`}>
+                <span>{e.date}</span>
+                <span>{e.hours}</span>
+                <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
