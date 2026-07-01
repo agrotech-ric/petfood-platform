@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from enum import Enum
 
 
+
 # Enums for categorical data
 class GenderType(str, Enum):
     MALE = "male"
