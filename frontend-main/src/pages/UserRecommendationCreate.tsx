@@ -140,43 +140,30 @@ export const UserRecommendationCreate = () => {
 
   return 'moderate';
 };
-
   const pet = pets.find(p => p.id === request?.petId);
-  const getReproductiveStatus = ( status?: string): 'none' | 'pregnancy' | 'lactation' => {
-  switch (status?.toLowerCase()) { case 'щенность (беременность)': 
-      return 'pregnancy';
-    case 'период лактации': 
-      return 'lactation';
-    default:   
-      return 'none';
-  }
-};
-
-  const getPregnantPeriod = (  subStatus?: string ): 'none' | 'early_4_weeks' | 'last_5_weeks' => {
-    switch (subStatus?.toLowerCase()) {
-      case 'первые 4 недели беременности':
-        return 'early_4_weeks';
-      case 'последние 5 недель беременности':
-        return 'last_5_weeks';
-      default:
-        return 'none';
-    }
+  const getReproductiveStatus = (status?: string| undefined ): 'none' | 'pregnancy' | 'lactation' => { 
+    const value = status?.toLowerCase() ?? '';
+    if (value.includes('беремен')) { return 'pregnancy'; }
+    if (value.includes('лактац')) {  return 'lactation'; }
+    return 'none';
   };
 
-const getLactationWeek = (  subStatus?: string): 'none' | 'week_1' | 'week_2' | 'week_3' | 'week_4' => {
-  switch (subStatus) {
-    case '1 неделя':
-      return 'week_1';
-    case '2 неделя':
-      return 'week_2';
-    case '3 неделя':
-      return 'week_3';
-    case '4 неделя':
-      return 'week_4';
-    default:
-      return 'none';
-  }
-};
+  const getPregnantPeriod = ( subStatus?: string | undefined ): 'none' | 'early_4_weeks' | 'last_5_weeks' => { 
+    const value = subStatus?.toLowerCase() ?? '';
+    if (value.includes('4')) { return 'early_4_weeks'; }
+    if (value.includes('5')) {  return 'last_5_weeks'; }
+    return 'none';
+  };
+
+  const getLactationWeek = ( subStatus?: string| undefined ): 'none' | 'week_1' | 'week_2' | 'week_3' | 'week_4' => { 
+    const value = subStatus?.toLowerCase() ?? '';
+    if (value.includes('1')) { return 'week_1'; }
+    if (value.includes('2')) {  return 'week_2'; }
+    if (value.includes('3')) {  return 'week_3'; }
+    if (value.includes('4')) {  return 'week_4'; }
+    return 'none';
+  };
+
 
   useEffect(() => {
     if (!englishBreedName || !request) {
