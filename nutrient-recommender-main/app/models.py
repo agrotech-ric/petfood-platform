@@ -16,12 +16,11 @@ class AgeMetricType(str, Enum):
 
 class ReproductiveStatus(str, Enum):
     NONE = "none"
-    PREGNANCY = "pregnancy"
-    LACTATION = "lactation"
-
+    PREGNANCY = "pregnant"
+    LACTATION = "lactating"
 
 class PregnancyPeriod(str, Enum):
-    FIRST_4_WEEKS = "first_4_weeks"
+    FIRST_4_WEEKS = "early_4_weeks"
     LAST_5_WEEKS = "last_5_weeks"
 
 
