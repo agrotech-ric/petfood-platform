@@ -20,11 +20,13 @@ class ReproductiveStatus(str, Enum):
     LACTATION = "lactating"
 
 class PregnancyPeriod(str, Enum):
+    NONE = "none"
     FIRST_4_WEEKS = "early_4_weeks"
     LAST_5_WEEKS = "last_5_weeks"
 
 
 class LactationWeek(str, Enum):
+    NONE = "none"
     WEEK_1 = "week_1"
     WEEK_2 = "week_2"
     WEEK_3 = "week_3"
