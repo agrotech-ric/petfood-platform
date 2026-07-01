@@ -102,7 +102,7 @@ export type CaloriesRequest = {
   gender: string;
   breed: string;
   activity_level: 'passive' |'low' |'moderate' | 'active'| 'extreme'| 'obesity_prone';
-  reproductive_status?: 'none' | 'pregnant' | 'lactating';
+  reproductive_status?: 'none' | 'pregnancy' | 'lactation';
   pregnancy_period?: 'none' | 'early_4_weeks' | 'last_5_weeks';
   lactation_week?: 'none' | 'week_1' | 'week_2'| 'week_3'| 'week_4';
   num_puppies?: number | 0;

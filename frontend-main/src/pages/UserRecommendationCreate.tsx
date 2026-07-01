@@ -142,11 +142,11 @@ export const UserRecommendationCreate = () => {
 };
 
   const pet = pets.find(p => p.id === request?.petId);
-  const getReproductiveStatus = ( status?: string): 'none' | 'pregnant' | 'lactating' => {
+  const getReproductiveStatus = ( status?: string): 'none' | 'pregnancy' | 'lactation' => {
   switch (status?.toLowerCase()) { case 'щенность (беременность)': 
-      return 'pregnant';
+      return 'pregnancy';
     case 'период лактации': 
-      return 'lactating';
+      return 'lactation';
     default:   
       return 'none';
   }
@@ -201,8 +201,8 @@ const getLactationWeek = (  subStatus?: string): 'none' | 'week_1' | 'week_2' | 
           activity_level: activityLevel,
 
           reproductive_status: reproductiveStatus,
-          pregnancy_period: reproductiveStatus === 'pregnant'  ? getPregnantPeriod(pet?.reproductiveSubStatusName): 'none',
-          lactation_week:  reproductiveStatus === 'lactating' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
+          pregnancy_period: reproductiveStatus === 'pregnancy'  ? getPregnantPeriod(pet?.reproductiveSubStatusName): 'none',
+          lactation_week:  reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
           num_puppies: pet?.puppiesCount ?? 0,
 
         });

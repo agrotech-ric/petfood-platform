@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from enum import Enum
 
 
+
 # Enums for categorical data
 class GenderType(str, Enum):
     MALE = "male"
@@ -16,8 +17,8 @@ class AgeMetricType(str, Enum):
 
 class ReproductiveStatus(str, Enum):
     NONE = "none"
-    PREGNANCY = "pregnant"
-    LACTATION = "lactating"
+    PREGNANCY = "pregnancy"
+    LACTATION = "lactation"
 
 class PregnancyPeriod(str, Enum):
     NONE = "none"
@@ -63,9 +64,9 @@ class DogInfoRequest(BaseModel):
     gender: GenderType = Field(..., description="Dog gender")
     breed: str = Field(..., description="Dog breed name")
     reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
-    pregnancy_period: Optional[PregnancyPeriod] = Field(None, description="Pregnancy period (if pregnant)")
-    lactation_week: Optional[LactationWeek] = Field(None, description="Lactation week (if lactating)")
-    num_puppies: Optional[int] = Field(None, ge=0, description="Number of puppies (if lactating)")
+    pregnancy_period: Optional[PregnancyPeriod] = Field(None, description="Pregnancy period (if pregnancy)")
+    lactation_week: Optional[LactationWeek] = Field(None, description="Lactation week (if lactation)")
+    num_puppies: Optional[int] = Field(None, ge=0, description="Number of puppies (if lactation)")
     activity_level: Optional[ActivityLevel] = Field(None, description="Activity level")
 
 
