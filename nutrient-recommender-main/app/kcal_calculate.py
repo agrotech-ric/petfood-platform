@@ -2,7 +2,7 @@ import textwrap
 
 metrics_age_types = ["years", "months"]
 gender_types = ["male", "female"]
-rep_status_types = [ 'none' , 'pregnant' , 'lactating']
+rep_status_types = [ 'none' , 'pregnancy' , 'lactation']
 berem_time_types = ["early_4_weeks", "last_5_weeks"]
 lact_time_types = ['week_1', 'week_2', 'week_3', 'week_4']
 age_category_types = ["puppy", "adult", "senior"]
