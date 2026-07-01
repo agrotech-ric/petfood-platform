@@ -188,6 +188,8 @@ export const vetService = {
 
   async calculateCalories(request: CaloriesRequest): Promise<CaloriesCalculation> {
     try {
+      const isFemale = request.gender.toLowerCase() === 'female';
+      
       const normalizedRequest: CaloriesRequest = {
         weight: request.weight,
         age: request.age,
@@ -195,18 +197,22 @@ export const vetService = {
         gender: request.gender,
         breed: getEnglishBreedName(request.breed),
         activity_level: request.activity_level,
-        reproductive_status: request.reproductive_status ?? 'none',
       };
 
-      // Only include pregnancy fields if reproductive_status is 'pregnancy'
-      if (request.reproductive_status === 'pregnancy') {
-        normalizedRequest.pregnancy_period = request.pregnancy_period;
-      }
+      // Only include reproductive status for female dogs
+      if (isFemale) {
+        normalizedRequest.reproductive_status = request.reproductive_status ?? 'none';
 
-      // Only include lactation fields if reproductive_status is 'lactation'
-      if (request.reproductive_status === 'lactation') {
-        normalizedRequest.lactation_week = request.lactation_week;
-        normalizedRequest.num_puppies = request.num_puppies;
+        // Only include pregnancy fields if reproductive_status is 'pregnancy'
+        if (request.reproductive_status === 'pregnancy') {
+          normalizedRequest.pregnancy_period = request.pregnancy_period;
+        }
+
+        // Only include lactation fields if reproductive_status is 'lactation'
+        if (request.reproductive_status === 'lactation') {
+          normalizedRequest.lactation_week = request.lactation_week;
+          normalizedRequest.num_puppies = request.num_puppies;
+        }
       }
 
       return await apiClient.post<CaloriesCalculation>(
@@ -222,21 +228,27 @@ export const vetService = {
   async calculateNutrients(request: NutrientsRequest): Promise<NutrientsCalculation> {
     try {
       const { target_kcal, ...rest } = request;
+      const isFemale = request.gender.toLowerCase() === 'female';
+      
       const normalizedRequest: CaloriesRequest = {
         ...rest,
         breed: getEnglishBreedName(request.breed),
-        reproductive_status: request.reproductive_status ?? 'none',
       };
 
-      // Only include pregnancy fields if reproductive_status is 'pregnancy'
-      if (request.reproductive_status === 'pregnancy') {
-        normalizedRequest.pregnancy_period = request.pregnancy_period;
-      }
+      // Only include reproductive status for female dogs
+      if (isFemale) {
+        normalizedRequest.reproductive_status = request.reproductive_status ?? 'none';
 
-      // Only include lactation fields if reproductive_status is 'lactation'
-      if (request.reproductive_status === 'lactation') {
-        normalizedRequest.lactation_week = request.lactation_week;
-        normalizedRequest.num_puppies = request.num_puppies;
+        // Only include pregnancy fields if reproductive_status is 'pregnancy'
+        if (request.reproductive_status === 'pregnancy') {
+          normalizedRequest.pregnancy_period = request.pregnancy_period;
+        }
+
+        // Only include lactation fields if reproductive_status is 'lactation'
+        if (request.reproductive_status === 'lactation') {
+          normalizedRequest.lactation_week = request.lactation_week;
+          normalizedRequest.num_puppies = request.num_puppies;
+        }
       }
 
       const endpoint = `/recommender/calculate/nutrients?target_kcal=${encodeURIComponent(target_kcal)}`;
