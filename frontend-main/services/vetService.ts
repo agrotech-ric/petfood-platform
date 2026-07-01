@@ -103,9 +103,9 @@ export type CaloriesRequest = {
   breed: string;
   activity_level: 'passive' |'low' |'moderate' | 'active'| 'extreme'| 'obesity_prone';
   reproductive_status?: 'none' | 'pregnancy' | 'lactation';
-  pregnancy_period?: 'none' | 'early_4_weeks' | 'last_5_weeks';
-  lactation_week?: 'none' | 'week_1' | 'week_2'| 'week_3'| 'week_4';
-  num_puppies?: number | 0;
+  pregnancy_period?: 'early_4_weeks' | 'last_5_weeks';
+  lactation_week?: 'week_1' | 'week_2'| 'week_3'| 'week_4';
+  num_puppies?: number;
 };
 
                        
@@ -188,20 +188,26 @@ export const vetService = {
 
   async calculateCalories(request: CaloriesRequest): Promise<CaloriesCalculation> {
     try {
-      const normalizedRequest: CaloriesRequest  = {
+      const normalizedRequest: CaloriesRequest = {
         weight: request.weight,
         age: request.age,
         age_metric: request.age_metric,
         gender: request.gender,
         breed: getEnglishBreedName(request.breed),
         activity_level: request.activity_level,
-
-        reproductive_status: request.reproductive_status ?? 'none' ,
-        pregnancy_period: request.pregnancy_period ?? 'none',
-        lactation_week: request.lactation_week ?? 'none',
-        num_puppies: request.num_puppies ?? 0,
+        reproductive_status: request.reproductive_status ?? 'none',
       };
 
+      // Only include pregnancy fields if reproductive_status is 'pregnancy'
+      if (request.reproductive_status === 'pregnancy') {
+        normalizedRequest.pregnancy_period = request.pregnancy_period;
+      }
+
+      // Only include lactation fields if reproductive_status is 'lactation'
+      if (request.reproductive_status === 'lactation') {
+        normalizedRequest.lactation_week = request.lactation_week;
+        normalizedRequest.num_puppies = request.num_puppies;
+      }
 
       return await apiClient.post<CaloriesCalculation>(
         '/recommender/calculate/calories',
@@ -216,13 +222,21 @@ export const vetService = {
   async calculateNutrients(request: NutrientsRequest): Promise<NutrientsCalculation> {
     try {
       const { target_kcal, ...rest } = request;
-      const normalizedRequest: CaloriesRequest & { reproductive_status?: string } = {
+      const normalizedRequest: CaloriesRequest = {
         ...rest,
         breed: getEnglishBreedName(request.breed),
+        reproductive_status: request.reproductive_status ?? 'none',
       };
 
-      if (request.gender.toLowerCase() === 'female') {
-        normalizedRequest.reproductive_status = 'none';
+      // Only include pregnancy fields if reproductive_status is 'pregnancy'
+      if (request.reproductive_status === 'pregnancy') {
+        normalizedRequest.pregnancy_period = request.pregnancy_period;
+      }
+
+      // Only include lactation fields if reproductive_status is 'lactation'
+      if (request.reproductive_status === 'lactation') {
+        normalizedRequest.lactation_week = request.lactation_week;
+        normalizedRequest.num_puppies = request.num_puppies;
       }
 
       const endpoint = `/recommender/calculate/nutrients?target_kcal=${encodeURIComponent(target_kcal)}`;
