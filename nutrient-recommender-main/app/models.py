@@ -70,65 +70,7 @@ class DogInfoRequest(BaseModel):
     activity_level: Optional[ActivityLevel] = Field(None, description="Activity level")
 
 
-    @validator('reproductive_status', 'pregnancy_period', 'lactation_week', 'num_puppies')
-    def check_female_only(cls, v, values, field):
-        if values.get('gender') == GenderType.FEMALE:
-            return v
 
-        # Для самцов разрешаем только "none" (или отсутствие значения)
-        if field.name == "reproductive_status":
-            if v not in (None, ReproductiveStatus.NONE):
-                raise ValueError("Reproductive parameters are only valid for female dogs")
-
-        elif field.name == "pregnancy_period":
-            if v not in (None, PregnancyPeriod.NONE):
-                raise ValueError("Reproductive parameters are only valid for female dogs")
-
-        elif field.name == "lactation_week":
-            if v not in (None, LactationWeek.NONE):
-                raise ValueError("Reproductive parameters are only valid for female dogs")
-
-        elif field.name == "num_puppies":
-            if v not in (None, 0):
-                raise ValueError("Reproductive parameters are only valid for female dogs")
-
-        return v
-        
-    @validator('pregnancy_period')
-    def check_pregnancy(cls, v, values):
-        if values.get('gender') != GenderType.FEMALE:
-            return v
-
-        if (
-            v is not None
-            and v != PregnancyPeriod.NONE
-            and values.get('reproductive_status') != ReproductiveStatus.PREGNANCY
-        ):
-            raise ValueError(
-                "Pregnancy period is only valid when reproductive_status is 'pregnancy'"
-            )
-
-        return v
-
-    @validator('lactation_week', 'num_puppies')
-    def check_lactation(cls, v, values, field):
-        if values.get('gender') != GenderType.FEMALE:
-            return v
-
-        if values.get('reproductive_status') != ReproductiveStatus.LACTATION:
-            if field.name == "lactation_week":
-                if v not in (None, LactationWeek.NONE):
-                    raise ValueError(
-                        "Lactation parameters are only valid when reproductive_status is 'lactation'"
-                    )
-
-            elif field.name == "num_puppies":
-                if v not in (None, 0):
-                    raise ValueError(
-                        "Lactation parameters are only valid when reproductive_status is 'lactation'"
-                    )
-
-        return v
 
 
 class DisorderRequest(BaseModel):
