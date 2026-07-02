@@ -22,12 +22,18 @@ export const LACTATION_WEEKS = [
   { value: '4', label: '4 неделя' },
 ];
 
+export const PREGNANCY_PERIODS = [
+  { value: 'early_4_weeks', label: 'Первые 4 недели беременности' },
+  { value: 'last_5_weeks', label: 'Последние 5 недель беременности' },
+];
+
 export const INITIAL_FORM_DATA: PetFormData = {
   photo: null,
   name: '',
   breed: '',
   gender: '',
   reproductiveStatus: '',
+  pregnancyPeriod: '',
   lactationWeek: '',
   puppyCount: 0,
   color: '',

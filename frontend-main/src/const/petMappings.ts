@@ -51,6 +51,17 @@ export const LACTATION_WEEK_REVERSE_MAP: { [key: number]: string } = {
   3: '4',
 };
 
+
+export const PREGNANCY_PERIOD_ID_MAP: { [key: string]: number } = {
+  early_4_weeks: 1,
+  last_5_weeks: 2,
+};
+
+export const PREGNANCY_PERIOD_REVERSE_MAP: { [key: number]: string } = {
+  1: 'early_4_weeks',
+  2: 'last_5_weeks',
+};
+
 /**
  * @param symptomNames - Array of symptom names
  * @param symptomsFromAPI - Symptoms fetched
@@ -92,6 +103,14 @@ export const getReproductiveStatusId = (formValue: string): number => {
 
 export const getReproductiveStatusFormValue = (id: number): string => {
   return REPRODUCTIVE_STATUS_ID_TO_VALUE[id] || '';
+};
+
+export const getPregnancyPeriodId = (period: string): number => {
+  return PREGNANCY_PERIOD_ID_MAP[period] || 0;
+};
+
+export const getPregnancyPeriodValue = (id: number): string => {
+  return PREGNANCY_PERIOD_REVERSE_MAP[id] || '';
 };
 
 export const getLactationWeekId = (week: string): number => {
