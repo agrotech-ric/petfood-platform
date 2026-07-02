@@ -53,13 +53,13 @@ export const LACTATION_WEEK_REVERSE_MAP: { [key: number]: string } = {
 
 
 export const PREGNANCY_PERIOD_ID_MAP: { [key: string]: number } = {
-  'early_4_weeks': 1,
-  'last_5_weeks': 2,
+  'early_4_weeks': 7,
+  'last_5_weeks': 8,
 };
 
 export const PREGNANCY_PERIOD_REVERSE_MAP: { [key: number]: string } = {
-  1: 'early_4_weeks',
-  2: 'last_5_weeks',
+  7: 'early_4_weeks',
+  8: 'last_5_weeks',
 };
 
 /**
