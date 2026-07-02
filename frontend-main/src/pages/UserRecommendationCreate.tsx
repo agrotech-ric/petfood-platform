@@ -145,7 +145,7 @@ export const UserRecommendationCreate = () => {
   const pet = pets.find(p => p.id === request?.petId);
   const getReproductiveStatus = (status?: string| 'none' ): 'none' | 'pregnancy' | 'lactation' => { 
     const value = status?.toLowerCase() ?? '';
-    if (value.includes('беремен')) { return 'pregnancy'; }
+    if (value.includes('щенн')) { return 'pregnancy'; }
     if (value.includes('лактац')) {  return 'lactation'; }
     return 'none';
   };
