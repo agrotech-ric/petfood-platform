@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePetForm } from '../hooks/usePetForm';
 import { usePets } from '../../context/PetContext';
-import { getReproductiveStatusFormValue, getLactationWeekValue } from '../const/petMappings';
+import { getReproductiveStatusFormValue, getLactationWeekValue, getPregnancyPeriodValue } from '../const/petMappings';
 import PhotoUpload from '../components/PhotoUpload';
 import PetFormLeftColumn from '../components/PetFormLeftColumn';
 import PetFormRightColumn from '../components/PetFormRightColumn';
@@ -35,22 +35,26 @@ const PetRegistration = () => {
       const pet = getPetById(id);
       if (pet) {
         const reproductiveStatus = getReproductiveStatusFormValue(pet.reproductiveStatusId);
-        const lactationWeek = pet.reproductiveSubStatusId
+        const lactationWeek =  reproductiveStatus === 'lactation' && pet.reproductiveSubStatusId
           ? getLactationWeekValue(pet.reproductiveSubStatusId)
+          : '';
+        const pregnancyPeriod =  reproductiveStatus === 'pregnancy' && pet.reproductiveSubStatusId
+          ? getPregnancyPeriodValue(pet.reproductiveSubStatusId)
           : '';
 
         setInitialData({
-          photo: null,
-          name: pet.name,
-          breed: pet.breedName,
-          gender: pet.gender,
-          reproductiveStatus,
-          lactationWeek,
-          puppyCount: pet.puppiesCount || 0,
-          color: pet.colorName,
-          dateOfBirth: pet.birthDate,
-          passportId: pet.passportId,
-          weight: pet.weightKg,
+            photo: null,
+            name: pet.name,
+            breed: pet.breedName,
+            gender: pet.gender,
+            reproductiveStatus,
+            pregnancyPeriod,
+            lactationWeek,
+            puppyCount: pet.puppiesCount || 0,
+            color: pet.colorName,
+            dateOfBirth: pet.birthDate,
+            passportId: pet.passportId,
+            weight: pet.weightKg,
         }, pet.photo);
       }
     }

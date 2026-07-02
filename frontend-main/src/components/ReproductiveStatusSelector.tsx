@@ -3,7 +3,7 @@ import PetRegistrationDropdown from './PetRegistrationDropdown';
 import styles from '../styles/PetRegistration.module.css';
 import reproStyles from '../styles/ReproductiveStatus.module.css';
 import { PetFormData, FormErrors } from '../types/petForm';
-import { REPRODUCTIVE_STATUSES, LACTATION_WEEKS } from '../const/petForm';
+import { REPRODUCTIVE_STATUSES, LACTATION_WEEKS, PREGNANCY_PERIODS, } from '../const/petForm';
 
 type ReproductiveStatusSelectorProps = {
   value: string;
@@ -24,11 +24,14 @@ const ReproductiveStatusSelector = ({
 }: ReproductiveStatusSelectorProps) => {
   const [lactationWeek, setLactationWeek] = useState(formData?.lactationWeek || '');
   const [puppyCount, setPuppyCount] = useState(formData?.puppyCount || 0);
+  const [pregnancyPeriod, setPregnancyPeriod] = useState( formData?.pregnancyPeriod || ''
+);
 
   useEffect(() => {
     setLactationWeek(formData?.lactationWeek || '');
     setPuppyCount(formData?.puppyCount || 0);
-  }, [formData?.lactationWeek, formData?.puppyCount]);
+    setPregnancyPeriod(formData?.pregnancyPeriod || '');
+  }, [formData?.lactationWeek, formData?.puppyCount, formData?.pregnancyPeriod,]);
 
   const handleReproductiveStatusChange = (newValue: string) => {
     onChange(newValue);
@@ -39,6 +42,11 @@ const ReproductiveStatusSelector = ({
       onFormDataChange?.('lactationWeek', '');
       onFormDataChange?.('puppyCount', 0);
     }
+
+    if (newValue !== 'pregnancy') {
+      setPregnancyPeriod('');
+      onFormDataChange?.('pregnancyPeriod', '');
+}
   };
 
   const handleLactationWeekChange = (newValue: string) => {
@@ -58,6 +66,11 @@ const ReproductiveStatusSelector = ({
     onFormDataChange?.('puppyCount', newValue);
   };
 
+  const handlePregnancyPeriodChange = (newValue: string) => {
+  setPregnancyPeriod(newValue);
+  onFormDataChange?.('pregnancyPeriod', newValue);
+};
+
   return (
     <>
       <div className={styles.formGroup}>
@@ -72,6 +85,21 @@ const ReproductiveStatusSelector = ({
           error={error}
         />
       </div>
+
+      {value === 'pregnancy' && (
+          <div className={reproStyles.nestedField}>
+            <label className={styles.label}>
+              Срок беременности <span className={styles.required}>*</span>
+            </label>
+            <PetRegistrationDropdown
+              options={PREGNANCY_PERIODS}
+              value={pregnancyPeriod}
+              onChange={handlePregnancyPeriodChange}
+              placeholder="Выберите из списка"
+              error={errors?.pregnancyPeriod}
+            />
+          </div>
+        )}
 
       {value === 'lactation' && (
         <>

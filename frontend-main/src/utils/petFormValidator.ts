@@ -57,17 +57,22 @@ export const validatePetForm = (formData: PetFormData): FormErrors => {
   }
 
   if (formData.gender === 'female') {
-    if (!formData.reproductiveStatus) {
-      errors.reproductiveStatus = '*Выберите репродуктивный статус';
-    } else if (formData.reproductiveStatus === 'lactation') {
-      if (!formData.lactationWeek) {
-        errors.lactationWeek = '*Выберите неделю лактации';
-      }
-      if (!formData.puppyCount || formData.puppyCount <= 0) {
-        errors.puppyCount = '*Введите количество щенков';
-      }
+  if (!formData.reproductiveStatus) {
+    errors.reproductiveStatus = '*Выберите репродуктивный статус';
+  } else if (formData.reproductiveStatus === 'pregnancy') {
+    if (!formData.pregnancyPeriod) {
+      errors.pregnancyPeriod = '*Выберите срок беременности';
+    }
+  } else if (formData.reproductiveStatus === 'lactation') {
+    if (!formData.lactationWeek) {
+      errors.lactationWeek = '*Выберите неделю лактации';
+    }
+
+    if (!formData.puppyCount || formData.puppyCount <= 0) {
+      errors.puppyCount = '*Введите количество щенков';
     }
   }
+}
 
   if (!formData.color) {
     errors.color = '*Выберите окрас';
