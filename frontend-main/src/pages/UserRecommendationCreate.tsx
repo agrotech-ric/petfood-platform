@@ -192,7 +192,7 @@ export const UserRecommendationCreate = () => {
           reproductive_status: reproductiveStatus,
           pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
           lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
-          num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 'none',
+          num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
 
         });
 
@@ -234,7 +234,7 @@ export const UserRecommendationCreate = () => {
         reproductive_status: reproductiveStatus,
         pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
         lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
-        num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 'none',
+        num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
         target_kcal: targetKcal
       });
 
