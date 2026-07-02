@@ -118,7 +118,7 @@ async def calculate_calories(request: DogInfoRequest):
 
         # Determine size and age categories
         size_categ = size_category(avg_weight)
-        age_type_categ = age_type_category(size_categ, request.age.value, request.age_metric.value)
+        age_type_categ = age_type_category(size_categ, request.age, request.age_metric.value)
 
         # Get activity level based on age category
         activity_level = request.activity_level.value if request.activity_level else None
@@ -140,7 +140,7 @@ async def calculate_calories(request: DogInfoRequest):
             expected=avg_weight,
             activity_level=activity_level,
             user_breed=request.breed,
-            age=request.age.value
+            age=request.age
         )
 
         return CalorieCalculationResponse(
