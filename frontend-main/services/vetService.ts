@@ -201,19 +201,27 @@ export const vetService = {
 
       // Only include reproductive status for female dogs
       if (isFemale) {
-        normalizedRequest.reproductive_status = request.reproductive_status ?? 'none';
+      normalizedRequest.reproductive_status = request.reproductive_status ?? 'none';
 
-        // Only include pregnancy fields if reproductive_status is 'pregnancy'
-        if (request.reproductive_status === 'pregnancy') {
-          normalizedRequest.pregnancy_period = request.pregnancy_period;
-        }
-
-        // Only include lactation fields if reproductive_status is 'lactation'
-        if (request.reproductive_status === 'lactation') {
-          normalizedRequest.lactation_week = request.lactation_week;
-          normalizedRequest.num_puppies = request.num_puppies;
-        }
+      if (request.reproductive_status === 'pregnancy') {
+        normalizedRequest.pregnancy_period = request.pregnancy_period ?? 'none';
+        normalizedRequest.lactation_week = 'none';
+        normalizedRequest.num_puppies = 0;
+      } else if (request.reproductive_status === 'lactation') {
+        normalizedRequest.lactation_week = request.lactation_week ?? 'none';
+        normalizedRequest.num_puppies = request.num_puppies ?? 0;
+        normalizedRequest.pregnancy_period = 'none';
+      } else {
+        normalizedRequest.pregnancy_period = 'none';
+        normalizedRequest.lactation_week = 'none';
+        normalizedRequest.num_puppies = 0;
       }
+    } else {
+      normalizedRequest.reproductive_status = 'none';
+      normalizedRequest.pregnancy_period = 'none';
+      normalizedRequest.lactation_week = 'none';
+      normalizedRequest.num_puppies = 0;
+    }
 
       return await apiClient.post<CaloriesCalculation>(
         '/recommender/calculate/calories',
@@ -235,20 +243,27 @@ export const vetService = {
         breed: getEnglishBreedName(request.breed),
       };
 
-      // Only include reproductive status for female dogs
       if (isFemale) {
         normalizedRequest.reproductive_status = request.reproductive_status ?? 'none';
 
-        // Only include pregnancy fields if reproductive_status is 'pregnancy'
         if (request.reproductive_status === 'pregnancy') {
-          normalizedRequest.pregnancy_period = request.pregnancy_period;
+          normalizedRequest.pregnancy_period = request.pregnancy_period ?? 'none';
+          normalizedRequest.lactation_week = 'none';
+          normalizedRequest.num_puppies = 0;
+        } else if (request.reproductive_status === 'lactation') {
+          normalizedRequest.lactation_week = request.lactation_week ?? 'none';
+          normalizedRequest.num_puppies = request.num_puppies ?? 0;
+          normalizedRequest.pregnancy_period = 'none';
+        } else {
+          normalizedRequest.pregnancy_period = 'none';
+          normalizedRequest.lactation_week = 'none';
+          normalizedRequest.num_puppies = 0;
         }
-
-        // Only include lactation fields if reproductive_status is 'lactation'
-        if (request.reproductive_status === 'lactation') {
-          normalizedRequest.lactation_week = request.lactation_week;
-          normalizedRequest.num_puppies = request.num_puppies;
-        }
+      } else {
+        normalizedRequest.reproductive_status = 'none';
+        normalizedRequest.pregnancy_period = 'none';
+        normalizedRequest.lactation_week = 'none';
+        normalizedRequest.num_puppies = 0;
       }
 
       const endpoint = `/recommender/calculate/nutrients?target_kcal=${encodeURIComponent(target_kcal)}`;
