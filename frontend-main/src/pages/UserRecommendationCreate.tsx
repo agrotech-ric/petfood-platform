@@ -143,27 +143,27 @@ export const UserRecommendationCreate = () => {
   return 'moderate';
 };
   const pet = pets.find(p => p.id === request?.petId);
-  const getReproductiveStatus = (status?: string| undefined ): 'none' | 'pregnancy' | 'lactation' => { 
+  const getReproductiveStatus = (status?: string| 'none' ): 'none' | 'pregnancy' | 'lactation' => { 
     const value = status?.toLowerCase() ?? '';
     if (value.includes('беремен')) { return 'pregnancy'; }
     if (value.includes('лактац')) {  return 'lactation'; }
     return 'none';
   };
 
-  const getPregnantPeriod = ( subStatus?: string | undefined ): 'early_4_weeks' | 'last_5_weeks' | undefined => { 
+  const getPregnantPeriod = ( subStatus?: string | 'none' ): 'early_4_weeks' | 'last_5_weeks' | 'none' => { 
     const value = subStatus?.toLowerCase() ?? '';
     if (value.includes('4')) { return 'early_4_weeks'; }
     if (value.includes('5')) {  return 'last_5_weeks'; }
-    return undefined;
+    return 'none';
   };
 
-  const getLactationWeek = ( subStatus?: string| undefined ): 'week_1' | 'week_2' | 'week_3' | 'week_4' | undefined => { 
+  const getLactationWeek = ( subStatus?: string| 'none' ): 'week_1' | 'week_2' | 'week_3' | 'week_4' | 'none' => { 
     const value = subStatus?.toLowerCase() ?? '';
     if (value.includes('1')) { return 'week_1'; }
     if (value.includes('2')) {  return 'week_2'; }
     if (value.includes('3')) {  return 'week_3'; }
     if (value.includes('4')) {  return 'week_4'; }
-    return undefined;
+    return 'none';
   };
 
 
@@ -190,9 +190,9 @@ export const UserRecommendationCreate = () => {
           activity_level: activityLevel,
 
           reproductive_status: reproductiveStatus,
-          pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : undefined,
-          lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : undefined,
-          num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : undefined,
+          pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
+          lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
+          num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 'none',
 
         });
 
@@ -232,9 +232,9 @@ export const UserRecommendationCreate = () => {
         breed: englishBreedName,
         activity_level: activityLevel,
         reproductive_status: reproductiveStatus,
-        pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : undefined,
-        lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : undefined,
-        num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : undefined,
+        pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
+        lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
+        num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 'none',
         target_kcal: targetKcal
       });
 
