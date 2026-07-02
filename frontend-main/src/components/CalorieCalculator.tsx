@@ -100,7 +100,7 @@ export const CalorieCalculator = ({
       {formula && (
         <div className={styles.formulaSection}>
           <h3 className={styles.formulaTitle}>Формула расчета</h3>
-          {renderFormula(formula)}
+          <pre>{formula}</pre>
           {referencePage && (
             <p className={styles.referencePageText}>
               Источник: страница {referencePage}
