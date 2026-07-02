@@ -47,6 +47,8 @@ export const VetRecommendation = () => {
   const [selectedDisease, setSelectedDisease] = useState('');
 
   const [dailyKcal, setDailyKcal] = useState<number | null>(null);
+  const [formula, setFormula] = useState<string | null>(null);
+  const [referencePage, setReferencePage] = useState<string | null>(null);
   const [targetKcal, setTargetKcal] = useState<number>(0);
   const [initialKcal, setInitialKcal] = useState<number>(0);
   const [isCalculatingKcal, setIsCalculatingKcal] = useState(false);
@@ -127,6 +129,44 @@ export const VetRecommendation = () => {
     loadDiseases();
   }, [englishBreedName]);
 
+  
+  const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
+  const name = activityTypeName.toLowerCase();
+
+  if (name.includes('пассивный')) return 'passive';
+  if (name.includes('средний1')) return 'low';
+  if (name.includes('средний2')) return 'moderate';
+  if (name.includes('активный')) return 'active';
+  if (name.includes('экстремальных условиях')) return 'extreme';
+  if (name.includes('склонные к ожирению')) return 'obesity_prone';
+
+  return 'moderate';
+};
+  const pet = pets.find(p => p.id === request?.petId);
+  const getReproductiveStatus = (status?: string| 'none' ): 'none' | 'pregnancy' | 'lactation' => { 
+    const value = status?.toLowerCase() ?? '';
+    if (value.includes('беремен')) { return 'pregnancy'; }
+    if (value.includes('лактац')) {  return 'lactation'; }
+    return 'none';
+  };
+
+  const getPregnantPeriod = ( subStatus?: string | 'none' ): 'early_4_weeks' | 'last_5_weeks' | 'none' => { 
+    const value = subStatus?.toLowerCase() ?? '';
+    if (value.includes('4')) { return 'early_4_weeks'; }
+    if (value.includes('5')) {  return 'last_5_weeks'; }
+    return 'none';
+  };
+
+  const getLactationWeek = ( subStatus?: string| 'none' ): 'week_1' | 'week_2' | 'week_3' | 'week_4' | 'none' => { 
+    const value = subStatus?.toLowerCase() ?? '';
+    if (value.includes('1')) { return 'week_1'; }
+    if (value.includes('2')) {  return 'week_2'; }
+    if (value.includes('3')) {  return 'week_3'; }
+    if (value.includes('4')) {  return 'week_4'; }
+    return 'none';
+  };
+
+
   useEffect(() => {
     if (!englishBreedName || !request) {
       return;
@@ -137,20 +177,29 @@ export const VetRecommendation = () => {
       setKcalError(null);
 
       try {
-        const petAge = request.birthDate ? calculatePetAge(request.birthDate) : 2;
+        const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
         const activityLevel = getActivityLevel(request.activityTypeName);
+        const reproductiveStatus = getReproductiveStatus( pet?.reproductiveStatusName);
 
         const result = await vetService.calculateCalories({
           weight: request.weightKg,
-          age: petAge,
-          age_metric: 'years',
+          age: Math.floor(petAge.age),
+          age_metric: petAge.age_metric,
           gender: request.gender || 'male',
           breed: englishBreedName,
-          activity_level: activityLevel
+          activity_level: activityLevel,
+
+          reproductive_status: reproductiveStatus,
+          pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
+          lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
+          num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
+
         });
 
         const calculatedKcal = Math.round(result.daily_kcal);
         setDailyKcal(calculatedKcal);
+        setFormula(result.formula || null);
+        setReferencePage(result.reference_page || null);
         setTargetKcal(calculatedKcal);
         setInitialKcal(calculatedKcal);
       } catch (err) {
@@ -164,18 +213,7 @@ export const VetRecommendation = () => {
     calculateDailyKcal();
   }, [englishBreedName, request]);
 
-  const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
-  const name = activityTypeName.toLowerCase();
 
-  if (name.includes('пассивный')) return 'passive';
-  if (name.includes('средний1')) return 'low';
-  if (name.includes('средний2')) return 'moderate';
-  if (name.includes('активный')) return 'active';
-  if (name.includes('экстремальных условиях')) return 'extreme';
-  if (name.includes('склонные к ожирению')) return 'obesity_prone';
-
-  return 'moderate';
-};
 
   const handleRecalculateNutrients = async () => {
     if (!request || !targetKcal || !englishBreedName) return;
@@ -183,16 +221,21 @@ export const VetRecommendation = () => {
     setKcalError(null);
 
     try {
-      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : 2;
+      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
       const activityLevel = getActivityLevel(request.activityTypeName);
+      const reproductiveStatus = getReproductiveStatus(pet?.reproductiveStatusName);
 
       await vetService.calculateNutrients({
         weight: request.weightKg,
-        age: petAge,
-        age_metric: 'years',
+        age: Math.floor(petAge.age),
+        age_metric: petAge.age_metric,
         gender: request.gender || 'male',
         breed: englishBreedName,
         activity_level: activityLevel,
+        reproductive_status: reproductiveStatus,
+        pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
+        lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
+        num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
         target_kcal: targetKcal
       });
 
@@ -201,7 +244,7 @@ export const VetRecommendation = () => {
       setKcalError(err instanceof Error ? err.message : 'Не удалось пересчитать нутриенты');
     }
   };
-
+  
   const handleDiseaseSelect = (disease: string) => {
     setSelectedDisease(disease);
     setCalculationError(null);
@@ -312,6 +355,7 @@ export const VetRecommendation = () => {
     );
   };
 
+
   const handleCalculate = async () => {
     if (!request || selectedIngredients.length === 0 || !englishBreedName) {
       showActionError('Выберите хотя бы один ингредиент');
@@ -322,7 +366,7 @@ export const VetRecommendation = () => {
     setCalculationError(null);
 
     try {
-      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : 2;
+      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
 
       const ingredient_ranges = Object.entries(ingredientRanges).map(([ingredient, range]) => ({
         ingredient,
@@ -339,7 +383,7 @@ export const VetRecommendation = () => {
 
       const optimizationResult = await vetService.optimizeRecipe({
         weight: request.weightKg,
-        age: petAge,
+        age: Math.floor(petAge.age),
         breed: englishBreedName,
         ingredients: selectedIngredients,
         ingredient_ranges,
