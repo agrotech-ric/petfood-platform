@@ -197,7 +197,7 @@ def age_type_category(size_categ, age, age_metric):
         return None
 
     else:
-        if age <= 7 * 12:
+        if age > 12 and age <= 7 * 12:
             return age_category_types[1]
         elif age < 12:
             return age_category_types[0]
