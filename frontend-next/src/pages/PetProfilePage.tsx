@@ -290,18 +290,26 @@ function TabWeight() {
                 placeholder="Вес, кг" />
               <button className={styles.addRowBtn} onClick={addEntry}>+</button>
             </div>
-            <div className={`${styles.chartTableHead} ${styles.weightHead}`}>
-              <span>Дата</span>
-              <span>Вес, кг</span>
-              <span>Удалить</span>
-            </div>
-            {entries.map(e => (
-              <div key={e.id} className={`${styles.chartTableRow} ${styles.weightHead}`}>
-                <span>{e.date}</span>
-                <span>{e.weight}</span>
-                <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
-              </div>
-            ))}
+            <table className={styles.chartTable}>
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Вес, кг</th>
+                  <th>Удалить</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(e => (
+                  <tr key={e.id}>
+                    <td>{e.date}</td>
+                    <td>{e.weight}</td>
+                    <td>
+                      <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -344,18 +352,26 @@ function TabActivity() {
                 placeholder="Время, ч" />
               <button className={styles.addRowBtn} onClick={addEntry}>+</button>
             </div>
-            <div className={`${styles.chartTableHead} ${styles.activityHead}`}>
-              <span>Дата</span>
-              <span>Время, ч</span>
-              <span>Удалить</span>
-            </div>
-            {entries.map(e => (
-              <div key={e.id} className={`${styles.chartTableRow} ${styles.activityHead}`}>
-                <span>{e.date}</span>
-                <span>{e.hours}</span>
-                <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
-              </div>
-            ))}
+            <table className={styles.chartTable}>
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Время, ч</th>
+                  <th>Удалить</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(e => (
+                  <tr key={e.id}>
+                    <td>{e.date}</td>
+                    <td>{e.hours}</td>
+                    <td>
+                      <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

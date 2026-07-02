@@ -559,39 +559,45 @@
 
 .addRowBtn:hover { background: var(--color-accent-alt-hover); }
 
-.chartTableHead {
-  display: grid;
-  font-size: 12px;
+.chartTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.chartTable th {
+  text-align: left;
+  padding: 10px 16px;
   font-weight: 600;
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: 6px;
-  margin-bottom: 4px;
+  white-space: nowrap;
 }
 
-.weightHead { grid-template-columns: 1fr 1fr 40px; }
-.activityHead { grid-template-columns: 1fr 1fr 40px; }
-
-.chartTableRow {
-  display: grid;
-  font-size: 12px;
+.chartTable td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
   color: var(--color-text-muted);
-  padding: 6px 0;
-  border-bottom: 1px solid var(--color-border-light, #f5f5f5);
-  align-items: center;
 }
 
-.chartTableRow:last-child { border-bottom: none; }
+.chartTable tr:last-child td {
+  border-bottom: none;
+}
+
+.chartTable td:last-child,
+.chartTable th:last-child {
+  text-align: center;
+  width: 60px;
+}
 
 .removeBtn {
   background: none;
   border: none;
   cursor: pointer;
   color: var(--color-text-muted);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   padding: 0;
-  text-align: center;
   transition: color 0.15s;
 }
 
