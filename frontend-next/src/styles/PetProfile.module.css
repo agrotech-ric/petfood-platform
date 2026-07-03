@@ -245,7 +245,7 @@
 }
 
 .tab {
-  flex: 1;
+  flex-shrink: 0;
   min-width: 0;
   padding: 14px 12px;
   font-size: 13px;
@@ -618,12 +618,18 @@
 }
 
 /* ── Responsive ──────────────────────────────────────── */
+@media (min-width: 701px) {
+  .tab { flex: 1; }
+}
+
 @media (max-width: 900px) {
   .petCard { flex-direction: column; }
   .petInfoMain { flex-direction: column; }
   .petPhoto, .petPhotoPlaceholder { width: 100%; max-width: 260px; }
   .chartLayout { grid-template-columns: 1fr; }
 }
+
+.tabsDropdown { display: none; }
 
 @media (max-width: 700px) {
   .pageHeader {
@@ -663,8 +669,41 @@
 
   .petCard, .tabContent { padding: 16px; }
   .petName { font-size: 24px; }
+  .petPhoto,
+  .petPhotoPlaceholder {
+    width: min(100%, 260px);
+    aspect-ratio: 1 / 1;
+    height: auto;
+    align-self: center;
+  }
   .conditionActions { flex-direction: column; }
-  .tabsRow { overflow-x: auto; }
+  .tabsRow { display: none; }
+  .tabsDropdown {
+    display: block;
+    padding: 0;
+  }
+  .tabsSelect {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px 12px 0 0;
+    border: 1px solid #BFBFBF;
+    border-bottom: none;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 36px;
+    box-sizing: border-box;
+  }
+  .tabContent {
+    border-radius: 0 0 12px 12px;
+  }
   .tableScroll,
   .chartTableScroll {
     margin-left: -16px;
