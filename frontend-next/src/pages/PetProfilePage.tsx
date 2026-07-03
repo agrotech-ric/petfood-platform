@@ -7,7 +7,6 @@ import {
   type WeightEntry, type ActivityEntry, type PetDiseaseHistory,
 } from '../data/petProfileMock'
 import styles from '../styles/PetProfile.module.css'
-import DateIcon from '../assets/icons/date.svg?react'
 import EditIcon from '../assets/icons/edit.svg?react'
 import EditIcon1 from '../assets/icons/edit1.svg?react'
 import DeleteIcon from '../assets/icons/delete.svg?react'
@@ -162,15 +161,15 @@ function TabCondition() {
           className={styles.conditionActionBtn}
           onClick={() => navigate(`/pet-profile/${id}/edit-current-condition`, { state: { fromTab: 'condition' } })}
         >
-          <EditIcon1 width={14} height={14} />
+          <EditIcon1 width={14} height={14} className="no-filter" />
           Изменить
         </button>
         <button className={styles.conditionActionBtn}>
-          <ReloadIcon width={20} height={20} />
+          <ReloadIcon width={20} height={20} className="no-filter" />
           Переместить в историю болезней
         </button>
         <button className={styles.dangerBtn}>
-          <DeleteIcon width={14} height={14} />
+          <DeleteIcon width={14} height={14} className="no-filter" />
           Удалить
         </button>
       </div>
@@ -211,11 +210,11 @@ function TabHistory() {
                 title="Изменить"
                 onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`, { state: { fromTab: 'history' } })}
               >
-                <EditIcon1 width={20} height={20} />
+                <EditIcon1 width={20} height={20} className="no-filter" />
               </button>
               <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
                 title="Удалить" onClick={() => removeEntry(h.id)}>
-                    <DeleteIcon width={20} height={20} />
+                    <DeleteIcon width={20} height={20} className="no-filter" />
                   </button>
                 </td>
               </tr>
@@ -248,7 +247,7 @@ function TabContra() {
         className={styles.actionCardBtn}
         onClick={() => navigate(`/pet-profile/${id}/edit-contraindications`, { state: { fromTab: 'contra' } })}
       >
-        <EditIcon1 width={20} height={20} />
+        <EditIcon1 width={20} height={20} className="no-filter" />
         Изменить
       </button>
     </div>
@@ -290,18 +289,26 @@ function TabWeight() {
                 placeholder="Вес, кг" />
               <button className={styles.addRowBtn} onClick={addEntry}>+</button>
             </div>
-            <div className={`${styles.chartTableHead} ${styles.weightHead}`}>
-              <span>Дата</span>
-              <span>Вес, кг</span>
-              <span>Удалить</span>
-            </div>
-            {entries.map(e => (
-              <div key={e.id} className={`${styles.chartTableRow} ${styles.weightHead}`}>
-                <span>{e.date}</span>
-                <span>{e.weight}</span>
-                <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
-              </div>
-            ))}
+            <table className={styles.chartTable}>
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Вес, кг</th>
+                  <th>Удалить</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(e => (
+                  <tr key={e.id}>
+                    <td>{e.date}</td>
+                    <td>{e.weight}</td>
+                    <td>
+                      <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -344,18 +351,26 @@ function TabActivity() {
                 placeholder="Время, ч" />
               <button className={styles.addRowBtn} onClick={addEntry}>+</button>
             </div>
-            <div className={`${styles.chartTableHead} ${styles.activityHead}`}>
-              <span>Дата</span>
-              <span>Время, ч</span>
-              <span>Удалить</span>
-            </div>
-            {entries.map(e => (
-              <div key={e.id} className={`${styles.chartTableRow} ${styles.activityHead}`}>
-                <span>{e.date}</span>
-                <span>{e.hours}</span>
-                <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
-              </div>
-            ))}
+            <table className={styles.chartTable}>
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Время, ч</th>
+                  <th>Удалить</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map(e => (
+                  <tr key={e.id}>
+                    <td>{e.date}</td>
+                    <td>{e.hours}</td>
+                    <td>
+                      <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -396,11 +411,11 @@ export function PetProfilePage() {
             className={styles.editBtn}
             onClick={() => navigate(`/pet-profile/${id}/edit-profile`, { state: { fromTab: activeTab } })}
           >
-            <EditIcon width={14} height={14} />
+            <EditIcon width={14} height={14} className="no-filter" />
             Изменить
           </button>
           <button className={styles.deleteBtn}>
-            <DeleteIcon width={14} height={14} />
+            <DeleteIcon width={14} height={14} className="no-filter" />
             Удалить
           </button>
         </div>

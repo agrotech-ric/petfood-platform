@@ -567,7 +567,7 @@ export function CreateRecipePage() {
         </button>
         <h1 className={styles.headerTitle}>{stepTitles[step]}</h1>
         <button className={styles.deleteBtn}>
-          <DeleteIcon width="14" height="14" />
+          <DeleteIcon width="14" height="14" className="no-filter" />
           Удалить
         </button>
       </div>

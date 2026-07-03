@@ -14,3 +14,10 @@
   min-width: 0;
   box-sizing: border-box;
 }
+
+@media (max-width: 640px) {
+  .main {
+    margin-left: 56px;
+    padding: 24px 16px 40px;
+  }
+}

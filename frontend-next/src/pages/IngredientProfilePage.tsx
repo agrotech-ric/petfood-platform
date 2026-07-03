@@ -29,11 +29,11 @@ export function IngredientProfilePage() {
         <h1 className={styles.headerTitle}>Профиль ингредиента</h1>
         <div className={styles.headerActions}>
           <button className={styles.editBtn} onClick={() => navigate(`/ingredients/${item.id}/edit`)}>
-            <EditIcon width={20} height={20} />
+            <EditIcon width={20} height={20} className="no-filter" />
             Изменить
           </button>
           <button className={styles.deleteBtn}>
-            <DeleteIcon width={20} height={20} />
+            <DeleteIcon width={20} height={20} className="no-filter" />
             Удалить
           </button>
         </div>

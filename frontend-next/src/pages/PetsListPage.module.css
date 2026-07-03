@@ -21,7 +21,7 @@
   grid-column: 2;
   justify-self: center;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--color-accent-alt);
   margin: 0;
@@ -132,6 +132,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   transition: background 0.15s;
 }
 
@@ -159,6 +160,41 @@
 .allFiltersBtn:hover {
   border-color: var(--color-accent-alt);
   color: var(--color-accent-alt);
+}
+
+@media (max-width: 768px) {
+  .searchRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .searchInputWrap {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .searchInput {
+    min-width: 0;
+    padding: 10px 12px;
+  }
+
+  .searchBtn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    flex: 0 0 44px;
+  }
+
+  .searchBtn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .allFiltersBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .filtersIcon {
@@ -213,6 +249,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .empty {

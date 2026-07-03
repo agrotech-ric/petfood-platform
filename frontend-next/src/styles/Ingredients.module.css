@@ -10,7 +10,6 @@
 /* ── Top bar ───────────────────────────────────────── */
 .topBar {
   width: 100%;
-  max-width: 1176px;
   background: var(--color-surface);
   border-radius: 12px;
   box-shadow: 0 1px 4px var(--color-shadow);
@@ -59,7 +58,6 @@
 /* ── Content card ──────────────────────────────────── */
 .contentCard {
   width: 100%;
-  max-width: 1176px;
   background: var(--color-surface);
   border-radius: 12px;
   box-shadow: 0 1px 4px var(--color-shadow);
