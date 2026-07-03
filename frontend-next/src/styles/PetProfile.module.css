@@ -628,20 +628,39 @@
 @media (max-width: 700px) {
   .pageHeader {
     flex-wrap: wrap;
+    align-items: flex-start;
     padding: 14px 16px;
     gap: 10px;
   }
-  .headerTitle {
+
+  .backBtn {
     order: 1;
+  }
+
+  .headerTitle {
+    position: static;
+    transform: none;
+    order: 2;
     flex: 1 1 100%;
-    text-align: left;
+    width: 100%;
+    text-align: center;
     font-size: 16px;
   }
+
   .headerActions {
-    order: 2;
+    order: 3;
     width: 100%;
+    display: flex;
+    gap: 10px;
   }
-  .editBtn, .deleteBtn { flex: 1; justify-content: center; }
+
+  .editBtn,
+  .deleteBtn {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+  }
+
   .petCard, .tabContent { padding: 16px; }
   .petName { font-size: 24px; }
   .conditionActions { flex-direction: column; }
