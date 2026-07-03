@@ -127,3 +127,51 @@
 .navBottom .navItem:last-child:hover {
   color: var(--color-danger);
 }
+
+/* ── Mobile (≤ 640px) ─────────────────────────────────── */
+@media (max-width: 640px) {
+  .sidebar {
+    width: 56px;
+    padding-top: 24px;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .sidebarExpanded {
+    width: 200px;
+  }
+
+  .navTop {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .navBottom {
+    gap: 8px;
+    padding: 0 10px 20px 10px;
+  }
+
+  .navItem {
+    gap: 12px;
+  }
+
+  .iconWrap {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 6px;
+  }
+
+  .navIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .separator {
+    width: 36px;
+    margin: 0 0 12px 10px;
+  }
+
+  .navLabel {
+    font-size: 14px;
+  }
+}
