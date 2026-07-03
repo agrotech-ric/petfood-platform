@@ -49,4 +49,9 @@ export type VetRequest = {
   symptoms: string[];
   comments?: string;
   createdAt: string;
+  reproductiveStatus?: string;
+  pregnancyPeriod?: string;
+  lactationWeek?: string;
+  puppyCount?: number;
+
 };
