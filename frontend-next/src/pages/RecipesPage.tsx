@@ -68,7 +68,7 @@ export function RecipesPage() {
               onChange={e => setSearch(e.target.value)}
             />
             <button type="button" className={styles.searchBtn} aria-label="Поиск">
-              <SearchIcon width={16} height={16} />
+              <SearchIcon width={16} height={16} className="no-filter" />
             </button>
           </div>
 

@@ -161,15 +161,15 @@ function TabCondition() {
           className={styles.conditionActionBtn}
           onClick={() => navigate(`/pet-profile/${id}/edit-current-condition`, { state: { fromTab: 'condition' } })}
         >
-          <EditIcon1 width={14} height={14} />
+          <EditIcon1 width={14} height={14} className="no-filter" />
           Изменить
         </button>
         <button className={styles.conditionActionBtn}>
-          <ReloadIcon width={20} height={20} />
+          <ReloadIcon width={20} height={20} className="no-filter" />
           Переместить в историю болезней
         </button>
         <button className={styles.dangerBtn}>
-          <DeleteIcon width={14} height={14} />
+          <DeleteIcon width={14} height={14} className="no-filter" />
           Удалить
         </button>
       </div>
@@ -210,11 +210,11 @@ function TabHistory() {
                 title="Изменить"
                 onClick={() => navigate(`/pet-profile/${id}/history/${h.id}`, { state: { fromTab: 'history' } })}
               >
-                <EditIcon1 width={20} height={20} />
+                <EditIcon1 width={20} height={20} className="no-filter" />
               </button>
               <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
                 title="Удалить" onClick={() => removeEntry(h.id)}>
-                    <DeleteIcon width={20} height={20} />
+                    <DeleteIcon width={20} height={20} className="no-filter" />
                   </button>
                 </td>
               </tr>
@@ -247,7 +247,7 @@ function TabContra() {
         className={styles.actionCardBtn}
         onClick={() => navigate(`/pet-profile/${id}/edit-contraindications`, { state: { fromTab: 'contra' } })}
       >
-        <EditIcon1 width={20} height={20} />
+        <EditIcon1 width={20} height={20} className="no-filter" />
         Изменить
       </button>
     </div>
@@ -411,11 +411,11 @@ export function PetProfilePage() {
             className={styles.editBtn}
             onClick={() => navigate(`/pet-profile/${id}/edit-profile`, { state: { fromTab: activeTab } })}
           >
-            <EditIcon width={14} height={14} />
+            <EditIcon width={14} height={14} className="no-filter" />
             Изменить
           </button>
           <button className={styles.deleteBtn}>
-            <DeleteIcon width={14} height={14} />
+            <DeleteIcon width={14} height={14} className="no-filter" />
             Удалить
           </button>
         </div>

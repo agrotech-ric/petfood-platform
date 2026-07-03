@@ -178,11 +178,11 @@ export function RecipeProfilePage() {
         <h1 className={styles.headerTitle}>Профиль корма</h1>
         <div className={styles.headerActions}>
           <button className={styles.editBtn} onClick={() => navigate(`/recipes/${recipe.id}/edit`, { state: { from: origin, petId: originPetId, fromTab: (location.state as any)?.fromTab } })}>
-            <EditIcon width="20" height="20" />
+            <EditIcon width="20" height="20" className="no-filter" />
             Изменить
           </button>
           <button className={styles.deleteBtn}>
-            <DeleteIcon width="20" height="20" />
+            <DeleteIcon width="20" height="20" className="no-filter" />
             Удалить
           </button>
         </div>

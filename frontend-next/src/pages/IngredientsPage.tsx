@@ -110,7 +110,7 @@ export function IngredientsPage() {
               onChange={e => setSearch(e.target.value)}
             />
             <button type="button" className={styles.searchBtn} aria-label="Search">
-              <SearchIcon className={styles.svgSlot} />
+              <SearchIcon className={`${styles.svgSlot} no-filter`} />
             </button>
           </div>
         </div>

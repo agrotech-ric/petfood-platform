@@ -214,7 +214,7 @@ textarea:focus {
   }
 }
 
-/* Raster icons embedded in SVG (PNG) stay black unless inverted in dark theme */
-[data-theme='dark'] svg:has(image) {
-  filter: brightness(0) invert(1) opacity(0.82);
+/* Raster icons embedded in SVG (PNG) stay grey in dark theme */
+[data-theme='dark'] svg:has(image):not(.no-filter) {
+  filter: brightness(0) invert(1) opacity(0.45);
 }
