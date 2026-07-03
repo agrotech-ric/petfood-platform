@@ -39,6 +39,7 @@ export const UserRecommendationCreate = () => {
   const { breeds, isLoadingReference, pets } = usePets();
 
   const request = location.state?.request || null;
+  console.log("REQUEST:", request);
   const [error, setError] = useState<string | null>(null);
   const [englishBreedName, setEnglishBreedName] = useState<string>('');
 
