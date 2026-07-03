@@ -14,7 +14,7 @@ export const PetInfoCard = ({ request }: PetInfoCardProps) => {
   const { pets } = usePets();
   
   // Get the pet from context to access reproductive status
-  const pet = pets.find(p => p.id === request.id || p.name === request.petName);
+  const pet = pets.find(p => p.id === request.petId || p.name === request.petName);
   
   const petSpecies = request.petSpecies || request.speciesName || 'Не указано';
   const petBreed = request.petBreed || request.breedName || 'Не указана';
@@ -94,19 +94,19 @@ export const PetInfoCard = ({ request }: PetInfoCardProps) => {
           </div>
           )}
 
-       {pet?.reproductiveStatusName === 'pregnancy' && (
+       {pet && pet.reproductiveStatusName === 'pregnancy' && pet.reproductiveSubStatusName && (
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Срок беременности</span>
             <span className={styles.detailValue}>{
             pet.reproductiveSubStatusName?.includes('4') ? 'Первые 4 недели беременности' : 
             pet.reproductiveSubStatusName?.includes('5') ? 'Последние 5 недель беременности' : 
-            'Не указан'
+            pet.reproductiveSubStatusName
             }</span>
           </div>
           )}
         
              
-        {pet?.reproductiveStatusName === 'lactation' && (
+        {pet && pet.reproductiveStatusName === 'lactation' && pet.reproductiveSubStatusName && (
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Лактационный период</span>
                 <span className={styles.detailValue}>{
@@ -114,14 +114,14 @@ export const PetInfoCard = ({ request }: PetInfoCardProps) => {
                 pet.reproductiveSubStatusName?.includes('2') ? '2 неделя' : 
                 pet.reproductiveSubStatusName?.includes('3') ? '3 неделя' : 
                 pet.reproductiveSubStatusName?.includes('4') ? '4 неделя' : 
-                'Не указан'
+                pet.reproductiveSubStatusName
                 }</span>
               </div>
           )}
-        {pet?.reproductiveStatusName === 'lactation' && (
+        {pet && pet.reproductiveStatusName === 'lactation' && pet.puppiesCount && pet.puppiesCount > 0 && (
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Количество щенков</span>
-                <span className={styles.detailValue}>{pet.puppiesCount || 'Не указано'}</span>
+                <span className={styles.detailValue}>{pet.puppiesCount}</span>
               </div>
         )}
 
