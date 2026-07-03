@@ -236,6 +236,8 @@
   display: flex;
   border-bottom: none;
   overflow-x: auto;
+  position: relative;
+  z-index: 2;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -247,7 +249,7 @@
 .tab {
   flex-shrink: 0;
   min-width: 0;
-  padding: 14px 12px;
+  padding: 14px 16px;
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-muted);
@@ -256,10 +258,16 @@
   border-bottom: 1px solid transparent;
   background: var(--color-surface);
   border-radius: 12px 12px 0 0;
-  margin-right: -1px;
+  margin-right: -12px;
+  position: relative;
+  z-index: 1;
   white-space: normal;
   text-align: center;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.tab:last-child {
+  margin-right: 0;
 }
 
 .tab:hover { color: var(--color-text); }
@@ -269,7 +277,7 @@
   background: var(--color-accent-alt);
   border-color: #BFBFBF;
   border-bottom-color: transparent;
-  z-index: 2;
+  z-index: 4;
   position: relative;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
@@ -279,8 +287,8 @@
 }
 .tabContent {
   position: relative;
-  z-index: 1;
-  margin-top: -1px;
+  z-index: 2;
+  margin-top: -7px;
   background: var(--color-surface);
   border: 1px solid #BFBFBF;
   border-top: 1px solid #BFBFBF;
@@ -667,7 +675,7 @@
     min-width: 0;
   }
 
-  .petCard, .tabContent { padding: 16px; }
+  .petCard, .tabContent { padding: 12px 16px 16px; }
   .petName { font-size: 24px; }
   .petPhoto,
   .petPhotoPlaceholder {
@@ -681,13 +689,16 @@
   .tabsDropdown {
     display: block;
     padding: 0;
+    border: 1px solid #BFBFBF;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    background: var(--color-surface);
   }
   .tabsSelect {
     width: 100%;
     padding: 12px 16px;
-    border-radius: 12px 12px 0 0;
-    border: 1px solid #BFBFBF;
-    border-bottom: none;
+    border: none;
+    border-radius: 0;
     background: var(--color-surface);
     color: var(--color-text);
     font-size: 14px;
@@ -700,6 +711,7 @@
     background-position: right 16px center;
     padding-right: 36px;
     box-sizing: border-box;
+    transform: translateY(-4px);
   }
   .tabContent {
     border-radius: 0 0 12px 12px;
