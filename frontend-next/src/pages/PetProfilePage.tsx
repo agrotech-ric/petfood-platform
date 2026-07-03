@@ -7,7 +7,6 @@ import {
   type WeightEntry, type ActivityEntry, type PetDiseaseHistory,
 } from '../data/petProfileMock'
 import styles from '../styles/PetProfile.module.css'
-import DateIcon from '../assets/icons/date.svg?react'
 import EditIcon from '../assets/icons/edit.svg?react'
 import EditIcon1 from '../assets/icons/edit1.svg?react'
 import DeleteIcon from '../assets/icons/delete.svg?react'
