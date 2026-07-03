@@ -81,7 +81,7 @@ export const PetInfoCard = ({ request }: PetInfoCardProps) => {
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Репродуктивный статус</span>
             <span className={styles.detailValue}>{
-             request.reproductiveStatus === 'pregnancy' ? 'Щенность' : request.reproductiveStatus === 'lactation' ? 'Период лактации' : 'Нет'
+             request.reproductiveStatus === 'pregnancy' ? 'Щенность' : request.reproductiveStatus === 'lactation' ? 'Период лактации' : request.reproductiveStatus
             }</span>
           </div>
           )}
