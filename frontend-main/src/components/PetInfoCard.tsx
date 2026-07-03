@@ -1,3 +1,4 @@
+import { usePets } from '../../context/PetContext';
 import styles from '../styles/PetInfoCard.module.css';
 import type { VetRequest } from '../types/vetRecommendation';
 import { formatAge } from '../../src/utils/petUtils';
@@ -10,6 +11,11 @@ type PetInfoCardProps = {
 
 
 export const PetInfoCard = ({ request }: PetInfoCardProps) => {
+  const { pets } = usePets();
+  
+  // Get the pet from context to access reproductive status
+  const pet = pets.find(p => p.id === request.id || p.name === request.petName);
+  
   const petSpecies = request.petSpecies || request.speciesName || 'Не указано';
   const petBreed = request.petBreed || request.breedName || 'Не указана';
 
@@ -77,41 +83,45 @@ export const PetInfoCard = ({ request }: PetInfoCardProps) => {
           <span className={styles.detailValue}>{request.weightKg}</span>
         </div>
 
-        {request.gender === 'female' && (
+        {request.gender === 'female' && pet && (
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Репродуктивный статус</span>
             <span className={styles.detailValue}>{
-             request.reproductiveStatus === 'pregnancy' ? 'Щенность' : request.reproductiveStatus === 'lactation' ? 'Период лактации' : request.reproductiveStatus
+             pet.reproductiveStatusName === 'pregnancy' ? 'Щенность' : 
+             pet.reproductiveStatusName === 'lactation' ? 'Период лактации' : 
+             pet.reproductiveStatusName || 'Не указан'
             }</span>
           </div>
           )}
 
-       {request.reproductiveStatus === 'pregnancy' && (
+       {pet?.reproductiveStatusName === 'pregnancy' && (
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Срок беременности</span>
             <span className={styles.detailValue}>{
-            request.pregnancyPeriod === 'early_4_weeks' ? 'Первые 4 недели беременности' : request.pregnancyPeriod === 'last_5_weeks' ? 'Последние 5 недель беременности' : 'Не указан'
+            pet.reproductiveSubStatusName?.includes('4') ? 'Первые 4 недели беременности' : 
+            pet.reproductiveSubStatusName?.includes('5') ? 'Последние 5 недель беременности' : 
+            'Не указан'
             }</span>
           </div>
           )}
         
              
-        {request.reproductiveStatus === 'lactation' && (
+        {pet?.reproductiveStatusName === 'lactation' && (
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Лактационный период</span>
                 <span className={styles.detailValue}>{
-                request.lactationWeek === 'week_1' ? '1 неделя' : 
-                request.lactationWeek === 'week_2' ? '2 неделя' : 
-                request.lactationWeek === 'week_3' ? '3 неделя' : 
-                request.lactationWeek === 'week_4' ? '4 неделя' : 
+                pet.reproductiveSubStatusName?.includes('1') ? '1 неделя' : 
+                pet.reproductiveSubStatusName?.includes('2') ? '2 неделя' : 
+                pet.reproductiveSubStatusName?.includes('3') ? '3 неделя' : 
+                pet.reproductiveSubStatusName?.includes('4') ? '4 неделя' : 
                 'Не указан'
                 }</span>
               </div>
           )}
-        {request.reproductiveStatus === 'lactation' && (
+        {pet?.reproductiveStatusName === 'lactation' && (
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Количество щенков</span>
-                <span className={styles.detailValue}>{request.puppyCount}</span>
+                <span className={styles.detailValue}>{pet.puppiesCount || 'Не указано'}</span>
               </div>
         )}
 
