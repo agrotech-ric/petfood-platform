@@ -87,38 +87,30 @@ export const PetInfoCard = ({ request }: PetInfoCardProps) => {
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Репродуктивный статус</span>
             <span className={styles.detailValue}>{
-             pet.reproductiveStatusName === 'pregnancy' ? 'Щенность' : 
-             pet.reproductiveStatusName === 'lactation' ? 'Период лактации' : 
              pet.reproductiveStatusName || 'Не указан'
             }</span>
           </div>
           )}
 
-       {pet?.reproductiveStatusName === 'pregnancy' && (
+       {pet?.reproductiveStatusName?.toLowerCase().includes('щенность') && (
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Срок беременности</span>
             <span className={styles.detailValue}>{
-            pet.reproductiveSubStatusName?.includes('4') ? 'Первые 4 недели беременности' : 
-            pet.reproductiveSubStatusName?.includes('5') ? 'Последние 5 недель беременности' : 
-            'Не указан'
+            pet.reproductiveSubStatusName || 'Не указан'
             }</span>
           </div>
           )}
         
              
-        {pet?.reproductiveStatusName === 'lactation' && (
+        {pet?.reproductiveStatusName?.toLowerCase().includes('лакт') && (
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Лактационный период</span>
                 <span className={styles.detailValue}>{
-                pet.reproductiveSubStatusName?.includes('1') ? '1 неделя' : 
-                pet.reproductiveSubStatusName?.includes('2') ? '2 неделя' : 
-                pet.reproductiveSubStatusName?.includes('3') ? '3 неделя' : 
-                pet.reproductiveSubStatusName?.includes('4') ? '4 неделя' : 
-                'Не указан'
+                pet.reproductiveSubStatusName || 'Не указан'
                 }</span>
               </div>
           )}
-        {pet?.reproductiveStatusName === 'lactation' && (
+        {pet?.reproductiveStatusName?.toLowerCase().includes('лакт') && (
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Количество щенков</span>
                 <span className={styles.detailValue}>{pet.puppiesCount || 'Не указано'}</span>
