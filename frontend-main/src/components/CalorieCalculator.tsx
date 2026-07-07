@@ -1,6 +1,5 @@
 import styles from '../styles/CalorieCalculator.module.css';
 import 'katex/dist/katex.min.css';
-import { BlockMath } from 'react-katex';
 
 
 type CalorieCalculatorProps = {
@@ -60,7 +59,7 @@ export const CalorieCalculator = ({
       {formula && (
         <div className={styles.formulaSection}>
           <h3 className={styles.formulaTitle}>Формула расчета</h3>
-          <BlockMath math={formula} />
+          <pre>{formula}</pre>
           {referencePage && (
               <p className={styles.referencePageText}>
                 Источник: формула расчета по FEDIAF {referencePage}{' '}
