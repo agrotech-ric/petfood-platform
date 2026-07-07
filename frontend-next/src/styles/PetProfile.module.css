@@ -236,6 +236,8 @@
   display: flex;
   border-bottom: none;
   overflow-x: auto;
+  position: relative;
+  z-index: 2;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -245,9 +247,9 @@
 }
 
 .tab {
-  flex: 1;
+  flex-shrink: 0;
   min-width: 0;
-  padding: 14px 12px;
+  padding: 14px 16px;
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-muted);
@@ -256,10 +258,16 @@
   border-bottom: 1px solid transparent;
   background: var(--color-surface);
   border-radius: 12px 12px 0 0;
-  margin-right: -1px;
+  margin-right: -12px;
+  position: relative;
+  z-index: 1;
   white-space: normal;
   text-align: center;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.tab:last-child {
+  margin-right: 0;
 }
 
 .tab:hover { color: var(--color-text); }
@@ -269,7 +277,7 @@
   background: var(--color-accent-alt);
   border-color: #BFBFBF;
   border-bottom-color: transparent;
-  z-index: 2;
+  z-index: 4;
   position: relative;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
@@ -279,8 +287,8 @@
 }
 .tabContent {
   position: relative;
-  z-index: 1;
-  margin-top: -1px;
+  z-index: 2;
+  margin-top: -7px;
   background: var(--color-surface);
   border: 1px solid #BFBFBF;
   border-top: 1px solid #BFBFBF;
@@ -618,6 +626,10 @@
 }
 
 /* ── Responsive ──────────────────────────────────────── */
+@media (min-width: 701px) {
+  .tab { flex: 1; }
+}
+
 @media (max-width: 900px) {
   .petCard { flex-direction: column; }
   .petInfoMain { flex-direction: column; }
@@ -625,27 +637,85 @@
   .chartLayout { grid-template-columns: 1fr; }
 }
 
+.tabsDropdown { display: none; }
+
 @media (max-width: 700px) {
   .pageHeader {
     flex-wrap: wrap;
+    align-items: flex-start;
     padding: 14px 16px;
     gap: 10px;
   }
-  .headerTitle {
+
+  .backBtn {
     order: 1;
+  }
+
+  .headerTitle {
+    position: static;
+    transform: none;
+    order: 2;
     flex: 1 1 100%;
-    text-align: left;
+    width: 100%;
+    text-align: center;
     font-size: 16px;
   }
+
   .headerActions {
-    order: 2;
+    order: 3;
     width: 100%;
+    display: flex;
+    gap: 10px;
   }
-  .editBtn, .deleteBtn { flex: 1; justify-content: center; }
-  .petCard, .tabContent { padding: 16px; }
+
+  .editBtn,
+  .deleteBtn {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .petCard, .tabContent { padding: 12px 16px 16px; }
   .petName { font-size: 24px; }
+  .petPhoto,
+  .petPhotoPlaceholder {
+    width: min(100%, 260px);
+    aspect-ratio: 1 / 1;
+    height: auto;
+    align-self: center;
+  }
   .conditionActions { flex-direction: column; }
-  .tabsRow { overflow-x: auto; }
+  .tabsRow { display: none; }
+  .tabsDropdown {
+    display: block;
+    padding: 0;
+    border: 1px solid #BFBFBF;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+  .tabsSelect {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 0;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 36px;
+    box-sizing: border-box;
+    transform: translateY(-4px);
+  }
+  .tabContent {
+    border-radius: 0 0 12px 12px;
+  }
   .tableScroll,
   .chartTableScroll {
     margin-left: -16px;

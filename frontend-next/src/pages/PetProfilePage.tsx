@@ -496,6 +496,17 @@ export function PetProfilePage() {
             </button>
           ))}
         </div>
+        <div className={styles.tabsDropdown}>
+          <select
+            className={styles.tabsSelect}
+            value={activeTab}
+            onChange={e => setActiveTab(e.target.value as Tab)}
+          >
+            {tabs.map(t => (
+              <option key={t.key} value={t.key}>{t.label}</option>
+            ))}
+          </select>
+        </div>
         <div className={styles.tabContent}>
           {activeTab === 'food' && <TabFood />}
           {activeTab === 'condition' && <TabCondition />}
