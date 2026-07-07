@@ -1,4 +1,7 @@
 import styles from '../styles/CalorieCalculator.module.css';
+import 'katex/dist/katex.min.css';
+import { BlockMath } from 'react-katex';
+
 
 type CalorieCalculatorProps = {
   targetKcal: number;
@@ -23,50 +26,7 @@ export const CalorieCalculator = ({
   formula = null,
   referencePage = null,
 }: CalorieCalculatorProps) => {
-  const renderFormula = (formulaText: string) => {
-    if (!formulaText) return null;
-
-    const lines = formulaText.split('\\\\').map(line => line.trim());
-    
-    return (
-      <div className={styles.formulaContainer}>
-        {lines.map((line, index) => {
-          // Parse text parts and math parts
-          const parts: Array<{ type: 'text' | 'math'; content: string }> = [];
-          let lastIndex = 0;
-          const mathPattern = /\\text\{([^}]*)\}|([^\\]*)/g;
-          let match;
-
-          while ((match = mathPattern.exec(line)) !== null) {
-            if (match[1] !== undefined) {
-              // \text{...} part
-              parts.push({ type: 'text', content: match[1] });
-            } else if (match[2]) {
-              // Math part
-              parts.push({ type: 'math', content: match[2] });
-            }
-          }
-
-          return (
-            <div key={index} className={styles.formulaLine}>
-              {parts.map((part, idx) =>
-                part.type === 'text' ? (
-                  <span key={idx} className={styles.formulaText}>
-                    {part.content}
-                  </span>
-                ) : (
-                  <span key={idx} className={styles.formulaMath}>
-                    {part.content}
-                  </span>
-                )
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
+  
   return (
     <>
       <h2 className={styles.sectionTitle}>Целевая энергия (ккал)</h2>
@@ -100,12 +60,19 @@ export const CalorieCalculator = ({
       {formula && (
         <div className={styles.formulaSection}>
           <h3 className={styles.formulaTitle}>Формула расчета</h3>
-          <pre>{formula}</pre>
+          <BlockMath math={formula} />
           {referencePage && (
-            <p className={styles.referencePageText}>
-              Источник: страница {referencePage}
-            </p>
-          )}
+              <p className={styles.referencePageText}>
+                Источник: формула расчета по FEDIAF {referencePage}{' '}
+                <a
+                  href={`https://europeanpetfood.org/wp-content/uploads/2024/09/FEDIAF-Nutritional-Guidelines_2024.pdf#page=${referencePage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Открыть документ
+                </a>
+              </p>
+            )}
         </div>
       )}
     </>
