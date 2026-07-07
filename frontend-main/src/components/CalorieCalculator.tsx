@@ -1,5 +1,4 @@
 import styles from '../styles/CalorieCalculator.module.css';
-import 'katex/dist/katex.min.css';
 
 
 type CalorieCalculatorProps = {
