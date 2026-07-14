@@ -1,6 +1,7 @@
 package dev.pet.pets.domain;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,11 +39,18 @@ public class PetHealthRecord {
     @Column(name = "weight_kg", nullable = false)
     private Double weightKg;
 
+    @Column(name = "activity_hours")
+    private Double activityHours;
+
+    @Column(name = "record_date")
+    private LocalDate recordDate;
+
     @Column(name = "created_at", nullable = false)
     private java.time.LocalDateTime createdAt;
 
     public PetHealthRecord() {
         this.createdAt = java.time.LocalDateTime.now();
+        this.recordDate = LocalDate.now();
         this.weightKg = 0.0;
     }
 
@@ -96,6 +104,22 @@ public class PetHealthRecord {
 
     public void setWeightKg(Double weightKg) {
         this.weightKg = weightKg;
+    }
+
+    public Double getActivityHours() {
+        return activityHours;
+    }
+
+    public void setActivityHours(Double activityHours) {
+        this.activityHours = activityHours;
+    }
+
+    public LocalDate getRecordDate() {
+        return recordDate;
+    }
+
+    public void setRecordDate(LocalDate recordDate) {
+        this.recordDate = recordDate;
     }
 
     public java.time.LocalDateTime getCreatedAt() {

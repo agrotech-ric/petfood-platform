@@ -1,11 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import {
-  MOCK_PET, MOCK_PET_FOODS, MOCK_CURRENT_CONDITION,
-  MOCK_DISEASE_HISTORY, MOCK_CONTRAINDICATIONS,
-  MOCK_WEIGHT_HISTORY, MOCK_ACTIVITY_HISTORY,
-  type WeightEntry, type ActivityEntry, type PetDiseaseHistory,
-} from '../data/petProfileMock'
+import { MOCK_PET_FOODS, MOCK_CONTRAINDICATIONS } from '../data/petProfileMock'
+import { petService, type HealthRecord, type PetProfileData } from '../../services/petService'
+import { referenceService, type ActivityType, type Symptom } from '../../services/referenceService'
 import styles from '../styles/PetProfile.module.css'
 import EditIcon from '../assets/icons/edit.svg?react'
 import EditIcon1 from '../assets/icons/edit1.svg?react'
@@ -16,8 +13,205 @@ import heartOrange from '../assets/figma/pets-list/heart-orange.svg'
 import heartWhite from '../assets/figma/pets-list/heart-white.svg'
 import ReloadIcon from '../assets/icons/reload.svg?react'
 
-
 type Tab = 'food' | 'condition' | 'history' | 'contra' | 'weight' | 'activity'
+
+type PetProfileView = {
+  id: string
+  name: string
+  age: string
+  breed: string
+  gender: string
+  birthDate: string
+  weight: string
+  activityLevel: string
+  reproductiveStatus: string
+  description: string
+  photoUrl?: string
+}
+
+type PetCurrentCondition = {
+  id: string
+  date: string
+  disease: string
+  description: string
+  symptoms: string[]
+}
+
+type PetDiseaseHistory = {
+  id: string
+  date: string
+  disease: string
+  symptoms: string
+  description: string
+}
+
+type WeightEntry = {
+  id: string
+  date: string
+  weight: number
+}
+
+type ActivityEntry = {
+  id: string
+  date: string
+  hours: number
+  label: string
+}
+
+type RefDefaults = {
+  activityTypeId: number
+  symptomId: number
+}
+
+function formatDate(value?: string, fallback = 'Не указано') {
+  if (!value) return fallback
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function formatShortDate(value?: string, fallback = 'Не указано') {
+  if (!value) return fallback
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('ru-RU')
+}
+
+function calculateAge(birthDate?: string) {
+  if (!birthDate) return 'Не указано'
+  const birth = new Date(birthDate)
+  if (Number.isNaN(birth.getTime())) return 'Не указано'
+
+  const now = new Date()
+  let years = now.getFullYear() - birth.getFullYear()
+  let months = now.getMonth() - birth.getMonth()
+
+  if (now.getDate() < birth.getDate()) months -= 1
+  if (months < 0) {
+    years -= 1
+    months += 12
+  }
+
+  if (years <= 0) {
+    return `${Math.max(months, 0)} мес.`
+  }
+
+  const yearWord = years % 10 === 1 && years % 100 !== 11 ? 'год' : years % 10 >= 2 && years % 10 <= 4 && (years % 100 < 10 || years % 100 >= 20) ? 'года' : 'лет'
+  return months > 0 ? `${years} ${yearWord} ${months} мес.` : `${years} ${yearWord}`
+}
+
+function formatGender(gender?: string) {
+  if (!gender) return 'Не указано'
+  const normalized = gender.toLowerCase()
+  if (normalized === 'male') return 'Самец'
+  if (normalized === 'female') return 'Самка'
+  return gender
+}
+
+function normalizeWeight(weight?: number) {
+  if (weight == null || Number.isNaN(weight)) return 'Не указано'
+  return Number.isInteger(weight) ? String(weight) : String(Number(weight.toFixed(1)))
+}
+
+function sortRecordsAsc(records: HealthRecord[]) {
+  return [...records].sort((a, b) => {
+    const aTime = new Date(a.createdAt).getTime()
+    const bTime = new Date(b.createdAt).getTime()
+    return (Number.isNaN(aTime) ? 0 : aTime) - (Number.isNaN(bTime) ? 0 : bTime)
+  })
+}
+
+function sortRecordsDesc(records: HealthRecord[]) {
+  return sortRecordsAsc(records).reverse()
+}
+
+function getRecordDescription(record?: HealthRecord) {
+  return record?.comments?.trim() || 'Описание не указано'
+}
+
+function getRecordDate(record: HealthRecord) {
+  return record.recordDate || record.createdAt
+}
+
+function mapPetToView(pet: PetProfileData, latestRecord?: HealthRecord, photoUrl?: string): PetProfileView {
+  return {
+    id: pet.id,
+    name: pet.name || 'Без имени',
+    age: calculateAge(pet.birthDate),
+    breed: pet.breedName || 'Не указано',
+    gender: formatGender(pet.gender),
+    birthDate: formatDate(pet.birthDate),
+    weight: normalizeWeight(pet.weightKg),
+    activityLevel: latestRecord?.activityTypeName || 'Не указано',
+    reproductiveStatus: pet.reproductiveSubStatusName || pet.reproductiveStatusName || 'Не указано',
+    description: latestRecord?.comments?.trim() || 'Описание пока не добавлено',
+    photoUrl,
+  }
+}
+
+function mapCurrentCondition(record?: HealthRecord): PetCurrentCondition | null {
+  if (!record) return null
+  return {
+    id: record.id,
+    date: formatShortDate(getRecordDate(record)),
+    disease: record.activityTypeName || 'Не указано',
+    description: getRecordDescription(record),
+    symptoms: record.symptoms?.length ? record.symptoms : ['Нет симптомов'],
+  }
+}
+
+function mapDiseaseHistory(records: HealthRecord[]): PetDiseaseHistory[] {
+  return sortRecordsDesc(records).map((record) => ({
+    id: record.id,
+    date: formatShortDate(getRecordDate(record)),
+    disease: record.activityTypeName || 'Не указано',
+    symptoms: record.symptoms?.join(', ') || 'Нет симптомов',
+    description: getRecordDescription(record),
+  }))
+}
+
+function mapWeightHistory(records: HealthRecord[], pet?: PetProfileData): WeightEntry[] {
+  const entries = sortRecordsAsc(records)
+    .filter((record) => record.weightKg != null)
+    .map((record) => ({
+      id: record.id,
+      date: formatShortDate(getRecordDate(record)),
+      weight: Number(record.weightKg),
+    }))
+
+  if (entries.length === 0 && pet?.weightKg != null) {
+    entries.push({
+      id: pet.id,
+      date: formatShortDate(pet.updatedAt || pet.createdAt || pet.birthDate),
+      weight: pet.weightKg,
+    })
+  }
+
+  return entries
+}
+
+function estimateActivityHours(activityName?: string) {
+  const value = activityName?.toLowerCase() || ''
+  if (value.includes('extreme') || value.includes('экстрем') || value.includes('очень')) return 5
+  if (value.includes('active') || value.includes('актив') || value.includes('высок')) return 4
+  if (value.includes('moderate') || value.includes('сред')) return 3
+  if (value.includes('low') || value.includes('низ')) return 2
+  if (value.includes('passive') || value.includes('пассив')) return 1
+  return 1
+}
+
+function mapActivityHistory(records: HealthRecord[]): ActivityEntry[] {
+  return sortRecordsAsc(records).filter((record) => record.activityHours != null).map((record) => ({
+    id: record.id,
+    date: formatShortDate(getRecordDate(record)),
+    hours: Number(record.activityHours),
+    label: record.activityTypeName || 'Не указано',
+  }))
+}
 
 // ── SVG Line Chart ──────────────────────────────────────────────
 function LineChart({
@@ -29,10 +223,11 @@ function LineChart({
 }) {
   const W = 320, H = 180, padL = 36, padB = 32, padT = 20, padR = 16
   const values = data.map(d => d.value)
-  const maxY = Math.max(...values) * 1.2
+  const maxY = Math.max(1, ...values) * 1.2
   const minY = 0
+  const stepCount = Math.max(data.length - 1, 1)
 
-  const toX = (i: number) => padL + (i / (data.length - 1)) * (W - padL - padR)
+  const toX = (i: number) => padL + (i / stepCount) * (W - padL - padR)
   const toY = (v: number) => padT + (1 - (v - minY) / (maxY - minY)) * (H - padT - padB)
 
   const points = data.map((d, i) => `${toX(i)},${toY(d.value)}`).join(' ')
@@ -40,7 +235,9 @@ function LineChart({
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
 
   // X axis: show first/mid/last labels
-  const xLabels = [0, Math.floor(data.length / 2), data.length - 1]
+  const xLabels = data.length
+    ? Array.from(new Set([0, Math.floor(data.length / 2), data.length - 1]))
+    : []
 
   // Y ticks
   const yTicks = [0, Math.round(maxY * 0.25), Math.round(maxY * 0.5), Math.round(maxY * 0.75), Math.round(maxY)]
@@ -68,12 +265,12 @@ function LineChart({
           transform={`rotate(-90, 10, ${H / 2})`}>{yLabel}</text>
 
         {/* Line */}
-        <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
+        {points && <polyline points={points} fill="none" stroke={color} strokeWidth="2" />}
 
         {/* Dots */}
         {data.map((d, i) => (
           <circle
-            key={i} cx={toX(i)} cy={toY(d.value)} r={4} fill={color}
+            key={`${d.date}-${i}`} cx={toX(i)} cy={toY(d.value)} r={4} fill={color}
             style={{ cursor: 'pointer' }}
             onMouseEnter={() => setTooltip({ x: toX(i), y: toY(d.value) - 10, text: `${d.value} • ${d.date}` })}
             onMouseLeave={() => setTooltip(null)}
@@ -130,7 +327,7 @@ function TabFood() {
           </tbody>
         </table>
       </div>
-      <button 
+      <button
         className={styles.primaryBtn}
         onClick={() => navigate(`/recipes/create`, { state: { from: 'pet-profile', petId: id, fromTab: 'food' } })}
         >
@@ -141,10 +338,27 @@ function TabFood() {
 }
 
 // ── Tab: Текущее состояние ──────────────────────────────────────
-function TabCondition() {
+function TabCondition({
+  condition,
+  onDelete,
+  onMoveToHistory,
+  savingId,
+}: {
+  condition: PetCurrentCondition | null
+  onDelete: (recordId: string) => Promise<void>
+  onMoveToHistory: () => void
+  savingId?: string
+}) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const c = MOCK_CURRENT_CONDITION
+  const c = condition ?? {
+    id: '',
+    date: 'Нет записей',
+    disease: 'Не указано',
+    description: 'Записей о текущем состоянии пока нет',
+    symptoms: ['Нет данных'],
+  }
+
   return (
     <div>
       <p className={styles.conditionDate}>{c.date}</p>
@@ -164,11 +378,11 @@ function TabCondition() {
           <EditIcon1 width={14} height={14} className="no-filter" />
           Изменить
         </button>
-        <button className={styles.conditionActionBtn}>
+        <button className={styles.conditionActionBtn} disabled={!condition} onClick={onMoveToHistory}>
           <ReloadIcon width={20} height={20} className="no-filter" />
           Переместить в историю болезней
         </button>
-        <button className={styles.dangerBtn}>
+        <button className={styles.dangerBtn} disabled={!condition || savingId === condition.id} onClick={() => condition && void onDelete(condition.id)}>
           <DeleteIcon width={14} height={14} className="no-filter" />
           Удалить
         </button>
@@ -178,11 +392,17 @@ function TabCondition() {
 }
 
 // ── Tab: История болезней ───────────────────────────────────────
-function TabHistory() {
+function TabHistory({
+  items,
+  onDelete,
+  savingId,
+}: {
+  items: PetDiseaseHistory[]
+  onDelete: (recordId: string) => Promise<void>
+  savingId?: string
+}) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [history, setHistory] = useState<PetDiseaseHistory[]>(MOCK_DISEASE_HISTORY)
-  const removeEntry = (id: number) => setHistory(prev => prev.filter(h => h.id !== id))
 
   return (
     <div>
@@ -198,7 +418,9 @@ function TabHistory() {
             </tr>
           </thead>
           <tbody>
-            {history.map(h => (
+            {items.length === 0 ? (
+              <tr><td colSpan={5}>Записей пока нет</td></tr>
+            ) : items.map(h => (
               <tr key={h.id}>
                 <td>{h.date}</td>
                 <td>{h.disease}</td>
@@ -213,7 +435,7 @@ function TabHistory() {
                 <EditIcon1 width={20} height={20} className="no-filter" />
               </button>
               <button className={`${styles.iconActionBtn} ${styles.iconActionBtnDanger}`}
-                title="Удалить" onClick={() => removeEntry(h.id)}>
+                title="Удалить" disabled={savingId === h.id} onClick={() => void onDelete(h.id)}>
                     <DeleteIcon width={20} height={20} className="no-filter" />
                   </button>
                 </td>
@@ -255,23 +477,30 @@ function TabContra() {
 }
 
 // ── Tab: График веса ────────────────────────────────────────────
-function TabWeight() {
-  const [entries, setEntries] = useState<WeightEntry[]>(MOCK_WEIGHT_HISTORY)
+function TabWeight({
+  items,
+  onAdd,
+  onDelete,
+  savingId,
+  savingNew,
+}: {
+  items: WeightEntry[]
+  onAdd: (recordDate: string, weight: number) => Promise<void>
+  onDelete: (recordId: string) => Promise<void>
+  savingId?: string
+  savingNew: boolean
+}) {
   const [newDate, setNewDate] = useState('')
   const [newWeight, setNewWeight] = useState('')
 
-  const addEntry = () => {
+  const addEntry = async () => {
     if (!newDate || !newWeight) return
-    setEntries(prev => [...prev, {
-      id: Date.now(), date: newDate, weight: Number(newWeight)
-    }])
+    await onAdd(newDate, Number(newWeight))
     setNewDate('')
     setNewWeight('')
   }
 
-  const removeEntry = (id: number) => setEntries(prev => prev.filter(e => e.id !== id))
-
-  const chartData = entries.map(e => ({ date: e.date, value: e.weight }))
+  const chartData = items.map(e => ({ date: e.date, value: e.weight }))
 
   return (
     <div>
@@ -287,7 +516,7 @@ function TabWeight() {
               <input className={styles.chartTableInput} type="number"
                 value={newWeight} onChange={e => setNewWeight(e.target.value)}
                 placeholder="Вес, кг" />
-              <button className={styles.addRowBtn} onClick={addEntry}>+</button>
+              <button className={styles.addRowBtn} disabled={savingNew} onClick={() => void addEntry()}>+</button>
             </div>
             <table className={styles.chartTable}>
               <thead>
@@ -298,12 +527,14 @@ function TabWeight() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map(e => (
+                {items.length === 0 ? (
+                  <tr><td colSpan={3}>Записей пока нет</td></tr>
+                ) : items.map(e => (
                   <tr key={e.id}>
                     <td>{e.date}</td>
                     <td>{e.weight}</td>
                     <td>
-                      <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+                      <button className={styles.removeBtn} disabled={savingId === e.id} onClick={() => void onDelete(e.id)}>X</button>
                     </td>
                   </tr>
                 ))}
@@ -317,23 +548,30 @@ function TabWeight() {
 }
 
 // ── Tab: Активность ─────────────────────────────────────────────
-function TabActivity() {
-  const [entries, setEntries] = useState<ActivityEntry[]>(MOCK_ACTIVITY_HISTORY)
+function TabActivity({
+  items,
+  onAdd,
+  onDelete,
+  savingId,
+  savingNew,
+}: {
+  items: ActivityEntry[]
+  onAdd: (recordDate: string, hours: number) => Promise<void>
+  onDelete: (recordId: string) => Promise<void>
+  savingId?: string
+  savingNew: boolean
+}) {
   const [newDate, setNewDate] = useState('')
   const [newHours, setNewHours] = useState('')
 
-  const addEntry = () => {
+  const addEntry = async () => {
     if (!newDate || !newHours) return
-    setEntries(prev => [...prev, {
-      id: Date.now(), date: newDate, hours: Number(newHours)
-    }])
+    await onAdd(newDate, Number(newHours))
     setNewDate('')
     setNewHours('')
   }
 
-  const removeEntry = (id: number) => setEntries(prev => prev.filter(e => e.id !== id))
-
-  const chartData = entries.map(e => ({ date: e.date, value: e.hours }))
+  const chartData = items.map(e => ({ date: e.date, value: e.hours }))
 
   return (
     <div>
@@ -349,7 +587,7 @@ function TabActivity() {
               <input className={styles.chartTableInput} type="number"
                 value={newHours} onChange={e => setNewHours(e.target.value)}
                 placeholder="Время, ч" />
-              <button className={styles.addRowBtn} onClick={addEntry}>+</button>
+              <button className={styles.addRowBtn} disabled={savingNew} onClick={() => void addEntry()}>+</button>
             </div>
             <table className={styles.chartTable}>
               <thead>
@@ -360,12 +598,14 @@ function TabActivity() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map(e => (
-                  <tr key={e.id}>
+                {items.length === 0 ? (
+                  <tr><td colSpan={3}>Записей пока нет</td></tr>
+                ) : items.map(e => (
+                  <tr key={e.id} title={e.label}>
                     <td>{e.date}</td>
                     <td>{e.hours}</td>
                     <td>
-                      <button className={styles.removeBtn} onClick={() => removeEntry(e.id)}>X</button>
+                      <button className={styles.removeBtn} disabled={savingId === e.id} onClick={() => void onDelete(e.id)}>X</button>
                     </td>
                   </tr>
                 ))}
@@ -383,11 +623,223 @@ export function PetProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const initialTab = ((location.state as any)?.tab as Tab) ?? 'food'
+  const locationState = location.state as { tab?: Tab; fromTab?: Tab } | null
+  const initialTab = locationState?.tab ?? locationState?.fromTab ?? 'food'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [liked, setLiked] = useState(false)
-  const pet = MOCK_PET
-  const onToggleLike = () => setLiked(prev => !prev)
+  const [petData, setPetData] = useState<PetProfileData | null>(null)
+  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([])
+  const [photoUrl, setPhotoUrl] = useState<string>()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])
+  const [symptoms, setSymptoms] = useState<Symptom[]>([])
+  const [savingNewRecord, setSavingNewRecord] = useState(false)
+  const [savingRecordId, setSavingRecordId] = useState<string>()
+  const [savingFavorite, setSavingFavorite] = useState(false)
+  const [deletingPet, setDeletingPet] = useState(false)
+
+  useEffect(() => {
+    if (!id) {
+      setError('Питомец не найден')
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    const loadProfile = async () => {
+      setLoading(true)
+      setError('')
+      setPhotoUrl(undefined)
+
+      try {
+        const [pet, records] = await Promise.all([
+          petService.getPet(id),
+          petService.getHealthRecords(id),
+        ])
+
+        if (cancelled) return
+
+        setPetData(pet)
+        setHealthRecords(records)
+
+        void petService.getFavoriteStatus(id)
+          .then((status) => {
+            if (!cancelled) setLiked(status.favorite)
+          })
+          .catch(() => {
+            if (!cancelled) setLiked(false)
+          })
+
+        void Promise.all([
+          referenceService.fetchActivityTypes(),
+          referenceService.fetchSymptoms(),
+        ]).then(([acts, syms]) => {
+          if (!cancelled) {
+            setActivityTypes(acts)
+            setSymptoms(syms)
+          }
+        }).catch(() => {
+          if (!cancelled) {
+            setActivityTypes([])
+            setSymptoms([])
+          }
+        })
+
+        if (pet.photoObjectKey) {
+          try {
+            const photo = await petService.getPhotoDownloadUrl(pet.photoObjectKey)
+            if (!cancelled) setPhotoUrl(photo.url)
+          } catch {
+            if (!cancelled) setPhotoUrl(undefined)
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setPetData(null)
+          setHealthRecords([])
+          setError(err instanceof Error ? err.message : 'Не удалось загрузить профиль питомца')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void loadProfile()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  const latestRecord = useMemo(() => sortRecordsDesc(healthRecords)[0], [healthRecords])
+
+  const pet = useMemo(
+    () => petData ? mapPetToView(petData, latestRecord, photoUrl) : null,
+    [latestRecord, petData, photoUrl],
+  )
+
+  const currentCondition = useMemo(() => mapCurrentCondition(latestRecord), [latestRecord])
+  const diseaseHistory = useMemo(() => mapDiseaseHistory(healthRecords), [healthRecords])
+  const weightHistory = useMemo(() => mapWeightHistory(healthRecords, petData ?? undefined), [healthRecords, petData])
+  const activityHistory = useMemo(() => mapActivityHistory(healthRecords), [healthRecords])
+
+  const refDefaults = useMemo<RefDefaults | null>(() => {
+    const activityTypeId = activityTypes[0]?.id
+    const symptomId = symptoms.find((item) => {
+      const label = (item.nameRu || item.name || item.nameEn || '').toLowerCase()
+      return label === 'нет' || label.includes('нет')
+    })?.id ?? symptoms[0]?.id
+
+    if (!activityTypeId || !symptomId) return null
+    return { activityTypeId, symptomId }
+  }, [activityTypes, symptoms])
+
+  const createRecord = async (data: { recordDate: string; weightKg?: number; activityHours?: number; notes: string }) => {
+    if (!id || !refDefaults) {
+      setActionError('Справочники ещё не загружены, попробуйте ещё раз')
+      return
+    }
+
+    setSavingNewRecord(true)
+    setActionError('')
+
+    try {
+      const created = await petService.createHealthRecord(id, {
+        activityTypeId: refDefaults.activityTypeId,
+        symptomIds: [refDefaults.symptomId],
+        recordDate: data.recordDate,
+        weightKg: data.weightKg,
+        activityHours: data.activityHours,
+        notes: data.notes,
+      })
+
+      setHealthRecords((prev) => [...prev, created])
+      if (data.weightKg != null) {
+        setPetData((prev) => prev ? { ...prev, weightKg: data.weightKg } : prev)
+      }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Не удалось сохранить запись')
+      throw err
+    } finally {
+      setSavingNewRecord(false)
+    }
+  }
+
+  const deleteRecord = async (recordId: string) => {
+    if (!id) return
+
+    setSavingRecordId(recordId)
+    setActionError('')
+
+    try {
+      await petService.deleteHealthRecord(id, recordId)
+      setHealthRecords((prev) => prev.filter((record) => record.id !== recordId))
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Не удалось удалить запись')
+    } finally {
+      setSavingRecordId(undefined)
+    }
+  }
+
+  const onToggleLike = async () => {
+    if (!id || savingFavorite) return
+
+    const next = !liked
+    setLiked(next)
+    setSavingFavorite(true)
+    setActionError('')
+
+    try {
+      if (next) {
+        await petService.addFavorite(id)
+      } else {
+        await petService.removeFavorite(id)
+      }
+    } catch (err) {
+      setLiked(!next)
+      setActionError(err instanceof Error ? err.message : 'Не удалось обновить избранное')
+    } finally {
+      setSavingFavorite(false)
+    }
+  }
+
+  const deletePet = async () => {
+    if (!id || deletingPet) return
+    if (!window.confirm('Удалить профиль питомца?')) return
+
+    setDeletingPet(true)
+    setActionError('')
+
+    try {
+      await petService.deletePet(id)
+      navigate('/dashboard')
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Не удалось удалить питомца')
+      setDeletingPet(false)
+    }
+  }
+
+  const sharePet = async () => {
+    if (!pet) return
+    const url = window.location.href
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: pet.name, text: 'Профиль питомца', url })
+      } else {
+        await navigator.clipboard.writeText(url)
+      }
+    } catch {
+      // User cancelled native share dialog.
+    }
+  }
+
+  const downloadPhoto = () => {
+    if (!pet?.photoUrl) return
+    window.open(pet.photoUrl, '_blank', 'noopener,noreferrer')
+  }
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'food', label: 'Питание' },
@@ -410,11 +862,12 @@ export function PetProfilePage() {
           <button
             className={styles.editBtn}
             onClick={() => navigate(`/pet-profile/${id}/edit-profile`, { state: { fromTab: activeTab } })}
+            disabled={!petData}
           >
             <EditIcon width={14} height={14} className="no-filter" />
             Изменить
           </button>
-          <button className={styles.deleteBtn}>
+          <button className={styles.deleteBtn} disabled={!petData || deletingPet} onClick={() => void deletePet()}>
             <DeleteIcon width={14} height={14} className="no-filter" />
             Удалить
           </button>
@@ -423,7 +876,7 @@ export function PetProfilePage() {
 
       {/* Pet info card */}
       <div className={styles.petCard}>
-        {pet.photoUrl ? (
+        {pet?.photoUrl ? (
           <img src={pet.photoUrl} alt={pet.name} className={styles.petPhoto} />
         ) : (
           <div className={styles.petPhotoPlaceholder}>
@@ -438,23 +891,27 @@ export function PetProfilePage() {
 
         <div className={styles.petInfoMain}>
           <div className={styles.petInfoLeft}>
-            <h2 className={styles.petName}>{pet.name}</h2>
-            <p className={styles.petAgeLine}>Возраст: {pet.age}<br />ID: {pet.id}</p>
-            <div className={styles.petFields}>
-              {[
-                { label: 'Порода', value: pet.breed },
-                { label: 'Пол', value: pet.gender },
-                { label: 'Дата рождения', value: pet.birthDate },
-                { label: 'Вес', value: `${pet.weight} кг` },
-                { label: 'Уровень активности', value: pet.activityLevel },
-                { label: 'Репродуктивный статус', value: pet.reproductiveStatus },
-              ].map(f => (
-                <div key={f.label} className={styles.petFieldRow}>
-                  <span className={styles.petFieldLabel}>{f.label}</span>
-                  <span className={styles.petFieldValue}>{f.value}</span>
-                </div>
-              ))}
-            </div>
+            <h2 className={styles.petName}>{loading ? 'Загрузка...' : pet?.name ?? 'Питомец не найден'}</h2>
+            <p className={styles.petAgeLine}>Возраст: {pet?.age ?? 'Не указано'}<br />ID: {pet?.id ?? id}</p>
+            {error ? (
+              <p className={styles.conditionValue}>{error}</p>
+            ) : (
+              <div className={styles.petFields}>
+                {[
+                  { label: 'Порода', value: pet?.breed ?? 'Не указано' },
+                  { label: 'Пол', value: pet?.gender ?? 'Не указано' },
+                  { label: 'Дата рождения', value: pet?.birthDate ?? 'Не указано' },
+                  { label: 'Вес', value: pet ? `${pet.weight} кг` : 'Не указано' },
+                  { label: 'Уровень активности', value: pet?.activityLevel ?? 'Не указано' },
+                  { label: 'Репродуктивный статус', value: pet?.reproductiveStatus ?? 'Не указано' },
+                ].map(f => (
+                  <div key={f.label} className={styles.petFieldRow}>
+                    <span className={styles.petFieldLabel}>{f.label}</span>
+                    <span className={styles.petFieldValue}>{f.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className={styles.petInfoRight}>
@@ -463,22 +920,23 @@ export function PetProfilePage() {
                 className={styles.heartBtn}
                 type="button"
                 aria-label={liked ? 'Убрать из избранного' : 'Добавить в избранное'}
+                disabled={!petData || savingFavorite}
                 onClick={(e) => {
                   e.stopPropagation()
-                  onToggleLike()
+                  void onToggleLike()
                 }}
               >
                 <img alt="" src={liked ? heartOrange : heartWhite} className={styles.heartIcon} />
               </button>
-              <button className={styles.iconBtn} title="Поделиться">
+              <button className={styles.iconBtn} title="Поделиться" disabled={!petData} onClick={() => void sharePet()}>
                 <ShareIcon width={30} height={30} />
               </button>
-              <button className={styles.iconBtn} title="Скачать">
+              <button className={styles.iconBtn} title="Скачать" disabled={!pet?.photoUrl} onClick={downloadPhoto}>
                 <DownloadIcon width={30} height={30} />
               </button>
             </div>
             <p className={styles.descriptionLabel}>Описание</p>
-            <p className={styles.descriptionText}>{pet.description}</p>
+            <p className={styles.descriptionText}>{pet?.description ?? 'Описание пока не добавлено'}</p>
           </div>
         </div>
       </div>
@@ -508,12 +966,51 @@ export function PetProfilePage() {
           </select>
         </div>
         <div className={styles.tabContent}>
+          {actionError && <p className={styles.conditionValue}>{actionError}</p>}
           {activeTab === 'food' && <TabFood />}
-          {activeTab === 'condition' && <TabCondition />}
-          {activeTab === 'history' && <TabHistory />}
+          {activeTab === 'condition' && (
+            <TabCondition
+              condition={currentCondition}
+              onDelete={deleteRecord}
+              onMoveToHistory={() => setActiveTab('history')}
+              savingId={savingRecordId}
+            />
+          )}
+          {activeTab === 'history' && (
+            <TabHistory
+              items={diseaseHistory}
+              onDelete={deleteRecord}
+              savingId={savingRecordId}
+            />
+          )}
           {activeTab === 'contra' && <TabContra />}
-          {activeTab === 'weight' && <TabWeight />}
-          {activeTab === 'activity' && <TabActivity />}
+          {activeTab === 'weight' && (
+            <TabWeight
+              items={weightHistory}
+              onAdd={(recordDate, weightKg) => createRecord({
+                recordDate,
+                weightKg,
+                notes: `Вес: ${weightKg} кг`,
+              })}
+              onDelete={deleteRecord}
+              savingId={savingRecordId}
+              savingNew={savingNewRecord}
+            />
+          )}
+          {activeTab === 'activity' && (
+            <TabActivity
+              items={activityHistory}
+              onAdd={(recordDate, activityHours) => createRecord({
+                recordDate,
+                activityHours,
+                weightKg: petData?.weightKg,
+                notes: `Активность: ${activityHours} ч`,
+              })}
+              onDelete={deleteRecord}
+              savingId={savingRecordId}
+              savingNew={savingNewRecord}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -346,6 +346,7 @@ public class PetService {
         healthRecord.getSymptoms().add(defaultSymptom);
         healthRecord.setNotes("Начальная запись при регистрации питомца");
         healthRecord.setWeightKg(pet.getWeightKg() != null ? pet.getWeightKg() : 0.0);
+        healthRecord.setRecordDate(java.time.LocalDate.now());
         healthRecord.assignNewId();
 
         healthRepo.save(healthRecord);
@@ -401,6 +402,8 @@ public class PetService {
         healthRecord.setActivityType(activityType);
         healthRecord.setSymptoms(new HashSet<>(symptoms));
         healthRecord.setNotes(req.getNotes());
+        healthRecord.setActivityHours(req.getActivityHours());
+        healthRecord.setRecordDate(req.getRecordDate() != null ? req.getRecordDate() : java.time.LocalDate.now());
 
         Double recordWeight = req.getWeightKg() != null ? req.getWeightKg() : pet.getWeightKg();
         healthRecord.setWeightKg(recordWeight);
@@ -473,6 +476,14 @@ public class PetService {
             }
         }
 
+        if (req.getActivityHours() != null) {
+            record.setActivityHours(req.getActivityHours());
+        }
+
+        if (req.getRecordDate() != null) {
+            record.setRecordDate(req.getRecordDate());
+        }
+
         PetHealthRecord saved = healthRepo.save(record);
 
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
@@ -482,6 +493,31 @@ public class PetService {
         ));
 
         return toHealthDto(saved, resolveOwnerName(ownerId, jwt));
+    }
+
+    @Transactional
+    public void deleteHealthRecord(Jwt jwt, UUID petId, UUID healthRecordId, UUID ownerId) {
+        Pet pet = pets.findById(petId)
+            .orElseThrow(() -> new NotFoundException("Pet not found"));
+
+        if (!pet.getOwnerId().equals(ownerId)) {
+            throw new ForbiddenOperationException("you can only delete health records for your own pets");
+        }
+
+        PetHealthRecord record = healthRepo.findById(healthRecordId)
+            .orElseThrow(() -> new NotFoundException("Health record not found"));
+
+        if (record.getPet() == null || record.getPet().getId() == null || !record.getPet().getId().equals(petId)) {
+            throw new ForbiddenOperationException("health record does not belong to this pet");
+        }
+
+        healthRepo.delete(record);
+
+        auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
+            ownerId,
+            "HEALTH_RECORD_DELETED",
+            ActivityLogJson.petEvent(pet)
+        ));
     }
 
     private HealthRecordResponse toHealthDto(PetHealthRecord record) {
@@ -506,6 +542,7 @@ public class PetService {
         );
 
         response.setCreatedAt(record.getCreatedAt().toString());
+        response.setRecordDate(record.getRecordDate());
         response.setPetName(pet.getName());
         response.setSpeciesId(pet.getSpecies().getId());
         response.setSpeciesName(pet.getSpecies().getName());
@@ -521,6 +558,7 @@ public class PetService {
         response.setBirthDate(pet.getBirthDate());
         response.setPassportId(pet.getPassportId());
         response.setWeightKg(record.getWeightKg());
+        response.setActivityHours(record.getActivityHours());
         response.setPhotoObjectKey(pet.getPhotoObjectKey());
         response.setComments(record.getNotes());
         response.setOwnerName(ownerName);

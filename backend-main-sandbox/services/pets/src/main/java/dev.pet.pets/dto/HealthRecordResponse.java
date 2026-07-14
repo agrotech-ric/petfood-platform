@@ -13,6 +13,7 @@ public class HealthRecordResponse {
     private List<String> symptoms;
 
     private String createdAt;
+    private LocalDate recordDate;
     private String petName;
     private Long speciesId;
     private String speciesName;
@@ -24,6 +25,7 @@ public class HealthRecordResponse {
     private LocalDate birthDate;
     private String passportId;
     private Double weightKg;
+    private Double activityHours;
     private String photoObjectKey;
     private String comments;
     private String ownerName;
@@ -46,6 +48,9 @@ public class HealthRecordResponse {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public LocalDate getRecordDate() { return recordDate; }
+    public void setRecordDate(LocalDate recordDate) { this.recordDate = recordDate; }
 
     public String getPetName() { return petName; }
     public void setPetName(String petName) { this.petName = petName; }
@@ -79,6 +84,9 @@ public class HealthRecordResponse {
 
     public Double getWeightKg() { return weightKg; }
     public void setWeightKg(Double weightKg) { this.weightKg = weightKg; }
+
+    public Double getActivityHours() { return activityHours; }
+    public void setActivityHours(Double activityHours) { this.activityHours = activityHours; }
 
     public String getPhotoObjectKey() { return photoObjectKey; }
     public void setPhotoObjectKey(String photoObjectKey) { this.photoObjectKey = photoObjectKey; }

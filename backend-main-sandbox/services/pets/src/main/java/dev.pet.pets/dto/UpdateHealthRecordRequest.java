@@ -3,6 +3,7 @@ package dev.pet.pets.dto;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,10 @@ public class UpdateHealthRecordRequest {
 
     private Double weightKg;
 
+    private Double activityHours;
+
+    private LocalDate recordDate;
+
     public Long getActivityTypeId() { return activityTypeId; }
     public void setActivityTypeId(Long activityTypeId) { this.activityTypeId = activityTypeId; }
 
@@ -30,4 +35,10 @@ public class UpdateHealthRecordRequest {
 
     public Double getWeightKg() { return weightKg; }
     public void setWeightKg(Double weightKg) { this.weightKg = weightKg; }
+
+    public Double getActivityHours() { return activityHours; }
+    public void setActivityHours(Double activityHours) { this.activityHours = activityHours; }
+
+    public LocalDate getRecordDate() { return recordDate; }
+    public void setRecordDate(LocalDate recordDate) { this.recordDate = recordDate; }
 }

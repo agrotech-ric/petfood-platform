@@ -136,6 +136,11 @@ public class PetController {
         searchService.removeFavorite(jwt, id);
     }
 
+    @GetMapping("/{id}/favorite")
+    public java.util.Map<String, Boolean> isFavorite(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return java.util.Map.of("favorite", searchService.isFavorite(jwt, id));
+    }
+
     @GetMapping
     public Page<PetResponse> searchAll(@AuthenticationPrincipal Jwt jwt,
                                        @RequestParam(required = false) Long speciesId,
@@ -173,6 +178,16 @@ public class PetController {
     ) {
         UUID ownerId = UUID.fromString(jwt.getSubject());
         return service.updateHealthRecord(jwt, id, healthRecordId, ownerId, req);
+    }
+
+    @DeleteMapping("/{id}/health-records/{healthRecordId}")
+    public void deleteHealthRecord(
+        @AuthenticationPrincipal Jwt jwt,
+        @PathVariable UUID id,
+        @PathVariable UUID healthRecordId
+    ) {
+        UUID ownerId = UUID.fromString(jwt.getSubject());
+        service.deleteHealthRecord(jwt, id, healthRecordId, ownerId);
     }
 
     @GetMapping("/{id}/health-records")
@@ -267,4 +282,3 @@ public class PetController {
     }
 
 }
-
