@@ -38,6 +38,7 @@ public class PetResponse {
     private OffsetDateTime updatedAt;
 
     private String photoObjectKey;
+    private String comments;
 
 
 
@@ -108,5 +109,8 @@ public class PetResponse {
     public void setPhotoObjectKey(String photoObjectKey) {
         this.photoObjectKey = photoObjectKey;
     }
+
+    public String getComments() { return comments; }
+    public void setComments(String comments) { this.comments = comments; }
 
 }

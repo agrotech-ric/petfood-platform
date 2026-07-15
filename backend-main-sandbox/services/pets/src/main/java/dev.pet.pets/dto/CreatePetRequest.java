@@ -44,6 +44,9 @@ public class CreatePetRequest {
     @Size(max = 512)
     private String photoObjectKey;
 
+    @Size(max = 2000)
+    private String comments;
+
     public Integer getPuppiesCount() {
         return puppiesCount;
     }
@@ -141,6 +144,14 @@ public class CreatePetRequest {
 
     public void setPhotoObjectKey(String photoObjectKey) {
         this.photoObjectKey = photoObjectKey;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
     }
 
 

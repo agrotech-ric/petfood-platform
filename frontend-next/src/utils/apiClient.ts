@@ -104,6 +104,28 @@ export const apiClient = {
     return parseJsonBody<T>(response)
   },
 
+  put: async <T>(endpoint: string, data: any, timeout = 15000): Promise<T> => {
+    const fullUrl = `${apiBaseUrl}${endpoint}`
+
+    const response = await fetchWithTimeout(
+      fullUrl,
+      {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      timeout,
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Update failed')
+    }
+
+    return parseJsonBody<T>(response)
+  },
+
   delete: async (endpoint: string, timeout = 15000): Promise<void> => {
     const fullUrl = `${apiBaseUrl}${endpoint}`
 
@@ -122,4 +144,3 @@ export const apiClient = {
     }
   },
 }
-

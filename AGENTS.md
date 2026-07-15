@@ -187,7 +187,7 @@ API: `src/utils/apiClient.ts` — всегда `credentials: 'include'` (cookie 
 
 - Профиль: `services/profileService.ts` → `GET/PATCH /api/v1/account`, `GET /api/v1/account/profile/me`, `GET /api/v1/account/profile/me/activity`
 - Фото/аватар: presigned URL через `petService` (MinIO sandbox)
-- Профиль питомца: данные карточки через `petService.getPet()`, записи состояния/графиков через health records (`recordDate`, `weightKg`, `activityHours`); не добавлять локальные-only строки в графики без сохранения через API.
+- Профиль питомца: данные карточки через `petService.getPet()` (`comments` — описание питомца), питание через `petService.getPetFoods()`, противопоказания через `petService.getContraindications()`/`updateContraindications()`, текущее состояние/история болезней через health records (`conditionName`, `conditionStatus: current|history`, `notes`, `symptomIds`), графики через health records (`recordDate`, `weightKg`, `activityHours`); не добавлять локальные-only строки в графики без сохранения через API.
 - Не дублировать `fetch` — расширять существующие service-файлы
 
 ### Навигация «назад» с Edit Profile

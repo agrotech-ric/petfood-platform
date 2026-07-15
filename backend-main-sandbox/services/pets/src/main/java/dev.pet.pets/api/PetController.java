@@ -197,6 +197,31 @@ public class PetController {
         return service.listHealthRecords(id, ownerId, jwt);
     }
 
+    @GetMapping("/{id}/foods")
+    public List<PetFoodResponse> listPetFoods(
+        @AuthenticationPrincipal Jwt jwt,
+        @PathVariable UUID id
+    ) {
+        return service.listPetFoods(jwt, id);
+    }
+
+    @GetMapping("/{id}/contraindications")
+    public PetContraindicationsResponse getContraindications(
+        @AuthenticationPrincipal Jwt jwt,
+        @PathVariable UUID id
+    ) {
+        return service.getContraindications(jwt, id);
+    }
+
+    @PutMapping("/{id}/contraindications")
+    public PetContraindicationsResponse updateContraindications(
+        @AuthenticationPrincipal Jwt jwt,
+        @PathVariable UUID id,
+        @Valid @RequestBody UpdatePetContraindicationsRequest req
+    ) {
+        return service.updateContraindications(jwt, id, req);
+    }
+
 
     @PostMapping("/health-records/{recordId}/recommendation")
     @PreAuthorize("hasRole('VET') or hasRole('USER')")

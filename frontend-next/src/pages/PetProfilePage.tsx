@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { MOCK_PET_FOODS, MOCK_CONTRAINDICATIONS } from '../data/petProfileMock'
-import { petService, type HealthRecord, type PetProfileData } from '../../services/petService'
+import { petService, type HealthRecord, type PetContraindications, type PetFood, type PetProfileData } from '../../services/petService'
 import { referenceService, type ActivityType, type Symptom } from '../../services/referenceService'
 import styles from '../styles/PetProfile.module.css'
 import EditIcon from '../assets/icons/edit.svg?react'
@@ -58,6 +57,15 @@ type ActivityEntry = {
   label: string
 }
 
+type PetFoodView = {
+  id: string
+  name: string
+  type: string
+  format: string
+  calories: number
+  lastModified: string
+}
+
 type RefDefaults = {
   activityTypeId: number
   symptomId: number
@@ -79,6 +87,17 @@ function formatShortDate(value?: string, fallback = 'Не указано') {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleDateString('ru-RU')
+}
+
+function mapPetFoods(foods: PetFood[]): PetFoodView[] {
+  return foods.map((food) => ({
+    id: food.id,
+    name: food.name,
+    type: food.type,
+    format: food.format,
+    calories: food.calories,
+    lastModified: formatShortDate(food.updatedAt),
+  }))
 }
 
 function calculateAge(birthDate?: string) {
@@ -133,6 +152,22 @@ function getRecordDescription(record?: HealthRecord) {
   return record?.comments?.trim() || 'Описание не указано'
 }
 
+function isConditionRecord(record: HealthRecord) {
+  return Boolean(record.conditionName?.trim())
+}
+
+function isCurrentConditionRecord(record: HealthRecord) {
+  return isConditionRecord(record) && record.conditionStatus !== 'history'
+}
+
+function isHistoryConditionRecord(record: HealthRecord) {
+  return isConditionRecord(record) && record.conditionStatus === 'history'
+}
+
+function getConditionDisease(record: HealthRecord) {
+  return record.conditionName?.trim() || 'Не указано'
+}
+
 function getRecordDate(record: HealthRecord) {
   return record.recordDate || record.createdAt
 }
@@ -148,7 +183,7 @@ function mapPetToView(pet: PetProfileData, latestRecord?: HealthRecord, photoUrl
     weight: normalizeWeight(pet.weightKg),
     activityLevel: latestRecord?.activityTypeName || 'Не указано',
     reproductiveStatus: pet.reproductiveSubStatusName || pet.reproductiveStatusName || 'Не указано',
-    description: latestRecord?.comments?.trim() || 'Описание пока не добавлено',
+    description: pet.comments?.trim() || 'Описание пока не добавлено',
     photoUrl,
   }
 }
@@ -158,17 +193,17 @@ function mapCurrentCondition(record?: HealthRecord): PetCurrentCondition | null 
   return {
     id: record.id,
     date: formatShortDate(getRecordDate(record)),
-    disease: record.activityTypeName || 'Не указано',
+    disease: getConditionDisease(record),
     description: getRecordDescription(record),
     symptoms: record.symptoms?.length ? record.symptoms : ['Нет симптомов'],
   }
 }
 
 function mapDiseaseHistory(records: HealthRecord[]): PetDiseaseHistory[] {
-  return sortRecordsDesc(records).map((record) => ({
+  return sortRecordsDesc(records).filter(isHistoryConditionRecord).map((record) => ({
     id: record.id,
     date: formatShortDate(getRecordDate(record)),
-    disease: record.activityTypeName || 'Не указано',
+    disease: getConditionDisease(record),
     symptoms: record.symptoms?.join(', ') || 'Нет симптомов',
     description: getRecordDescription(record),
   }))
@@ -288,7 +323,7 @@ function LineChart({
 }
 
 // ── Tab: Питание ────────────────────────────────────────────────
-function TabFood() {
+function TabFood({ foods }: { foods: PetFoodView[] }) {
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -307,7 +342,9 @@ function TabFood() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_PET_FOODS.map(f => (
+            {foods.length === 0 ? (
+              <tr><td colSpan={6}>Записей пока нет</td></tr>
+            ) : foods.map(f => (
               <tr key={f.id}>
                 <td>{f.name}</td>
                 <td>{f.type}</td>
@@ -453,18 +490,20 @@ function TabHistory({
 }
 
 // ── Tab: Противопоказания ───────────────────────────────────────
-function TabContra() {
+function TabContra({ contraindications }: { contraindications: PetContraindications }) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const c = MOCK_CONTRAINDICATIONS
+  const c = contraindications
   return (
     <div>
       <p className={styles.sectionLabel}>Нежелательные ингредиенты</p>
       <div className={styles.chipsRow}>
-        {c.ingredients.map(i => <span key={i} className={styles.chip}>{i}</span>)}
+        {c.ingredients.length === 0
+          ? <span className={styles.chip}>Нет данных</span>
+          : c.ingredients.map(i => <span key={i} className={styles.chip}>{i}</span>)}
       </div>
       <p className={styles.conditionLabel}>Описание</p>
-      <p className={styles.conditionValue}>{c.description}</p>
+      <p className={styles.conditionValue}>{c.description || 'Описание пока не добавлено'}</p>
       <button
         className={styles.actionCardBtn}
         onClick={() => navigate(`/pet-profile/${id}/edit-contraindications`, { state: { fromTab: 'contra' } })}
@@ -629,6 +668,8 @@ export function PetProfilePage() {
   const [liked, setLiked] = useState(false)
   const [petData, setPetData] = useState<PetProfileData | null>(null)
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([])
+  const [petFoods, setPetFoods] = useState<PetFood[]>([])
+  const [petContraindications, setPetContraindications] = useState<PetContraindications | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -665,6 +706,22 @@ export function PetProfilePage() {
         setPetData(pet)
         setHealthRecords(records)
 
+        void petService.getPetFoods(id)
+          .then((foods) => {
+            if (!cancelled) setPetFoods(foods)
+          })
+          .catch(() => {
+            if (!cancelled) setPetFoods([])
+          })
+
+        void petService.getContraindications(id)
+          .then((contraindications) => {
+            if (!cancelled) setPetContraindications(contraindications)
+          })
+          .catch(() => {
+            if (!cancelled) setPetContraindications({ petId: id, ingredients: [], description: '' })
+          })
+
         void petService.getFavoriteStatus(id)
           .then((status) => {
             if (!cancelled) setLiked(status.favorite)
@@ -700,6 +757,8 @@ export function PetProfilePage() {
         if (!cancelled) {
           setPetData(null)
           setHealthRecords([])
+          setPetFoods([])
+          setPetContraindications(null)
           setError(err instanceof Error ? err.message : 'Не удалось загрузить профиль питомца')
         }
       } finally {
@@ -715,16 +774,18 @@ export function PetProfilePage() {
   }, [id])
 
   const latestRecord = useMemo(() => sortRecordsDesc(healthRecords)[0], [healthRecords])
+  const latestConditionRecord = useMemo(() => sortRecordsDesc(healthRecords).find(isCurrentConditionRecord), [healthRecords])
 
   const pet = useMemo(
     () => petData ? mapPetToView(petData, latestRecord, photoUrl) : null,
     [latestRecord, petData, photoUrl],
   )
 
-  const currentCondition = useMemo(() => mapCurrentCondition(latestRecord), [latestRecord])
+  const currentCondition = useMemo(() => mapCurrentCondition(latestConditionRecord), [latestConditionRecord])
   const diseaseHistory = useMemo(() => mapDiseaseHistory(healthRecords), [healthRecords])
   const weightHistory = useMemo(() => mapWeightHistory(healthRecords, petData ?? undefined), [healthRecords, petData])
   const activityHistory = useMemo(() => mapActivityHistory(healthRecords), [healthRecords])
+  const foodItems = useMemo(() => mapPetFoods(petFoods), [petFoods])
 
   const refDefaults = useMemo<RefDefaults | null>(() => {
     const activityTypeId = activityTypes[0]?.id
@@ -779,6 +840,26 @@ export function PetProfilePage() {
       setHealthRecords((prev) => prev.filter((record) => record.id !== recordId))
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Не удалось удалить запись')
+    } finally {
+      setSavingRecordId(undefined)
+    }
+  }
+
+  const moveCurrentConditionToHistory = async () => {
+    if (!id || !latestConditionRecord) return
+
+    setSavingRecordId(latestConditionRecord.id)
+    setActionError('')
+
+    try {
+      const updated = await petService.updateHealthRecord(id, latestConditionRecord.id, {
+        conditionStatus: 'history',
+      })
+
+      setHealthRecords((prev) => prev.map((record) => record.id === updated.id ? updated : record))
+      setActiveTab('history')
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Не удалось переместить запись в историю болезней')
     } finally {
       setSavingRecordId(undefined)
     }
@@ -967,12 +1048,12 @@ export function PetProfilePage() {
         </div>
         <div className={styles.tabContent}>
           {actionError && <p className={styles.conditionValue}>{actionError}</p>}
-          {activeTab === 'food' && <TabFood />}
+          {activeTab === 'food' && <TabFood foods={foodItems} />}
           {activeTab === 'condition' && (
             <TabCondition
               condition={currentCondition}
               onDelete={deleteRecord}
-              onMoveToHistory={() => setActiveTab('history')}
+              onMoveToHistory={moveCurrentConditionToHistory}
               savingId={savingRecordId}
             />
           )}
@@ -983,7 +1064,9 @@ export function PetProfilePage() {
               savingId={savingRecordId}
             />
           )}
-          {activeTab === 'contra' && <TabContra />}
+          {activeTab === 'contra' && (
+            <TabContra contraindications={petContraindications ?? { petId: id ?? '', ingredients: [], description: '' }} />
+          )}
           {activeTab === 'weight' && (
             <TabWeight
               items={weightHistory}

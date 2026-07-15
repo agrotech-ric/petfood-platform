@@ -3,6 +3,7 @@ package dev.pet.pets.dto;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +18,12 @@ public class CreateHealthRecordRequest {
 
     @JsonAlias("comments")
     private String notes;
+
+    @Size(max = 255)
+    private String conditionName;
+
+    @Size(max = 32)
+    private String conditionStatus;
 
     private Double weightKg;
 
@@ -46,6 +53,22 @@ public class CreateHealthRecordRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getConditionName() {
+        return conditionName;
+    }
+
+    public void setConditionName(String conditionName) {
+        this.conditionName = conditionName;
+    }
+
+    public String getConditionStatus() {
+        return conditionStatus;
+    }
+
+    public void setConditionStatus(String conditionStatus) {
+        this.conditionStatus = conditionStatus;
     }
 
     public Double getWeightKg() {

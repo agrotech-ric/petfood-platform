@@ -29,14 +29,18 @@ export type PetProfileData = {
   createdAt?: string
   updatedAt?: string
   photoObjectKey?: string
+  comments?: string
 }
 
 export type HealthRecord = {
   id: string
   petId: string
   ownerId: string
+  activityTypeId?: number
   activityTypeName?: string
   symptoms?: string[]
+  conditionName?: string
+  conditionStatus?: 'current' | 'history' | string
   createdAt: string
   recordDate?: string
   petName?: string
@@ -54,6 +58,22 @@ export type HealthRecord = {
   photoObjectKey?: string
   comments?: string
   ownerName?: string
+}
+
+export type PetFood = {
+  id: string
+  petId: string
+  name: string
+  type: string
+  format: string
+  calories: number
+  updatedAt: string
+}
+
+export type PetContraindications = {
+  petId: string
+  ingredients: string[]
+  description: string
 }
 
 export const petService = {
@@ -94,6 +114,15 @@ export const petService = {
 
   getHealthRecords: (petId: string) =>
     apiClient.get<HealthRecord[]>(`/api/v1/pets/${petId}/health-records`),
+
+  getPetFoods: (petId: string) =>
+    apiClient.get<PetFood[]>(`/api/v1/pets/${petId}/foods`),
+
+  getContraindications: (petId: string) =>
+    apiClient.get<PetContraindications>(`/api/v1/pets/${petId}/contraindications`),
+
+  updateContraindications: (petId: string, data: { ingredients: string[]; description: string }) =>
+    apiClient.put<PetContraindications>(`/api/v1/pets/${petId}/contraindications`, data),
 
   updateHealthRecord: (petId: string, healthRecordId: string, data: Record<string, unknown>) =>
     apiClient.patch<HealthRecord>(`/api/v1/pets/${petId}/health-records/${healthRecordId}`, data),

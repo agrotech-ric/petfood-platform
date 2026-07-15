@@ -36,6 +36,12 @@ public class PetHealthRecord {
     @Column(name = "notes")
     private String notes;
 
+    @Column(name = "condition_name")
+    private String conditionName;
+
+    @Column(name = "condition_status", nullable = false)
+    private String conditionStatus;
+
     @Column(name = "weight_kg", nullable = false)
     private Double weightKg;
 
@@ -52,6 +58,7 @@ public class PetHealthRecord {
         this.createdAt = java.time.LocalDateTime.now();
         this.recordDate = LocalDate.now();
         this.weightKg = 0.0;
+        this.conditionStatus = "current";
     }
 
     public UUID getId() {
@@ -96,6 +103,22 @@ public class PetHealthRecord {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getConditionName() {
+        return conditionName;
+    }
+
+    public void setConditionName(String conditionName) {
+        this.conditionName = conditionName;
+    }
+
+    public String getConditionStatus() {
+        return conditionStatus;
+    }
+
+    public void setConditionStatus(String conditionStatus) {
+        this.conditionStatus = conditionStatus;
     }
 
     public Double getWeightKg() {

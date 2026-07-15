@@ -18,6 +18,12 @@ public class UpdateHealthRecordRequest {
     @JsonAlias("comments")
     private String notes;
 
+    @Size(max = 255)
+    private String conditionName;
+
+    @Size(max = 32)
+    private String conditionStatus;
+
     private Double weightKg;
 
     private Double activityHours;
@@ -32,6 +38,12 @@ public class UpdateHealthRecordRequest {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public String getConditionName() { return conditionName; }
+    public void setConditionName(String conditionName) { this.conditionName = conditionName; }
+
+    public String getConditionStatus() { return conditionStatus; }
+    public void setConditionStatus(String conditionStatus) { this.conditionStatus = conditionStatus; }
 
     public Double getWeightKg() { return weightKg; }
     public void setWeightKg(Double weightKg) { this.weightKg = weightKg; }

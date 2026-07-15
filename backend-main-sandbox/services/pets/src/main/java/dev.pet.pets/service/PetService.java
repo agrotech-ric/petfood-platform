@@ -57,6 +57,8 @@ public class PetService {
     private final BreedRepository breedRepo;
     private final ColorRepository colorRepo;
     private final PetHealthRecordRepository healthRepo;
+    private final PetFoodRepository petFoodRepo;
+    private final PetContraindicationRepository contraindicationRepo;
     private final ReproductiveStatusRepository reproductiveStatusRepo;
     private final ReproductiveSubStatusRepository reproductiveSubStatusRepo;
     private final PetPhotoStorage photoStorage;
@@ -77,6 +79,8 @@ public class PetService {
         ActivityTypeRepository activityTypeRepo,
         SymptomRepository symptomRepo,
         PetHealthRecordRepository healthRepo,
+        PetFoodRepository petFoodRepo,
+        PetContraindicationRepository contraindicationRepo,
         ReproductiveStatusRepository reproductiveStatusRepo,
         ReproductiveSubStatusRepository reproductiveSubStatusRepo,
         PetPhotoStorage photoStorageService,
@@ -95,6 +99,8 @@ public class PetService {
         this.activityTypeRepo = activityTypeRepo;
         this.symptomRepo = symptomRepo;
         this.healthRepo = healthRepo;
+        this.petFoodRepo = petFoodRepo;
+        this.contraindicationRepo = contraindicationRepo;
         this.reproductiveStatusRepo = reproductiveStatusRepo;
         this.reproductiveSubStatusRepo = reproductiveSubStatusRepo;
         this.photoStorage = photoStorageService;
@@ -205,9 +211,6 @@ public class PetService {
 
         PetMapper.toEntity(req, pet, species, breed, color, status, subStatus);
         Pet saved = pets.save(pet);
-
-        // Create initial health record for newly registered pet
-        createInitialHealthRecord(saved, getSubject(jwt));
 
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
             saved.getOwnerId(),
@@ -379,6 +382,15 @@ public class PetService {
         return false;
     }
 
+    private String normalizeConditionStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "current";
+        }
+
+        String normalized = status.trim().toLowerCase(Locale.ROOT);
+        return "history".equals(normalized) ? "history" : "current";
+    }
+
     @Transactional
     public HealthRecordResponse createHealthRecord(Jwt jwt, UUID petId, UUID ownerId, CreateHealthRecordRequest req) {
         Pet pet = pets.findById(petId)
@@ -402,6 +414,8 @@ public class PetService {
         healthRecord.setActivityType(activityType);
         healthRecord.setSymptoms(new HashSet<>(symptoms));
         healthRecord.setNotes(req.getNotes());
+        healthRecord.setConditionName(req.getConditionName());
+        healthRecord.setConditionStatus(normalizeConditionStatus(req.getConditionStatus()));
         healthRecord.setActivityHours(req.getActivityHours());
         healthRecord.setRecordDate(req.getRecordDate() != null ? req.getRecordDate() : java.time.LocalDate.now());
 
@@ -465,6 +479,14 @@ public class PetService {
 
         if (req.getNotes() != null) {
             record.setNotes(req.getNotes());
+        }
+
+        if (req.getConditionName() != null) {
+            record.setConditionName(req.getConditionName());
+        }
+
+        if (req.getConditionStatus() != null) {
+            record.setConditionStatus(normalizeConditionStatus(req.getConditionStatus()));
         }
 
         if (req.getWeightKg() != null) {
@@ -532,7 +554,10 @@ public class PetService {
         response.setId(record.getId());
         response.setPetId(pet.getId());
         response.setOwnerId(record.getOwnerId());
+        response.setActivityTypeId(record.getActivityType().getId());
         response.setActivityTypeName(record.getActivityType().getName());
+        response.setConditionName(record.getConditionName());
+        response.setConditionStatus(record.getConditionStatus());
 
         response.setSymptoms(
             record.getSymptoms()
@@ -598,6 +623,108 @@ public class PetService {
         return records.stream()
             .map(r -> toHealthDto(r, ownerName))
             .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PetFoodResponse> listPetFoods(Jwt jwt, UUID petId) {
+        Pet pet = pets.findById(petId)
+            .orElseThrow(() -> new NotFoundException("Pet not found"));
+
+        if (!isAdminOrVet(jwt)) {
+            ensureOwner(jwt, pet.getOwnerId());
+        }
+
+        return petFoodRepo.findByPetIdAndOwnerIdOrderByUpdatedAtDesc(petId, pet.getOwnerId())
+            .stream()
+            .map(food -> new PetFoodResponse(
+                food.getId(),
+                petId,
+                food.getName(),
+                food.getFoodType(),
+                food.getFoodFormat(),
+                food.getCalories(),
+                food.getUpdatedAt()
+            ))
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PetContraindicationsResponse getContraindications(Jwt jwt, UUID petId) {
+        Pet pet = pets.findById(petId)
+            .orElseThrow(() -> new NotFoundException("Pet not found"));
+
+        if (!isAdminOrVet(jwt)) {
+            ensureOwner(jwt, pet.getOwnerId());
+        }
+
+        return contraindicationRepo.findByPetId(petId)
+            .map(this::toContraindicationsDto)
+            .orElseGet(() -> new PetContraindicationsResponse(petId, List.of(), ""));
+    }
+
+    @Transactional
+    public PetContraindicationsResponse updateContraindications(
+        Jwt jwt,
+        UUID petId,
+        UpdatePetContraindicationsRequest req
+    ) {
+        Pet pet = pets.findById(petId)
+            .orElseThrow(() -> new NotFoundException("Pet not found"));
+
+        if (!isAdminOrVet(jwt)) {
+            ensureOwner(jwt, pet.getOwnerId());
+        }
+
+        PetContraindication contraindication = contraindicationRepo.findByPetId(petId)
+            .orElseGet(() -> {
+                PetContraindication next = new PetContraindication();
+                next.setPetId(petId);
+                next.setOwnerId(pet.getOwnerId());
+                return next;
+            });
+
+        contraindication.setIngredientsJson(writeIngredients(req.getIngredients()));
+        contraindication.setDescription(req.getDescription());
+
+        return toContraindicationsDto(contraindicationRepo.save(contraindication));
+    }
+
+    private PetContraindicationsResponse toContraindicationsDto(PetContraindication contraindication) {
+        return new PetContraindicationsResponse(
+            contraindication.getPetId(),
+            readIngredients(contraindication.getIngredientsJson()),
+            contraindication.getDescription() != null ? contraindication.getDescription() : ""
+        );
+    }
+
+    private List<String> readIngredients(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            return objectMapper.readValue(
+                raw,
+                objectMapper.getTypeFactory().constructCollectionType(List.class, String.class)
+            );
+        } catch (Exception e) {
+            logger.warn("Failed to parse pet contraindication ingredients", e);
+            return List.of();
+        }
+    }
+
+    private String writeIngredients(List<String> ingredients) {
+        List<String> cleaned = ingredients == null ? List.of() : ingredients.stream()
+            .filter(item -> item != null && !item.isBlank())
+            .map(String::trim)
+            .distinct()
+            .toList();
+
+        try {
+            return objectMapper.writeValueAsString(cleaned);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize contraindication ingredients", e);
+        }
     }
 
 

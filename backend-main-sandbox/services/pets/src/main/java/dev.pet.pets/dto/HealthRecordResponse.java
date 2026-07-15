@@ -9,8 +9,11 @@ public class HealthRecordResponse {
     private UUID id;
     private UUID petId;
     private UUID ownerId;
+    private Long activityTypeId;
     private String activityTypeName;
     private List<String> symptoms;
+    private String conditionName;
+    private String conditionStatus;
 
     private String createdAt;
     private LocalDate recordDate;
@@ -40,11 +43,20 @@ public class HealthRecordResponse {
     public UUID getOwnerId() { return ownerId; }
     public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
 
+    public Long getActivityTypeId() { return activityTypeId; }
+    public void setActivityTypeId(Long activityTypeId) { this.activityTypeId = activityTypeId; }
+
     public String getActivityTypeName() { return activityTypeName; }
     public void setActivityTypeName(String activityTypeName) { this.activityTypeName = activityTypeName; }
 
     public List<String> getSymptoms() { return symptoms; }
     public void setSymptoms(List<String> symptoms) { this.symptoms = symptoms; }
+
+    public String getConditionName() { return conditionName; }
+    public void setConditionName(String conditionName) { this.conditionName = conditionName; }
+
+    public String getConditionStatus() { return conditionStatus; }
+    public void setConditionStatus(String conditionStatus) { this.conditionStatus = conditionStatus; }
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }

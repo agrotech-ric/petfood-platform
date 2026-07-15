@@ -26,6 +26,7 @@ public class PetMapper {
         target.setPassportId(src.getPassportId());
         target.setWeightKg(src.getWeightKg());
         target.setPhotoObjectKey(src.getPhotoObjectKey());
+        target.setComments(src.getComments());
         target.setReproductiveStatus(status);
         target.setReproductiveSubStatus(subStatus);
         target.setPuppiesCount(src.getPuppiesCount());
@@ -49,6 +50,7 @@ public class PetMapper {
 
         target.setPassportId(src.getPassportId());
         target.setWeightKg(src.getWeightKg());
+        target.setComments(src.getComments());
 
         target.setReproductiveSubStatus(subStatus);
         target.setPuppiesCount(src.getPuppiesCount());
@@ -87,6 +89,7 @@ public class PetMapper {
         dto.setPassportId(p.getPassportId());
         dto.setWeightKg(p.getWeightKg());
         dto.setPhotoObjectKey(p.getPhotoObjectKey());
+        dto.setComments(p.getComments());
         dto.setPuppiesCount(p.getPuppiesCount());
 
         if (p.getReproductiveStatus() != null) {

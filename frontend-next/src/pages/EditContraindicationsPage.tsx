@@ -1,20 +1,49 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { MOCK_CONTRAINDICATIONS } from '../data/petProfileMock'
 import { INGREDIENT_CATEGORIES } from '../data/createRecipeMock'
+import { petService } from '../../services/petService'
 import styles from '../styles/EditPet.module.css'
 
 export function EditContraindicationsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const returnTab = (location.state as any)?.fromTab ?? 'food'
-  const c = MOCK_CONTRAINDICATIONS
+  const returnTab = (location.state as any)?.fromTab ?? 'contra'
 
-  const [description, setDescription] = useState(c.description)
+  const [description, setDescription] = useState('')
   const [search, setSearch] = useState('')
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set())
-  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([...c.ingredients])
+  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    const petId = id
+
+    async function loadData() {
+      setLoading(true)
+      setError('')
+      try {
+        const data = await petService.getContraindications(petId)
+        if (cancelled) return
+        setDescription(data.description || '')
+        setSelectedIngredients(data.ingredients || [])
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Не удалось загрузить противопоказания')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void loadData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
 
   const toggleCategory = (key: string) => {
     setOpenCategories(prev => {
@@ -37,10 +66,31 @@ export function EditContraindicationsPage() {
     ),
   })).filter(cat => search === '' || cat.items.length > 0)
 
+  const goBack = () => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })
+
+  const handleSave = async () => {
+    if (!id) return
+
+    setSaving(true)
+    setError('')
+
+    try {
+      await petService.updateContraindications(id, {
+        ingredients: selectedIngredients,
+        description: description.trim(),
+      })
+      goBack()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось сохранить противопоказания')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       <div className={styles.pageHeader}>
-        <button className={styles.backBtn} onClick={() => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })}>
+        <button className={styles.backBtn} onClick={goBack}>
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>Особенности питания</h1>
@@ -48,12 +98,14 @@ export function EditContraindicationsPage() {
       </div>
 
       <div className={styles.card}>
+        {error && <p className={styles.fieldLabel}>{error}</p>}
         {/* Description */}
         <div className={styles.fieldGroup} style={{ marginBottom: 20 }}>
           <label className={styles.fieldLabel}>Описание</label>
           <textarea
             className={styles.fieldTextarea}
             value={description}
+            disabled={loading || saving}
             onChange={e => setDescription(e.target.value)}
           />
         </div>
@@ -68,6 +120,7 @@ export function EditContraindicationsPage() {
                 className={styles.ingredientSearchInput}
                 placeholder="Поиск"
                 value={search}
+                disabled={loading || saving}
                 onChange={e => setSearch(e.target.value)}
               />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -98,7 +151,9 @@ export function EditContraindicationsPage() {
                           style={selectedIngredients.includes(item)
                             ? { color: 'var(--color-accent-alt)', fontWeight: 600 }
                             : undefined}
-                          onClick={() => toggleIngredient(item)}
+                          onClick={() => {
+                            if (!saving) toggleIngredient(item)
+                          }}
                         >
                           {selectedIngredients.includes(item) ? '✓ ' : ''}{item}
                         </span>
@@ -117,7 +172,7 @@ export function EditContraindicationsPage() {
               {selectedIngredients.map(ing => (
                 <span key={ing} className={styles.chip}>
                   {ing}
-                  <button className={styles.chipRemove} onClick={() => toggleIngredient(ing)}>×</button>
+                  <button className={styles.chipRemove} onClick={() => toggleIngredient(ing)} disabled={saving}>×</button>
                 </span>
               ))}
               {selectedIngredients.length === 0 && (
@@ -131,9 +186,10 @@ export function EditContraindicationsPage() {
 
         <button
           className={styles.saveBtn}
-          onClick={() => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })}
+          onClick={handleSave}
+          disabled={loading || saving}
         >
-          Сохранить
+          {saving ? 'Сохранение...' : 'Сохранить'}
         </button>
       </div>
     </div>
