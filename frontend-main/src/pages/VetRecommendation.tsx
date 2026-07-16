@@ -49,6 +49,8 @@ export const VetRecommendation = () => {
   const [dailyKcal, setDailyKcal] = useState<number | null>(null);
   const [formula, setFormula] = useState<string | null>(null);
   const [referencePage, setReferencePage] = useState<string | null>(null);
+  const [additionalText, setAdditionalText] = useState<string | null>(null);
+
   const [targetKcal, setTargetKcal] = useState<number>(0);
   const [initialKcal, setInitialKcal] = useState<number>(0);
   const [isCalculatingKcal, setIsCalculatingKcal] = useState(false);
@@ -200,6 +202,7 @@ export const VetRecommendation = () => {
         setDailyKcal(calculatedKcal);
         setFormula(result.formula || null);
         setReferencePage(result.reference_page || null);
+        setAdditionalText(result.additional_text || null);
         setTargetKcal(calculatedKcal);
         setInitialKcal(calculatedKcal);
       } catch (err) {
@@ -483,6 +486,7 @@ export const VetRecommendation = () => {
               isCalculatingKcal={isCalculatingKcal}
               onRecalculate={handleRecalculateNutrients}
               errorMessage={kcalError}
+              additionalText={additionalText}
             />
 
             <IngredientSelector

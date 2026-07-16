@@ -107,6 +107,7 @@ class CalorieCalculationResponse(BaseModel):
     daily_kcal: float = Field(..., description="Daily caloric requirement (kcal)")
     formula: str = Field(..., description="Calculation formula (LaTeX format)")
     reference_page: str = Field(..., description="Reference page from FEDIAF guidelines")
+    additional_text: str = Field(..., description="additional text")
     size_category: SizeCategory = Field(..., description="Size category based on breed")
     age_category: AgeCategory = Field(..., description="Age category")
 

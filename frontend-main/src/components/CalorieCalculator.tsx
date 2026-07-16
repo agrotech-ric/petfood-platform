@@ -1,5 +1,37 @@
 import styles from '../styles/CalorieCalculator.module.css';
 
+import adult_active from "../formulas/adult_active.png";
+import adult_extreme from "../formulas/adult_extreme.png";
+import adult_moderate from "../formulas/adult_moderate.png";
+import adult_obesity_prone from "../formulas/adult_obesity_prone.png";
+import lactation_num_pup_less_5 from "../formulas/lactation_num_pup_less_5.png";
+import lactation_num_pup_more_5 from "../formulas/lactation_num_pup_more_5.png";
+import pregnancy_early_4_weeks from "../formulas/pregnancy_early_4_weeks.png";
+import pregnancy_last_5_weeks from "../formulas/pregnancy_last_5_weeks.png";
+import puppy_2_month from "../formulas/puppy_2_month.png";
+import puppy_more_2_month from "../formulas/puppy_more_2_month.png";
+import puppy_more_12_month from "../formulas/puppy_more_12_month.png";
+import senior_passive from "../formulas/senior_passive.png";
+import senior_moderate_adult_passive from "../formulas/senior_moderate_adult_passive.png";
+import senior_active_adult_low from "../formulas/senior_active_adult_low.png";
+
+
+const formulaImages: Record<string, string> = {
+  "pregnancy_early_4_weeks": pregnancy_early_4_weeks,
+  "pregnancy_last_5_weeks": pregnancy_last_5_weeks,
+  "lactation_num_pup_less_5": lactation_num_pup_less_5,
+  "lactation_num_pup_more_5": lactation_num_pup_more_5,
+  "puppy_2_month": puppy_2_month,
+  "puppy_more_2_month": puppy_more_2_month,
+  "puppy_more_12_month": puppy_more_12_month,
+  "senior_passive": senior_passive,
+  "senior_moderate_adult_passive": senior_moderate_adult_passive,
+  "senior_active_adult_low": senior_active_adult_low,
+  "adult_moderate": adult_moderate,
+  "adult_active": adult_active,
+  "adult_extreme": adult_extreme,
+  "adult_obesity_prone": adult_obesity_prone,
+};
 
 type CalorieCalculatorProps = {
   targetKcal: number;
@@ -11,7 +43,11 @@ type CalorieCalculatorProps = {
   errorMessage?: string | null;
   formula?: string | null;
   referencePage?: string | null;
+  additionalText?: string | null;
+
 };
+
+
 
 export const CalorieCalculator = ({
   targetKcal,
@@ -23,7 +59,11 @@ export const CalorieCalculator = ({
   errorMessage = null,
   formula = null,
   referencePage = null,
+  additionalText = null,
+
 }: CalorieCalculatorProps) => {
+
+  const formulaImage = formula ? formulaImages[formula] : null;
   
   return (
     <>
@@ -55,19 +95,28 @@ export const CalorieCalculator = ({
         )}
       </div>
 
-      {formula && (
+      {formulaImage && (
         <div className={styles.formulaSection}>
           <h3 className={styles.formulaTitle}>Формула расчета</h3>
-          <pre>{formula}</pre>
+            {formulaImage && (
+              <img
+                src={formulaImage}
+                className={styles.formulaImage}
+              />
+            )}
+            <p> {additionalText}</p>
+            
+
+
           {referencePage && (
-              <p className={styles.referencePageText}>
-                Источник: формула расчета по FEDIAF {referencePage}{' '}
+              <p className={styles.recommendedText}>
+                Источник: формула расчета по 
                 <a
                   href={`https://europeanpetfood.org/wp-content/uploads/2024/09/FEDIAF-Nutritional-Guidelines_2024.pdf#page=${referencePage}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Открыть документ
+                  FEDIAF {' '}
                 </a>
               </p>
             )}
