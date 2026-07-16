@@ -104,19 +104,17 @@ export const CalorieCalculator = ({
                 className={styles.formulaImage}
               />
             )}
-            <p> {additionalText}</p>
+            <p className={styles.additionalText}> {additionalText}</p>
             
-
-
           {referencePage && (
-              <p className={styles.recommendedText}>
+              <p className={styles.referencePageText}>
                 Источник: формула расчета по 
                 <a
                   href={`https://europeanpetfood.org/wp-content/uploads/2024/09/FEDIAF-Nutritional-Guidelines_2024.pdf#page=${referencePage}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  FEDIAF {' '}
+                   {' '}FEDIAF
                 </a>
               </p>
             )}
