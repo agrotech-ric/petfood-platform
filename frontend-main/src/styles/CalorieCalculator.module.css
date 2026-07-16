@@ -19,9 +19,16 @@
 .calorieContainer {
   display: flex;
   gap: 1rem;
+  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
 }
+
+.calorieContainer_block {
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 
 .kcalInput {
   width: 150px;
