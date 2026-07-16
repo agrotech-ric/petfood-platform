@@ -16,17 +16,19 @@
   white-space: pre-wrap;
 }
 
+
 .calorieContainer {
   display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  justify-content: space-between; 
+  align-items: flex-start;       
+  gap: 2rem;
 }
 
 .calorieContainer_block {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-  flex-wrap: wrap;
+  flex: 1;                        /* левая колонка занимает свободное место */
 }
 
 
@@ -70,7 +72,7 @@
 }
 
 .formulaSection {
-  margin-top: 1.5rem;
+  flex: 1;
 }
 
 
