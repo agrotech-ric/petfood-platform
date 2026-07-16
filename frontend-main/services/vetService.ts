@@ -66,6 +66,7 @@ export type CaloriesCalculation = {
   daily_kcal: number;
   formula: string;
   reference_page: string;
+  additional_text: string;
   size_category: string;
   age_category: string;
 };

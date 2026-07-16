@@ -130,7 +130,7 @@ async def calculate_calories(request: DogInfoRequest):
         number_puppies = request.num_puppies if request.num_puppies else 0
 
 
-        kcal, formula, page = kcal_calculate(
+        kcal, formula, page, additional_text = kcal_calculate(
             reproductive_status=reproductive_status,
             berem_time=pregnancy_period,
             num_pup= number_puppies ,
@@ -147,6 +147,7 @@ async def calculate_calories(request: DogInfoRequest):
             daily_kcal=max(0, kcal),
             formula=formula,
             reference_page=page,
+            additional_text=additional_text,
             size_category=size_categ,
             age_category=age_type_categ
         )
