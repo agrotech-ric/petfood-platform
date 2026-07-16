@@ -104,7 +104,18 @@
 
 .referencePageText {
   margin-top: 0.75rem;
-  font-size: 0.875rem;
-  color: #999;
-  font-style: italic;
+  color: #666;
+  font-size: 14px;
+}
+
+.formulaImage {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.additionalText{
+  margin-top: 0.75rem;
+  color: #000000;
+  font-size: 14px;
 }
