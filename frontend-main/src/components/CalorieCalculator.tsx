@@ -70,6 +70,7 @@ export const CalorieCalculator = ({
       <h2 className={styles.sectionTitle}>Целевая энергия (ккал)</h2>
       {errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
       <div className={styles.calorieContainer}>
+        <div className={styles.calorieContainer_block}>
         <input
           type="number"
           value={targetKcal}
@@ -80,12 +81,22 @@ export const CalorieCalculator = ({
           disabled={isCalculatingKcal}
         />
         
-        {dailyKcal && (
+     {dailyKcal && (
           <span className={styles.recommendedText}>
             Рекомендуемая: {dailyKcal} ккал
           </span>
         )}
         
+      {kcalChanged && (
+          <button
+            onClick={onRecalculate}
+            className={styles.recalculateBtn}
+          >
+            Пересчитать
+          </button>
+        )}
+
+       </div>
 
       {formulaImage && (
         <div className={styles.formulaSection}>
@@ -112,17 +123,9 @@ export const CalorieCalculator = ({
             )}
         </div>
       )}
-
+     
       </div>
 
-      {kcalChanged && (
-          <button
-            onClick={onRecalculate}
-            className={styles.recalculateBtn}
-          >
-            Пересчитать
-          </button>
-        )}
 
     </>
   );
