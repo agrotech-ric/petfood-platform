@@ -85,19 +85,11 @@ export const CalorieCalculator = ({
             Рекомендуемая: {dailyKcal} ккал
           </span>
         )}
-        {kcalChanged && (
-          <button
-            onClick={onRecalculate}
-            className={styles.recalculateBtn}
-          >
-            Пересчитать
-          </button>
-        )}
-      </div>
+        
 
       {formulaImage && (
         <div className={styles.formulaSection}>
-          <h3 className={styles.formulaTitle}>Формула расчета</h3>
+          <h3 className={styles.formulaTitle}>Формула расчета суточной энергетической потребности (ЭП)</h3>
             {formulaImage && (
               <img
                 src={formulaImage}
@@ -108,18 +100,30 @@ export const CalorieCalculator = ({
             
           {referencePage && (
               <p className={styles.referencePageText}>
-                Источник: формула расчета по 
+                Источник: формула расчета по {' '}
                 <a
                   href={`https://europeanpetfood.org/wp-content/uploads/2024/09/FEDIAF-Nutritional-Guidelines_2024.pdf#page=${referencePage}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                   {' '}FEDIAF
+                   FEDIAF
                 </a>
               </p>
             )}
         </div>
       )}
+
+      </div>
+
+      {kcalChanged && (
+          <button
+            onClick={onRecalculate}
+            className={styles.recalculateBtn}
+          >
+            Пересчитать
+          </button>
+        )}
+
     </>
   );
 };
