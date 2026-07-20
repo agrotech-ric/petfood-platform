@@ -84,7 +84,7 @@ async def get_breed_details(breed: str):
         min_weight = breed_data["min_weight"].values[0]
         max_weight = breed_data["max_weight"].values[0]
         avg_weight = (min_weight + max_weight) / 2
-        diseases = breed_data["Disease"].unique().tolist()
+        diseases = breed_data["Disease_ru"].unique().tolist()
 
         return BreedDetailsResponse(
             breed_info=BreedInfo(
@@ -238,7 +238,7 @@ async def get_disorder_recommendations(request: DisorderRequest):
         if breed_data.empty:
             raise HTTPException(status_code=404, detail=f"Breed '{request.breed}' not found")
 
-        disorder_data = breed_data[breed_data["Disease"] == request.disorder]
+        disorder_data = breed_data[breed_data["Disease_ru"] == request.disorder]
         if disorder_data.empty:
             raise HTTPException(status_code=404, detail=f"Disorder '{request.disorder}' not found for breed")
 
