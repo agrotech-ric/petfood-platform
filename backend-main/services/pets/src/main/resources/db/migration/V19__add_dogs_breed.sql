@@ -15,6 +15,7 @@ WHERE name_ru = 'Суссекс-спаниель';
 UPDATE breeds
 SET name_ru = 'Прямошёрстный ретривер'
 WHERE name_ru = 'Флэт-коутед ретривер'; 
+
 INSERT INTO breeds (species_id, name_ru, name_en)
 SELECT s.id, b.name_ru, b.name_en
 FROM (VALUES
