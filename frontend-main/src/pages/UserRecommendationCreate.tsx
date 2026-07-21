@@ -62,7 +62,7 @@ export const UserRecommendationCreate = () => {
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
   const [ingredientRanges, setIngredientRanges] = useState<IngredientRangesType>({});
   const [nutrientRanges, setNutrientRanges] = useState<NutrientRangesType>(DEFAULT_NUTRIENT_RANGES);
-  const [maximizeNutrients, setMaximizeNutrients] = useState<string[]>([]);
+  const [maximizeNutrients, setMaximizeNutrients] = useState<string[]>(["moisture","protein",]);
 
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
