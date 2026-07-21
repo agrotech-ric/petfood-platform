@@ -15,6 +15,7 @@ const NUTRIENT_OPTIONS = [
 
 export const MaximizationOptions = ({ maximizeNutrients, onToggle }: MaximizationOptionsProps) => {
   const handleChange = (values: string | string[]) => {
+    console.log(maximizeNutrients);
     const valuesArray = Array.isArray(values) ? values : [values];
     
     const added = valuesArray.find(v => !maximizeNutrients.includes(v));

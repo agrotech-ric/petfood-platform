@@ -13,18 +13,14 @@ from app.utils import (
     load_data, build_ml_models, get_disorder_keywords,
     get_ingredient_categories
 )
-from app.recipe_optimize import (
-    remap_ingredient_ranges,
-    resolve_maximize_nutrients,
-    resolve_recipe_ingredients,
-    brute_force_integer_percents,
-    soft_constraint_minimize,
-)
+
 from app.kcal_calculate import (
     kcal_calculate, protein_need_calc, get_other_nutrient_norms,
     size_category, age_type_category,
     age_category_types, size_types
 )
+
+from app.calc_recipe_method_2 import (calc_recipe)
 
 app = FastAPI(
     title="Dog Food Calculator API",
@@ -389,37 +385,29 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
             ].to_dict(orient='index')
 
         food_keys = set(food.keys())
-        ingredient_names, ingredient_name_map, missing_ingredients = resolve_recipe_ingredients(
-            request.ingredients,
-            food_keys,
-            merge_tab_df,
-            food_ingredients_df,
-        )
+        ingr_ranges = request.ingredient_ranges
 
-        if missing_ingredients:
-            missing_list = ", ".join(f"«{name}»" for name in missing_ingredients)
+        if len(ingr_ranges)==0:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    f"Для этих ингредиентов нет данных о составе: {missing_list}. "
-                    "Уберите их из списка или замените на другие из рекомендаций."
-                ),
+                detail="Выберите хотя бы один ингредиент.",
             )
 
-        if not ingredient_names:
-            raise HTTPException(
-                status_code=400,
-                detail="Выберите хотя бы один ингредиент с известным составом.",
-            )
-
-        ingr_range_dict = remap_ingredient_ranges(request.ingredient_ranges, ingredient_name_map)
-        nutr_range_dict = {nr.nutrient: (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
-        maximize_nutrients = resolve_maximize_nutrients(request.maximize_nutrients, cols_to_divide)
-
+        nutr_ranges = {nr.nutrient: (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
+        maximize_nutrients = request.maximize_nutrients if request.maximize_nutrients else ["Влага", "Белки"]
+       
+        ingr_ranges_2=ingr_ranges
+        lowest=sum([low for (low, high) in ingr_ranges_2])
+        highest=sum([high for (low, high) in ingr_ranges_2])
+       
+        if lowest>100:
+                  factor=99/lowest
+                  ingr_ranges_2=[(low*factor, high) for (low, high) in ingr_ranges]
+        elif highest<100:
+                  factor=101/highest
+                  ingr_ranges_2=[(low, high*factor) for (low, high) in ingr_ranges]
+				
         # Build LP problem
-        ingr_ranges = [ingr_range_dict.get(ing, (0, 100)) for ing in ingredient_names]
-        nutr_ranges = nutr_range_dict
-
         A = [
             [food[ing][nutr] if val > 0 else -food[ing][nutr]
              for ing in ingredient_names]
@@ -433,11 +421,12 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 
         A_eq = [[1 for _ in ingredient_names]]
         b_eq = [1.0]
-        bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges]
+        bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges_2]
 
         # Objective function
         f = [-sum(food[i][nutr] for nutr in maximize_nutrients if nutr in food[i])
              for i in ingredient_names]
+
 
         # Try linear programming
         res = linprog(f, A_ub=A, b_ub=b, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
@@ -504,24 +493,9 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 method="optimization"
             )
         else:
-            fallback_method = "soft_constraint"
-            best_recipe = soft_constraint_minimize(
-                ingredient_names,
-                ingr_range_dict,
-                food,
-                cols_to_divide,
-                nutr_range_dict,
-            )
-
-            if best_recipe is None:
-                fallback_method = "brute_force"
-                best_recipe = brute_force_integer_percents(
-                    ingredient_names,
-                    ingr_ranges,
-                    food,
-                    cols_to_divide,
-                    nutr_range_dict,
-                )
+)
+            fallback_method = "combinatory search"
+            best_recipe = calc_recipe(ingr_ranges_2,nutr_ranges,ingredient_names,food )
 
             if best_recipe is None:
                 raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
