@@ -393,19 +393,20 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 detail="Выберите хотя бы один ингредиент.",
             )
 
+        ingredient_names = [ing.ingredient for ing in ingr_ranges]
         nutr_ranges = {nr.nutrient: (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
         maximize_nutrients = request.maximize_nutrients if request.maximize_nutrients else ["Влага", "Белки"]
        
-        ingr_ranges_2=ingr_ranges
-        lowest=sum([low for (low, high) in ingr_ranges_2])
-        highest=sum([high for (low, high) in ingr_ranges_2])
+        ingr_ranges_data = [(ing.min_percent, ing.max_percent) for ing in ingr_ranges]
+        lowest = sum([low for (low, high) in ingr_ranges_data])
+        highest = sum([high for (low, high) in ingr_ranges_data])
        
-        if lowest>100:
-                  factor=99/lowest
-                  ingr_ranges_2=[(low*factor, high) for (low, high) in ingr_ranges]
-        elif highest<100:
-                  factor=101/highest
-                  ingr_ranges_2=[(low, high*factor) for (low, high) in ingr_ranges]
+        if lowest > 100:
+            factor = 99 / lowest
+            ingr_ranges_data = [(low * factor, high) for (low, high) in ingr_ranges_data]
+        elif highest < 100:
+            factor = 101 / highest
+            ingr_ranges_data = [(low, high * factor) for (low, high) in ingr_ranges_data]
 				
         # Build LP problem
         A = [
@@ -421,7 +422,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 
         A_eq = [[1 for _ in ingredient_names]]
         b_eq = [1.0]
-        bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges_2]
+        bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges_data]
 
         # Objective function
         f = [-sum(food[i][nutr] for nutr in maximize_nutrients if nutr in food[i])
@@ -493,9 +494,8 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 method="optimization"
             )
         else:
-)
             fallback_method = "combinatory search"
-            best_recipe = calc_recipe(ingr_ranges_2,nutr_ranges,ingredient_names,food )
+            best_recipe = calc_recipe(ingr_ranges_data, nutr_ranges, ingredient_names, food)
 
             if best_recipe is None:
                 raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
@@ -521,12 +521,12 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
             }
 
             nutrient_deficiencies = {}
-            if hasattr(request, 'nutrient_norms') and request.nutrient_norms:
-                for nutrient_name, required_amount in request.nutrient_norms.items():
-                    actual_amount = count_nutr_cont_all.get(nutrient_name, 0)
-                    deficit = required_amount - actual_amount
-                    if deficit > 0:
-                        nutrient_deficiencies[nutrient_name] = round(deficit, 2)
+            for nutrient_name, required_amount in count_nutr_cont_all.items():
+                fixed_nutrient_name = nutrient_name.split(",")[0]
+                measure = nutrient_name.split(",")[1] if nutrient_name.split(",").__len__() > 1 else ""
+                actual_amount = norms.get(fixed_nutrient_name, 0)
+                deficit = required_amount - actual_amount
+                nutrient_deficiencies[fixed_nutrient_name] = f"{round(abs(deficit), 2)}{measure}"
 
             composition = [RecipeComposition(ingredient=k, grams_per_100g=v) for k, v in values.items()]
 
