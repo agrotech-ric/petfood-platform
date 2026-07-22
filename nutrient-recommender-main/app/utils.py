@@ -122,7 +122,7 @@ def build_ml_models():
         return _model_cache
 
     food_df, _, _, _ = load_data()
-    food_df_wet = food_df[(food_df["food form"].str.lower() == "wet food") &(food_df["moisture"] > 50)].copy()
+    food_df_wet = food_df[(food_df["food form"].str.lower() == "wet food") &(food_df["moisture"] > 0.5)].copy()
 
     # Text vectorization
     vectorizer = TfidfVectorizer(stop_words="english", max_features=5000)
