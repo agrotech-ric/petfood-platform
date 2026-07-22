@@ -417,7 +417,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
             for val in (-nutr_ranges[nutr][0] , nutr_ranges[nutr][1] )
         ]
         b = [
-            val  for nutr in nutr_ranges
+            val/100  for nutr in nutr_ranges
             for val in (-nutr_ranges[nutr][0], nutr_ranges[nutr][1])
         ]
 
