@@ -7,7 +7,6 @@ from scipy.optimize import linprog
 from scipy.sparse import hstack, csr_matrix
 import numpy as np
 import itertools
-import logging
 
 
 from app.models import *
@@ -412,10 +411,10 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 				
         # Build LP problem
         A = [
-            [food[ing][nutr] if val > 0 else -food[ing][nutr]
+            [food[ing][nutr]/100 if val > 0 else -food[ing][nutr]/100
              for ing in ingredient_names]
             for nutr in nutr_ranges
-            for val in (-nutr_ranges[nutr][0] / 100, nutr_ranges[nutr][1] / 100)
+            for val in (-nutr_ranges[nutr][0] , nutr_ranges[nutr][1] )
         ]
         b = [
             val / 100 for nutr in nutr_ranges
@@ -439,10 +438,9 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
             result = {name: round(val * 100, 2) for name, val in zip(ingredient_names, res.x)}
 
             nutrients_100g = {
-                nutr: round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)) * 100, 2)
+                nutr: round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)), 2)
                 for nutr in cols_to_divide
             }
-            logging.info("nutrients_100g: %s", nutrients_100g)
 
             energy_100g = (3.5 * nutrients_100g["Белки"] +
                            8.5 * nutrients_100g["Жиры"] +
@@ -457,7 +455,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 
             all_nutrients = cols_to_divide + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
             count_nutr_cont_all = {
-                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()),
+                nutr: round(sum(amount * food[ingredient][nutr]/100 for ingredient, amount in ingredients_required.items()),
                             2)
                 for nutr in all_nutrients
             }
@@ -505,7 +503,6 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 
             values, totals = best_recipe
 
-            logging.info("nutrients_100g_combi: %s", totals)
 
             energy_100g = (3.5 * totals["Белки"] +
                            8.5 * totals["Жиры"] +
@@ -520,7 +517,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 
             all_nutrients = cols_to_divide + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
             count_nutr_cont_all = {
-                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()),
+                nutr: round(sum(amount * food[ingredient][nutr]/100 for ingredient, amount in ingredients_required.items()),
                             2)
                 for nutr in all_nutrients
             }
