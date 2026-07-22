@@ -5,7 +5,7 @@ import { vetService } from '../../services/vetService';
 import { usePets } from '../../context/PetContext';
 import { calculatePetAge } from '../utils/petAgeHelper';
 import { resolveBreedNameToEnglish } from '../utils/breedNameHelper';
-import { getDefaultRangeForIngredient } from '../../const/ingredientRanges';
+import { getDefaultRangeForIngredient } from '../const/ingredientRanges';
 import { INGREDIENT_CATEGORIES } from '../../data/mockData';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
 import { PetInfoCard } from '../components/PetInfoCard';
