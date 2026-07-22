@@ -36,7 +36,7 @@ def preprocess_food(df: pd.DataFrame) -> pd.DataFrame:
     """Preprocess food dataframe"""
     df = df.copy()
     nutrients = [
-        "protein", "fat", "carbohydrate (nfe)", "crude fibre", "calcium",
+        "moisture","protein", "fat", "carbohydrate (nfe)", "crude fibre", "calcium",
         "phospohorus", "potassium", "sodium", "magnesium", "vitamin e",
         "vitamin c", "omega-3-fatty acids", "omega-6-fatty acids",
     ]
@@ -122,7 +122,7 @@ def build_ml_models():
         return _model_cache
 
     food_df, _, _, _ = load_data()
-    food_df_wet = food_df[(food_df["food form"].str.lower() == "wet food") &(food_df["moisture"] > 0.5)].copy()
+    food_df_wet = food_df[(food_df["food form"].str.lower() == "wet food") &(food_df["moisture"] > 50)].copy()
 
     # Text vectorization
     vectorizer = TfidfVectorizer(stop_words="english", max_features=5000)
