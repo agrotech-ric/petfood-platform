@@ -298,16 +298,16 @@ export const UserRecommendationCreate = () => {
         max: Math.min(100, (predicted.moisture || 90) + 5)
       },
       protein: {
-        min: Math.max(0, predicted.protein - 3),
-        max: Math.min(100, predicted.protein + 6)
+        min: Math.max(0, predicted.protein - 5),
+        max: Math.min(100, predicted.protein + 10)
       },
       carbs: {
-        min: Math.max(0, predicted['carbohydrate (nfe)'] - 4),
-        max: Math.min(100, predicted['carbohydrate (nfe)'] + 4)
+        min: Math.max(0, predicted['carbohydrate (nfe)'] - 5),
+        max: Math.min(100, predicted['carbohydrate (nfe)'] + 5)
       },
       fats: {
-        min: Math.max(0, predicted.fat - 1),
-        max: Math.min(100, predicted.fat + 1)
+        min: Math.max(0, predicted.fat - 5),
+        max: Math.min(100, predicted.fat + 5)
       }
     });
   };
