@@ -7,6 +7,8 @@ from scipy.optimize import linprog
 from scipy.sparse import hstack, csr_matrix
 import numpy as np
 import itertools
+import logging
+
 
 from app.models import *
 from app.utils import (
@@ -440,6 +442,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 nutr: round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)) * 100, 2)
                 for nutr in cols_to_divide
             }
+            logging.info("nutrients_100g: %s", nutrients_100g)
 
             energy_100g = (3.5 * nutrients_100g["Белки"] +
                            8.5 * nutrients_100g["Жиры"] +
@@ -501,6 +504,8 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
 
             values, totals = best_recipe
+
+            logging.info("nutrients_100g_combi: %s", totals)
 
             energy_100g = (3.5 * totals["Белки"] +
                            8.5 * totals["Жиры"] +
