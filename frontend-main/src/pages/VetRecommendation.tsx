@@ -5,6 +5,7 @@ import { vetService } from '../../services/vetService';
 import { usePets } from '../../context/PetContext';
 import { calculatePetAge } from '../utils/petAgeHelper';
 import { resolveBreedNameToEnglish } from '../utils/breedNameHelper';
+import { getDefaultRangeForIngredient } from '../../const/ingredientRanges';
 import { INGREDIENT_CATEGORIES } from '../../data/mockData';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
 import { PetInfoCard } from '../components/PetInfoCard';
@@ -282,16 +283,7 @@ export const VetRecommendation = () => {
     }
   };
 
-  const populateRecommendedIngredients = (recommendation: DisorderRecommendation) => {
-    const newIngredients = recommendation.recommended_ingredients;
-    setSelectedIngredients(newIngredients);
-
-    const newRanges: IngredientRangesType = {};
-    newIngredients.forEach(ingredient => {
-      newRanges[ingredient] = { min: 0, max: 100 };
-    });
-    setIngredientRanges(newRanges);
-  };
+  const populateRecommendedIngredients = (recommendation: DisorderRecommendation) => { const newIngredients = recommendation.recommended_ingredients; setSelectedIngredients(newIngredients); const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => { acc[cat.category.toLowerCase()] = cat.items; return acc; }, {} as Record<string, string[]>); const newRanges: IngredientRangesType = {}; newIngredients.forEach(ingredient => { newRanges[ingredient] = getDefaultRangeForIngredient(ingredient, categoryMap); }); setIngredientRanges(newRanges); };
 
   const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['predicted_nutrients']) => {
     setNutrientRanges({
@@ -326,7 +318,7 @@ export const VetRecommendation = () => {
       setSelectedIngredients(prev => [...prev, ingredient]);
       setIngredientRanges(prev => ({
         ...prev,
-        [ingredient]: { min: 0, max: 100 }
+        [ingredient]: getDefaultRangeForIngredient(ingredient, INGREDIENT_CATEGORIES.reduce((acc, cat) => { acc[cat.category.toLowerCase()] = cat.items; return acc; }, {} as Record<string, string[]>))
       }));
     }
   };
@@ -527,3 +519,5 @@ export const VetRecommendation = () => {
     </div>
   );
 };
+
+
