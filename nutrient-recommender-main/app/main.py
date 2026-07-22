@@ -250,10 +250,19 @@ async def get_disorder_recommendations(request: DisorderRequest):
         cat_vec = models['encoder'].transform([[breed_size, "Adult"]])
         kw_combined = hstack([csr_matrix(kw_reduced), cat_vec])
 
+
+        # Build query vector
+        kw_tfidf_wet = models['vectorizer_wet'].transform([keywords])
+        kw_reduced_wet = models['svd_wet'].transform(kw_tfidf_wet)
+
+        cat_vec_wet = models['encoder_wet'].transform([[breed_size, "Adult"]])
+        kw_combined_wet = hstack([csr_matrix(kw_reduced_wet), cat_vec_wet])
+
+
         # Predict nutrients
         nutrient_preds = {}
         for nut, model in models['nutrient_models'].items():
-            pred = model.predict(kw_combined)[0]
+            pred = model.predict(kw_combined_wet)[0]
             sc = models['scalers'].get(nut)
             if sc:
                 pred = sc.inverse_transform([[pred]])[0][0]

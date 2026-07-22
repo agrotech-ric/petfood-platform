@@ -122,6 +122,7 @@ def build_ml_models():
         return _model_cache
 
     food_df, _, _, _ = load_data()
+    food_df_wet = food_df[(food_df["food form"].str.lower() == "wet food") &(food_df["moisture"] > 50)].copy()
 
     # Text vectorization
     vectorizer = TfidfVectorizer(stop_words="english", max_features=5000)
@@ -140,6 +141,24 @@ def build_ml_models():
     X_sparse_text = csr_matrix(X_text_reduced)
     X_combined = hstack([X_sparse_text, X_categorical])
 
+
+
+    vectorizer_wet = TfidfVectorizer(stop_words="english", max_features=5000)
+    X_tfidf_wet = vectorizer_wet.fit_transform(food_df_wet["combined_text"])
+
+    svd_wet = TruncatedSVD(n_components=100, random_state=42)
+    X_text_reduced_wet = svd_wet.fit_transform(X_tfidf_wet)
+
+    encoder_wet = OneHotEncoder(sparse_output=True, handle_unknown="ignore")
+    cats_wet = food_df_wet[["breed size", "lifestage"]].fillna("Unknown")
+    encoder_wet.fit(cats_wet)
+    X_categorical_wet = encoder_wet.transform(cats_wet)
+
+    # Combine features
+    X_sparse_text_wet = csr_matrix(X_text_reduced_wet)
+    X_combined_wet = hstack([X_sparse_text_wet, X_categorical_wet])
+
+
     # Train nutrient models
     nutrient_models = {}
     scalers = {}
@@ -153,8 +172,10 @@ def build_ml_models():
         "calcium", "phospohorus", "potassium", "magnesium",
     }
 
+
+
     for nutrient in nutrients:
-        y = food_df[nutrient].fillna(food_df[nutrient].median()).values.reshape(-1, 1)
+        y = food_df_wet[nutrient].fillna(food_df_wet[nutrient].median()).values.reshape(-1, 1)
         if nutrient in to_scale:
             scaler = StandardScaler()
             y_scaled = scaler.fit_transform(y).ravel()
@@ -162,7 +183,7 @@ def build_ml_models():
             scaler = None
             y_scaled = y.ravel()
 
-        X_train, _, y_train, _ = train_test_split(X_combined, y_scaled, test_size=0.2, random_state=42)
+        X_train, _, y_train, _ = train_test_split(X_combined_wet, y_scaled, test_size=0.2, random_state=42)
 
         base = Ridge()
         search = GridSearchCV(base, param_grid={"alpha": [0.1, 1.0]}, scoring="r2", cv=2, n_jobs=-1)
@@ -198,6 +219,14 @@ def build_ml_models():
     _model_cache['X_text_reduced'] = X_text_reduced
     _model_cache['X_categorical'] = X_categorical
     _model_cache['X_combined'] = X_combined
+
+    _model_cache['vectorizer_wet'] = vectorizer_wet
+    _model_cache['svd_wet'] = svd_wet
+    _model_cache['encoder_wet'] = encoder_wet
+    _model_cache['X_text_reduced_wet'] = X_text_reduced_wet
+    _model_cache['X_categorical_wet'] = X_categorical_wet
+    _model_cache['X_combined_wet'] = X_combined_wet
+
     _model_cache['nutrient_models'] = nutrient_models
     _model_cache['scalers'] = scalers
     _model_cache['ingredient_models'] = ingredient_models
