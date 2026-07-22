@@ -8,9 +8,7 @@ import itertools
 main_nutrs=['Влага', 'Белки', 'Углеводы', 'Жиры']
 
 
-def calc_recipe(ingr_ranges,nutr_ranges,ingredient_names,food):
-
-      # --- Вычисление всех возможных соотношений ингредиентов
+def calc_recipe(ingr_ranges, nutr_ranges, ingredient_names, food):
       step = 1  
       variants = []
       ranges = [np.arange(low, high + step, step) for (low, high) in ingr_ranges]
@@ -39,4 +37,5 @@ def calc_recipe(ingr_ranges,nutr_ranges,ingredient_names,food):
          if penalty < min_penalty:
             min_penalty = penalty
             best_recipe = (ingredients_combo, nutrients_combo)
+    
       return best_recipe
