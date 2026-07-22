@@ -69,7 +69,7 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
         food_df = pd.read_csv("data/FINAL_COMBINED.csv")
         disease_df = pd.read_csv("data/Disease.csv")
         merge_tab_df = pd.read_csv("data/merge_tab.csv")
-        food_ingredients_df = pd.read_csv("data//food_ingrediets.csv")
+        food_ingredients_df = pd.read_csv("data/food_ingrediets.csv")
 
         # Preprocess
         food_df = preprocess_food(food_df)
