@@ -24,7 +24,7 @@ def calc_recipe(ingr_ranges, nutr_ranges, ingredient_names, food):
          nutrients_combo = {nutr: 0.0 for nutr in main_nutrs}
          for i, ingr in enumerate(ingredient_names):
             for nutr in main_nutrs:
-               nutrients_combo[nutr] += ingredients_combo[ingr] * food[ingr][nutr]/100
+               nutrients_combo[nutr] += ingredients_combo[ingr] * food[ingr][nutr]
          penalty = 0
          for nutr in main_nutrs:
             val = nutrients_combo[nutr]

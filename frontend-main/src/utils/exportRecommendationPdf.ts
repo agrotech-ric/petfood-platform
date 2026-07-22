@@ -164,7 +164,7 @@ export const exportRecommendationPdf = (
     .filter((item) => item.grams_per_100g > 0)
     .map((item) => {
       const grams = parseFloat(
-        ((item.grams_per_100g / 100) * optimizationResult.total_feed_grams).toFixed(2)
+        ( optimizationResult.total_feed_grams).toFixed(2)
       );
       return [item.ingredient, `${item.grams_per_100g.toFixed(2)}%`, `${grams} г`];
     });
