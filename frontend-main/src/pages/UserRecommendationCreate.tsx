@@ -6,7 +6,6 @@ import { usePets } from '../../context/PetContext';
 import { calculatePetAge } from '../utils/petAgeHelper';
 import { resolveBreedNameToEnglish } from '../utils/breedNameHelper';
 import { getDefaultRangeForIngredient } from '../const/ingredientRanges';
-
 import { INGREDIENT_CATEGORIES } from '../../data/mockData';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
 import { PetInfoCard } from '../components/PetInfoCard';
@@ -133,19 +132,17 @@ export const UserRecommendationCreate = () => {
     loadDiseases();
   }, [englishBreedName]);
 
-
   const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
-  const name = activityTypeName.toLowerCase();
+    const name = activityTypeName.toLowerCase();
+    if (name.includes('пассивный')) return 'passive';
+    if (name.includes('средний1')) return 'low';
+    if (name.includes('средний2')) return 'moderate';
+    if (name.includes('активный')) return 'active';
+    if (name.includes('экстремальных условиях')) return 'extreme';
+    if (name.includes('склонные к ожирению')) return 'obesity_prone';
+    return 'moderate';
+  };
 
-  if (name.includes('пассивный')) return 'passive';
-  if (name.includes('средний1')) return 'low';
-  if (name.includes('средний2')) return 'moderate';
-  if (name.includes('активный')) return 'active';
-  if (name.includes('экстремальных условиях')) return 'extreme';
-  if (name.includes('склонные к ожирению')) return 'obesity_prone';
-
-  return 'moderate';
-};
   const pet = pets.find(p => p.id === request?.petId);
   const getReproductiveStatus = (status?: string| 'none' ): 'none' | 'pregnancy' | 'lactation' => { 
     const value = status?.toLowerCase() ?? '';
@@ -170,7 +167,6 @@ export const UserRecommendationCreate = () => {
     return 'none';
   };
 
-
   useEffect(() => {
     if (!englishBreedName || !request) {
       return;
@@ -192,12 +188,10 @@ export const UserRecommendationCreate = () => {
           gender: request.gender || 'male',
           breed: englishBreedName,
           activity_level: activityLevel,
-
           reproductive_status: reproductiveStatus,
           pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
           lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
           num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
-
         });
 
         const calculatedKcal = Math.round(result.daily_kcal);
@@ -217,7 +211,6 @@ export const UserRecommendationCreate = () => {
 
     calculateDailyKcal();
   }, [englishBreedName, request]);
-
 
   const handleRecalculateNutrients = async () => {
     if (!request || !targetKcal || !englishBreedName) return;
@@ -282,19 +275,19 @@ export const UserRecommendationCreate = () => {
     }
   };
 
-  const populateRecommendedIngredients = (recommendation: DisorderRecommendation) => { 
-    const newIngredients = recommendation.recommended_ingredients; 
-    setSelectedIngredients(newIngredients); 
-    const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => { 
-      acc[cat.category.toLowerCase()] = cat.items; 
-      0return acc; 
-    }, {} as Record<string, string[]>); 
-    const newRanges: IngredientRangesType = {}; 
-    newIngredients.forEach(ingredient => { 
-      newRanges[ingredient] = getDefaultRangeForIngredient(ingredient, categoryMap); 
-    }); 
-      setIngredientRanges(newRanges); };
-
+  const populateRecommendedIngredients = (recommendation: DisorderRecommendation) => {
+    const newIngredients = recommendation.recommended_ingredients;
+    setSelectedIngredients(newIngredients);
+    const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => {
+      acc[cat.category.toLowerCase()] = cat.items;
+      return acc;
+    }, {} as Record<string, string[]>);
+    const newRanges: IngredientRangesType = {};
+    newIngredients.forEach(ingredient => {
+      newRanges[ingredient] = getDefaultRangeForIngredient(ingredient, categoryMap);
+    });
+    setIngredientRanges(newRanges);
+  };
 
   const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['predicted_nutrients']) => {
     setNutrientRanges({
@@ -327,10 +320,13 @@ export const UserRecommendationCreate = () => {
       });
     } else {
       setSelectedIngredients(prev => [...prev, ingredient]);
+      const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => {
+        acc[cat.category.toLowerCase()] = cat.items;
+        return acc;
+      }, {} as Record<string, string[]>);
       setIngredientRanges(prev => ({
         ...prev,
-        [ingredient]: getDefaultRangeForIngredient(ingredient, INGREDIENT_CATEGORIES.reduce((acc, cat) => { acc[cat.category.toLowerCase()] = cat.items; return acc; }, {} as Record<string, string[]>))
-      
+        [ingredient]: getDefaultRangeForIngredient(ingredient, categoryMap)
       }));
     }
   };
