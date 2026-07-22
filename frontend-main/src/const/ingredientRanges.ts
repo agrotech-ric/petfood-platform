@@ -9,7 +9,7 @@ export const INGREDIENT_RANGE_DEFAULTS = {
 
 export type IngredientCategory = keyof typeof INGREDIENT_RANGE_DEFAULTS;
 
-const CATEGORY_MAPPING = {
+const CATEGORY_MAPPING: Record<string, IngredientCategory> = {
   'мясо': 'proteins',
   'масло и жир': 'oils',
   'крупы': 'carbonates_cer',
@@ -17,7 +17,7 @@ const CATEGORY_MAPPING = {
   'зелень и специи': 'other',
   'яйца и молочные продукты': 'proteins',
   'вода, соль и сахар': 'water',
-  'дополнительные пищевые компоненты': 'other'
+  'дополнительные пищевые компоненты': 'other',
 };
 
 export const getDefaultRangeForIngredient = (
@@ -40,5 +40,5 @@ export const getDefaultRangeForIngredient = (
   }
   
   // Fallback default ranges
-  return { min: 0, max: 100 };
+  return { min: 1, max: 100 };
 };
