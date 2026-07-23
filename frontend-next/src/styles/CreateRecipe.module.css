@@ -12,7 +12,7 @@
   width: 100%;
   max-width: 1176px;
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: 7px;
   box-shadow: 0 1px 4px var(--color-shadow);
   padding: 16px 28px;
   display: flex;
@@ -66,12 +66,28 @@
 
 .deleteBtn:hover { background: #f5f5f5; }
 
+.headerActionPlaceholder {
+  width: 90px;
+}
+
+.formError {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--color-error, #d9534f);
+  border-radius: 8px;
+  color: var(--color-error, #d9534f);
+  background: var(--color-surface);
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
 /* ── Card ───────────────────────────────────────────── */
 .card {
   width: 100%;
   max-width: 1176px;
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: 7px;
   box-shadow: 0 1px 4px var(--color-shadow);
   padding: 24px 28px;
   margin-bottom: 16px;
@@ -96,6 +112,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
+}
+
+.formColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .fieldGroup {
@@ -260,6 +282,28 @@
 
 .primaryBtn:hover { background: var(--color-accent-alt-hover); }
 
+.updateRecommendationsBtn,
+.finalSaveBtn {
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 5px;
+  padding: 9px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.updateRecommendationsBtn {
+  margin: -6px 0 20px;
+}
+
+.finalSaveBtn {
+  display: block;
+  width: fit-content;
+  margin: 0 0 16px;
+}
+
 /* ── Step 2: energy ─────────────────────────────────── */
 .energyRow {
   display: flex;
@@ -392,6 +436,12 @@
   margin: 0 0 8px;
 }
 
+.selectedItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .selectedChip {
   display: inline-flex;
   align-items: center;
@@ -402,6 +452,21 @@
   padding: 4px 10px;
   font-size: 12px;
   flex-wrap: wrap;
+}
+
+.selectedChipRemove {
+  background: none;
+  border: none;
+  color: var(--color-text-inverse);
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+}
+
+.fieldHint {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 
 .clearAllBtn {
@@ -573,9 +638,10 @@
 
 .metricCard {
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: 7px;
   box-shadow: 0 1px 4px var(--color-shadow);
   padding: 24px 28px;
+  text-align: center;
 }
 
 .metricValue {
@@ -603,7 +669,7 @@
 
 .chartCard {
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: 7px;
   box-shadow: 0 1px 4px var(--color-shadow);
   padding: 24px 28px;
   box-sizing: border-box;
@@ -661,6 +727,14 @@
   color: var(--color-text-muted);
 }
 
+.resultEnergy {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
 /* ── Step 3: nutrients ──────────────────────────────── */
 .nutrientsGrid {
   display: grid;
@@ -677,6 +751,21 @@
 }
 
 .nutrientRow:last-child { border-bottom: none; }
+
+.editResult .nutrientsGrid {
+  grid-auto-flow: column;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, min-content);
+}
+
+.resultDetailsCard {
+  padding-top: 24px;
+}
+
+.resultDetailsCard .barChartsRow {
+  margin-top: 28px;
+  margin-bottom: 0;
+}
 
 /* ── Step 3: bar charts ─────────────────────────────── */
 .barChartsRow {
@@ -761,7 +850,7 @@
 }
 
 /* ── Responsive ──────────────────────────────────────── */
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .twoPanel,
   .chartsRow,
   .barChartsRow,
@@ -771,6 +860,12 @@
 
   .metricsRow {
     grid-template-columns: 1fr;
+  }
+
+  .editResult .nutrientsGrid {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
   }
 
   .formGrid3 {

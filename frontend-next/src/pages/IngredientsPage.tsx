@@ -1,6 +1,7 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MOCK_INGREDIENTS, FILTER_GROUPS, type Ingredient } from '../data/ingredientsMock'
+import { ingredientService, type Ingredient } from '../../services/ingredientService'
+import { FILTER_GROUPS } from '../data/ingredientOptions'
 import styles from '../styles/Ingredients.module.css'
 import SearchIcon from '../assets/icons/search.svg?react'
 
@@ -28,6 +29,9 @@ export function IngredientsPage() {
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([])
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown on outside click
@@ -40,6 +44,28 @@ export function IngredientsPage() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    ingredientService.list({
+      search,
+      nutrients: activeFilters.map(filter => filter.key),
+      sort: sortKey,
+      direction: sortDir,
+    })
+      .then(data => {
+        if (!cancelled) setIngredients(data)
+      })
+      .catch(() => {
+        if (!cancelled) setError('Не удалось загрузить ингредиенты')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [search, sortKey, sortDir, activeFilters])
 
   const toggleFilter = (group: string, key: string, label: string) => {
     setActiveFilters(prev => {
@@ -61,29 +87,6 @@ export function IngredientsPage() {
       setSortDir('asc')
     }
   }
-
-  const filtered = useMemo(() => {
-    let data = [...MOCK_INGREDIENTS]
-
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      data = data.filter(i =>
-        i.name.toLowerCase().includes(q) ||
-        i.category.toLowerCase().includes(q) ||
-        (i.subtype ?? '').toLowerCase().includes(q)
-      )
-    }
-
-    data.sort((a, b) => {
-      const av = a[sortKey] ?? ''
-      const bv = b[sortKey] ?? ''
-      if (av < bv) return sortDir === 'asc' ? -1 : 1
-      if (av > bv) return sortDir === 'asc' ? 1 : -1
-      return 0
-    })
-
-    return data
-  }, [search, sortKey, sortDir])
 
   const isFilterActive = (key: string) => activeFilters.some(f => f.key === key)
 
@@ -183,10 +186,12 @@ export function IngredientsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={TABLE_COLS.length} className={styles.emptyRow}>Ничего не найдено</td></tr>
+              {loading || error || ingredients.length === 0 ? (
+                <tr><td colSpan={TABLE_COLS.length} className={styles.emptyRow}>
+                  {loading ? 'Загрузка...' : error || 'Ничего не найдено'}
+                </td></tr>
               ) : (
-                filtered.map(item => (
+                ingredients.map(item => (
                   <tr key={item.id} onClick={() => navigate(`/ingredients/${item.id}`)}>
                     <td>{item.category}</td>
                     <td>{item.name}</td>

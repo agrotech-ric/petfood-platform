@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { petService, type HealthRecord, type PetContraindications, type PetFood, type PetProfileData } from '../../services/petService'
+import { petService, type HealthRecord, type PetContraindications, type PetProfileData } from '../../services/petService'
+import { recipeService, type RecipeListItem } from '../../services/recipeService'
 import { referenceService, type ActivityType, type Symptom } from '../../services/referenceService'
+import { RECIPE_FORMAT_LABELS, RECIPE_TYPE_LABELS } from '../data/recipeOptions'
 import styles from '../styles/PetProfile.module.css'
 import EditIcon from '../assets/icons/edit.svg?react'
 import EditIcon1 from '../assets/icons/edit1.svg?react'
@@ -62,7 +64,7 @@ type PetFoodView = {
   name: string
   type: string
   format: string
-  calories: number
+  calories: number | string
   lastModified: string
 }
 
@@ -89,14 +91,14 @@ function formatShortDate(value?: string, fallback = 'Не указано') {
   return date.toLocaleDateString('ru-RU')
 }
 
-function mapPetFoods(foods: PetFood[]): PetFoodView[] {
-  return foods.map((food) => ({
-    id: food.id,
-    name: food.name,
-    type: food.type,
-    format: food.format,
-    calories: food.calories,
-    lastModified: formatShortDate(food.updatedAt),
+function mapPetRecipes(recipes: RecipeListItem[]): PetFoodView[] {
+  return recipes.map((recipe) => ({
+    id: String(recipe.id),
+    name: recipe.name,
+    type: RECIPE_TYPE_LABELS[recipe.type],
+    format: RECIPE_FORMAT_LABELS[recipe.format],
+    calories: recipe.calories ?? '—',
+    lastModified: formatShortDate(recipe.updatedAt),
   }))
 }
 
@@ -662,13 +664,23 @@ export function PetProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const locationState = location.state as { tab?: Tab; fromTab?: Tab } | null
+  const locationState = location.state as {
+    tab?: Tab
+    fromTab?: Tab
+    from?: string
+    recipeId?: number
+    recipeReturnState?: {
+      from?: string
+      petId?: string
+      fromTab?: string
+    }
+  } | null
   const initialTab = locationState?.tab ?? locationState?.fromTab ?? 'food'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [liked, setLiked] = useState(false)
   const [petData, setPetData] = useState<PetProfileData | null>(null)
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([])
-  const [petFoods, setPetFoods] = useState<PetFood[]>([])
+  const [petRecipes, setPetRecipes] = useState<RecipeListItem[]>([])
   const [petContraindications, setPetContraindications] = useState<PetContraindications | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string>()
   const [loading, setLoading] = useState(true)
@@ -680,6 +692,16 @@ export function PetProfilePage() {
   const [savingRecordId, setSavingRecordId] = useState<string>()
   const [savingFavorite, setSavingFavorite] = useState(false)
   const [deletingPet, setDeletingPet] = useState(false)
+
+  const goBack = () => {
+    if (locationState?.from === 'recipe-profile' && locationState.recipeId) {
+      navigate(`/recipes/${locationState.recipeId}`, {
+        state: locationState.recipeReturnState,
+      })
+      return
+    }
+    navigate('/dashboard')
+  }
 
   useEffect(() => {
     if (!id) {
@@ -706,12 +728,12 @@ export function PetProfilePage() {
         setPetData(pet)
         setHealthRecords(records)
 
-        void petService.getPetFoods(id)
-          .then((foods) => {
-            if (!cancelled) setPetFoods(foods)
+        void recipeService.list({ petId: id, sort: 'updatedAt', direction: 'desc' })
+          .then((recipes) => {
+            if (!cancelled) setPetRecipes(recipes)
           })
           .catch(() => {
-            if (!cancelled) setPetFoods([])
+            if (!cancelled) setPetRecipes([])
           })
 
         void petService.getContraindications(id)
@@ -757,7 +779,7 @@ export function PetProfilePage() {
         if (!cancelled) {
           setPetData(null)
           setHealthRecords([])
-          setPetFoods([])
+          setPetRecipes([])
           setPetContraindications(null)
           setError(err instanceof Error ? err.message : 'Не удалось загрузить профиль питомца')
         }
@@ -785,7 +807,7 @@ export function PetProfilePage() {
   const diseaseHistory = useMemo(() => mapDiseaseHistory(healthRecords), [healthRecords])
   const weightHistory = useMemo(() => mapWeightHistory(healthRecords, petData ?? undefined), [healthRecords, petData])
   const activityHistory = useMemo(() => mapActivityHistory(healthRecords), [healthRecords])
-  const foodItems = useMemo(() => mapPetFoods(petFoods), [petFoods])
+  const foodItems = useMemo(() => mapPetRecipes(petRecipes), [petRecipes])
 
   const refDefaults = useMemo<RefDefaults | null>(() => {
     const activityTypeId = activityTypes[0]?.id
@@ -935,7 +957,7 @@ export function PetProfilePage() {
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       {/* Header */}
       <div className={styles.pageHeader}>
-        <button className={styles.backBtn} onClick={() => navigate('/dashboard')}>
+        <button className={styles.backBtn} onClick={goBack}>
           ‹ Назад
         </button>
         <h1 className={styles.headerTitle}>Профиль питомца</h1>

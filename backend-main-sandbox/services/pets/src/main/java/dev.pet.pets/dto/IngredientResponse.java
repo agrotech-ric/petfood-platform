@@ -1,0 +1,76 @@
+package dev.pet.pets.dto;
+
+import dev.pet.pets.domain.Ingredient;
+import java.time.OffsetDateTime;
+
+public record IngredientResponse(
+    Long id,
+    String category,
+    String name,
+    String subtype,
+    double portion,
+    double calories,
+    double protein,
+    double fat,
+    double carbs,
+    double moisture,
+    double fiber,
+    double ash,
+    double cholesterol,
+    double sugar,
+    double calcium,
+    double phosphorus,
+    double magnesium,
+    double sodium,
+    double potassium,
+    double iron,
+    double copper,
+    double zinc,
+    double manganese,
+    double linoleic,
+    double alphaLinolenic,
+    double arachidonic,
+    double epa,
+    double dha,
+    double choline,
+    double selenium,
+    double iodine,
+    double vitaminA,
+    double vitaminE,
+    double vitaminD,
+    double vitaminB1,
+    double vitaminB2,
+    double vitaminB3,
+    double vitaminB5,
+    double vitaminB6,
+    double vitaminB9,
+    double vitaminB12,
+    double vitaminC,
+    double vitaminK,
+    double alphaCarotene,
+    double betaCarotene,
+    double betaCryptoxanthin,
+    double luteinZeaxanthin,
+    double lycopene,
+    double retinol,
+    OffsetDateTime createdAt,
+    OffsetDateTime updatedAt
+) {
+    public static IngredientResponse from(Ingredient ingredient) {
+        return new IngredientResponse(
+            ingredient.getId(), ingredient.getCategory(), ingredient.getName(), ingredient.getSubtype(),
+            ingredient.getPortion(), ingredient.getCalories(), ingredient.getProtein(), ingredient.getFat(),
+            ingredient.getCarbs(), ingredient.getMoisture(), ingredient.getFiber(), ingredient.getAsh(),
+            ingredient.getCholesterol(), ingredient.getSugar(), ingredient.getCalcium(), ingredient.getPhosphorus(),
+            ingredient.getMagnesium(), ingredient.getSodium(), ingredient.getPotassium(), ingredient.getIron(),
+            ingredient.getCopper(), ingredient.getZinc(), ingredient.getManganese(), ingredient.getLinoleic(),
+            ingredient.getAlphaLinolenic(), ingredient.getArachidonic(), ingredient.getEpa(), ingredient.getDha(),
+            ingredient.getCholine(), ingredient.getSelenium(), ingredient.getIodine(), ingredient.getVitaminA(),
+            ingredient.getVitaminE(), ingredient.getVitaminD(), ingredient.getVitaminB1(), ingredient.getVitaminB2(),
+            ingredient.getVitaminB3(), ingredient.getVitaminB5(), ingredient.getVitaminB6(), ingredient.getVitaminB9(),
+            ingredient.getVitaminB12(), ingredient.getVitaminC(), ingredient.getVitaminK(), ingredient.getAlphaCarotene(),
+            ingredient.getBetaCarotene(), ingredient.getBetaCryptoxanthin(), ingredient.getLuteinZeaxanthin(),
+            ingredient.getLycopene(), ingredient.getRetinol(), ingredient.getCreatedAt(), ingredient.getUpdatedAt()
+        );
+    }
+}

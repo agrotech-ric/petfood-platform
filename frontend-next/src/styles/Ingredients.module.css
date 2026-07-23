@@ -365,8 +365,9 @@
 
 .nutrientRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding: 5px 0;
   border-bottom: 1px solid var(--color-border-light, #f5f5f5);
   font-size: 13px;
@@ -378,6 +379,7 @@
 
 .nutrientName {
   color: var(--color-text);
+  min-width: 0;
 }
 
 .nutrientValue {
@@ -572,9 +574,12 @@
 }
 
 .fieldWithUnit {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
   align-items: center;
   gap: 6px;
+  width: 220px;
+  flex: 0 0 220px;
 }
 
 .fieldUnit {
@@ -735,5 +740,6 @@
 
   .fieldWithUnit {
     width: 100%;
+    flex-basis: 100%;
   }
 }

@@ -1,0 +1,57 @@
+package dev.pet.pets.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
+public record IngredientRequest(
+    @NotBlank String category,
+    @NotBlank String name,
+    String subtype,
+    @Positive double portion,
+    @PositiveOrZero double calories,
+    @PositiveOrZero double protein,
+    @PositiveOrZero double fat,
+    @PositiveOrZero double carbs,
+    @PositiveOrZero double moisture,
+    @PositiveOrZero double fiber,
+    @PositiveOrZero double ash,
+    @PositiveOrZero double cholesterol,
+    @PositiveOrZero double sugar,
+    @PositiveOrZero double calcium,
+    @PositiveOrZero double phosphorus,
+    @PositiveOrZero double magnesium,
+    @PositiveOrZero double sodium,
+    @PositiveOrZero double potassium,
+    @PositiveOrZero double iron,
+    @PositiveOrZero double copper,
+    @PositiveOrZero double zinc,
+    @PositiveOrZero double manganese,
+    @PositiveOrZero double linoleic,
+    @PositiveOrZero double alphaLinolenic,
+    @PositiveOrZero double arachidonic,
+    @PositiveOrZero double epa,
+    @PositiveOrZero double dha,
+    @PositiveOrZero double choline,
+    @PositiveOrZero double selenium,
+    @PositiveOrZero double iodine,
+    @PositiveOrZero double vitaminA,
+    @PositiveOrZero double vitaminE,
+    @PositiveOrZero double vitaminD,
+    @PositiveOrZero double vitaminB1,
+    @PositiveOrZero double vitaminB2,
+    @PositiveOrZero double vitaminB3,
+    @PositiveOrZero double vitaminB5,
+    @PositiveOrZero double vitaminB6,
+    @PositiveOrZero double vitaminB9,
+    @PositiveOrZero double vitaminB12,
+    @PositiveOrZero double vitaminC,
+    @PositiveOrZero double vitaminK,
+    @PositiveOrZero double alphaCarotene,
+    @PositiveOrZero double betaCarotene,
+    @PositiveOrZero double betaCryptoxanthin,
+    @PositiveOrZero double luteinZeaxanthin,
+    @PositiveOrZero double lycopene,
+    @PositiveOrZero double retinol
+) {
+}

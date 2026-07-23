@@ -78,9 +78,25 @@ export function App() {
           <Route path="/ingredients/:id/edit" element={<IngredientEditPage />} />
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/recipes/create" element={<CreateRecipePage />} />
-          <Route path="/recipes/:id" element={<RecipeProfilePage />} />
-          <Route path="/recipes/:id/edit" element={<EditRecipePage />} />
         </Route>
+
+        <Route
+          path="/recipes/:id"
+          element={
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
+              <RecipeProfilePage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/recipes/:id/edit"
+          element={
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
+              <EditRecipePage />
+            </PrivateRoute>
+          }
+        />
 
         <Route
           path="/register-pet"

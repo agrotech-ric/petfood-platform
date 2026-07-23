@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { MOCK_INGREDIENTS } from '../data/ingredientsMock'
+import { ingredientService, type Ingredient } from '../../services/ingredientService'
 import styles from '../styles/Ingredients.module.css'
 import ShareIcon from '../assets/icons/share.svg?react'
 import DownloadIcon from '../assets/icons/download.svg?react'
@@ -9,7 +10,65 @@ import DeleteIcon from '../assets/icons/delete.svg?react'
 export function IngredientProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const item = MOCK_INGREDIENTS.find(i => i.id === Number(id))
+  const ingredientId = Number(id)
+  const [item, setItem] = useState<Ingredient | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!Number.isInteger(ingredientId)) {
+      setLoading(false)
+      return
+    }
+    ingredientService.get(ingredientId)
+      .then(data => {
+        if (!cancelled) setItem(data)
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [ingredientId])
+
+  const handleDelete = async () => {
+    if (!item || !window.confirm(`Удалить ингредиент «${item.name}»?`)) return
+    try {
+      await ingredientService.delete(item.id)
+      navigate('/ingredients')
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Не удалось удалить ингредиент')
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = { title: item?.name ?? 'Ингредиент', url: window.location.href }
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+      } else {
+        await navigator.clipboard.writeText(window.location.href)
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      window.alert('Не удалось поделиться ссылкой')
+    }
+  }
+
+  const handleDownload = () => {
+    if (!item) return
+    const blob = new Blob([JSON.stringify(item, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `ingredient-${item.id}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  if (loading) {
+    return <div className={styles.page}><p>Загрузка...</p></div>
+  }
 
   if (!item) {
     return (
@@ -32,7 +91,7 @@ export function IngredientProfilePage() {
             <EditIcon width={20} height={20} className="no-filter" />
             Изменить
           </button>
-          <button className={styles.deleteBtn}>
+          <button className={styles.deleteBtn} onClick={handleDelete}>
             <DeleteIcon width={20} height={20} className="no-filter" />
             Удалить
           </button>
@@ -43,10 +102,10 @@ export function IngredientProfilePage() {
       <div className={styles.profileCard}>
         {/* Share/download icons */}
         <div className={styles.profileActions}>
-          <button className={styles.iconBtn} title="Поделиться">
+          <button className={styles.iconBtn} title="Поделиться" onClick={handleShare}>
             <ShareIcon width={30} height={30} />
           </button>
-          <button className={styles.iconBtn} title="Скачать">
+          <button className={styles.iconBtn} title="Скачать" onClick={handleDownload}>
             <DownloadIcon width={30} height={30} />
           </button>
         </div>
@@ -59,7 +118,7 @@ export function IngredientProfilePage() {
         <div className={styles.profileMeta}>
           <div className={styles.profileMetaGroup}>
             <span className={styles.profileMetaLabel}>Порция</span>
-            <span className={styles.profileMetaValue}>100 г</span>
+            <span className={styles.profileMetaValue}>{item.portion} г</span>
           </div>
           <div className={styles.profileMetaGroup}>
             <span className={styles.profileMetaLabel}>Энергетическая ценность</span>
@@ -85,7 +144,7 @@ export function IngredientProfilePage() {
                 { label: 'Влажность', value: item.moisture, unit: 'г' },
                 { label: 'Белки', value: item.protein, unit: 'г' },
                 { label: 'Жиры', value: item.fat, unit: 'г' },
-                { label: 'Углеводы', value: 0, unit: 'г' },
+                { label: 'Углеводы', value: item.carbs, unit: 'г' },
                 { label: 'Клетчатка', value: item.fiber, unit: 'г' },
                 { label: 'Зола', value: item.ash, unit: 'г' },
                 { label: 'Холестерин', value: item.cholesterol, unit: 'г' },

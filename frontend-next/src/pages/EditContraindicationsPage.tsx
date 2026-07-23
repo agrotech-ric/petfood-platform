@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { INGREDIENT_CATEGORIES } from '../data/createRecipeMock'
+import { ingredientService } from '../../services/ingredientService'
 import { petService } from '../../services/petService'
 import styles from '../styles/EditPet.module.css'
 
@@ -14,6 +14,9 @@ export function EditContraindicationsPage() {
   const [search, setSearch] = useState('')
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set())
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
+  const [ingredientCategories, setIngredientCategories] = useState<
+    Array<{ key: string; label: string; items: string[] }>
+  >([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -27,10 +30,26 @@ export function EditContraindicationsPage() {
       setLoading(true)
       setError('')
       try {
-        const data = await petService.getContraindications(petId)
+        const [data, ingredients] = await Promise.all([
+          petService.getContraindications(petId),
+          ingredientService.list(),
+        ])
         if (cancelled) return
         setDescription(data.description || '')
         setSelectedIngredients(data.ingredients || [])
+        const grouped = new Map<string, string[]>()
+        ingredients.forEach((ingredient) => {
+          const items = grouped.get(ingredient.category) ?? []
+          items.push(ingredient.subtype
+            ? `${ingredient.name} — ${ingredient.subtype}`
+            : ingredient.name)
+          grouped.set(ingredient.category, items)
+        })
+        setIngredientCategories(Array.from(grouped, ([label, items]) => ({
+          key: label,
+          label,
+          items,
+        })))
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Не удалось загрузить противопоказания')
       } finally {
@@ -59,7 +78,7 @@ export function EditContraindicationsPage() {
     )
   }
 
-  const filteredCategories = INGREDIENT_CATEGORIES.map(cat => ({
+  const filteredCategories = ingredientCategories.map(cat => ({
     ...cat,
     items: cat.items.filter(item =>
       item.toLowerCase().includes(search.toLowerCase())

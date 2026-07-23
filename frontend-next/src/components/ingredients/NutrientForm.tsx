@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CATEGORIES, type Ingredient } from '../../data/ingredientsMock'
+import { type Ingredient } from '../../../services/ingredientService'
+import { CATEGORIES } from '../../data/ingredientOptions'
 import styles from '../../styles/Ingredients.module.css'
 
 type Props = {
   title: string
   initialValues: Partial<Ingredient>
-  onSave: (values: Partial<Ingredient>) => void
+  onSave: (values: Partial<Ingredient>) => Promise<void> | void
   saveLabel?: string
 }
 
@@ -79,19 +80,33 @@ const RIGHT_ROWS = [
 export function NutrientForm({ title, initialValues, onSave, saveLabel = 'Сохранить' }: Props) {
   const navigate = useNavigate()
   const [fields, setFields] = useState<Fields>(toFields(initialValues))
+  const [saving, setSaving] = useState(false)
 
   const set = (key: string, value: string) => {
     setFields(prev => ({ ...prev, [key]: value }))
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const parsed: Partial<Ingredient> = {}
     Object.entries(fields).forEach(([k, v]) => {
       if (v === '') return
+      if (k === 'name' || k === 'subtype' || k === 'category') {
+        ;(parsed as Record<string, unknown>)[k] = v
+        return
+      }
       const n = Number(v)
-      ;(parsed as Record<string, unknown>)[k] = isNaN(n) ? v : n
+      ;(parsed as Record<string, unknown>)[k] = Number.isNaN(n) ? v : n
     })
-    onSave(parsed)
+    if (!String(parsed.name ?? '').trim() || !String(parsed.category ?? '').trim()) {
+      window.alert('Заполните название и категорию ингредиента')
+      return
+    }
+    setSaving(true)
+    try {
+      await onSave(parsed)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const numInput = (key: string, unit: string) => (
@@ -239,7 +254,7 @@ export function NutrientForm({ title, initialValues, onSave, saveLabel = 'Сох
           </div>
         </div>
 
-        <button className={styles.saveBtn} onClick={handleSave}>
+        <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
           {saveLabel}
         </button>
       </div>
