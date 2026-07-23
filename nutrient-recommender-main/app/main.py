@@ -1,22 +1,27 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
+import asyncio
 import pandas as pd
 from scipy.optimize import linprog
 from scipy.sparse import hstack, csr_matrix
 import numpy as np
 import itertools
 
+
 from app.models import *
 from app.utils import (
     load_data, build_ml_models, get_disorder_keywords,
     get_ingredient_categories
 )
+
 from app.kcal_calculate import (
     kcal_calculate, protein_need_calc, get_other_nutrient_norms,
     size_category, age_type_category,
     age_category_types, size_types
 )
+
+from app.calc_recipe_method_2 import (calc_recipe)
 
 app = FastAPI(
     title="Dog Food Calculator API",
@@ -76,7 +81,7 @@ async def get_breed_details(breed: str):
         min_weight = breed_data["min_weight"].values[0]
         max_weight = breed_data["max_weight"].values[0]
         avg_weight = (min_weight + max_weight) / 2
-        diseases = breed_data["Disease"].unique().tolist()
+        diseases = breed_data["Disease_ru"].unique().tolist()
 
         return BreedDetailsResponse(
             breed_info=BreedInfo(
@@ -113,21 +118,19 @@ async def calculate_calories(request: DogInfoRequest):
         age_type_categ = age_type_category(size_categ, request.age, request.age_metric.value)
 
         # Get activity level based on age category
-        activity_level = None
-        if age_type_categ == age_category_types[1]:  # Adult
-            activity_level = request.activity_level_adult.value if request.activity_level_adult else None
-        elif age_type_categ == age_category_types[2]:  # Elderly
-            activity_level = request.activity_level_elderly.value if request.activity_level_elderly else None
+        activity_level = request.activity_level.value if request.activity_level else None
 
         # Calculate calories
         reproductive_status = request.reproductive_status.value if request.reproductive_status else None
         pregnancy_period = request.pregnancy_period.value if request.pregnancy_period else None
         lactation_week = request.lactation_week.value if request.lactation_week else None
+        number_puppies = request.num_puppies if request.num_puppies else 0
 
-        kcal, formula, page = kcal_calculate(
+
+        kcal, formula, page, additional_text = kcal_calculate(
             reproductive_status=reproductive_status,
             berem_time=pregnancy_period,
-            num_pup=request.num_puppies,
+            num_pup= number_puppies ,
             L_time=lactation_week,
             age_type=age_type_categ,
             weight=request.weight,
@@ -141,6 +144,7 @@ async def calculate_calories(request: DogInfoRequest):
             daily_kcal=max(0, kcal),
             formula=formula,
             reference_page=page,
+            additional_text=additional_text,
             size_category=size_categ,
             age_category=age_type_categ
         )
@@ -231,7 +235,7 @@ async def get_disorder_recommendations(request: DisorderRequest):
         if breed_data.empty:
             raise HTTPException(status_code=404, detail=f"Breed '{request.breed}' not found")
 
-        disorder_data = breed_data[breed_data["Disease"] == request.disorder]
+        disorder_data = breed_data[breed_data["Disease_ru"] == request.disorder]
         if disorder_data.empty:
             raise HTTPException(status_code=404, detail=f"Disorder '{request.disorder}' not found for breed")
 
@@ -246,10 +250,19 @@ async def get_disorder_recommendations(request: DisorderRequest):
         cat_vec = models['encoder'].transform([[breed_size, "Adult"]])
         kw_combined = hstack([csr_matrix(kw_reduced), cat_vec])
 
+
+        # Build query vector
+        kw_tfidf_wet = models['vectorizer_wet'].transform([keywords])
+        kw_reduced_wet = models['svd_wet'].transform(kw_tfidf_wet)
+
+        cat_vec_wet = models['encoder_wet'].transform([[breed_size, "Adult"]])
+        kw_combined_wet = hstack([csr_matrix(kw_reduced_wet), cat_vec_wet])
+
+
         # Predict nutrients
         nutrient_preds = {}
         for nut, model in models['nutrient_models'].items():
-            pred = model.predict(kw_combined)[0]
+            pred = model.predict(kw_combined_wet)[0]
             sc = models['scalers'].get(nut)
             if sc:
                 pred = sc.inverse_transform([[pred]])[0][0]
@@ -338,11 +351,10 @@ async def get_disorder_recommendations(request: DisorderRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/optimize/recipe", response_model=OptimizedRecipeResponse, tags=["Recipe Optimization"])
-async def optimize_recipe(request: OptimizeRecipeRequest):
-    """Optimize food recipe composition based on constraints"""
+def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResponse:
+    """Optimize food recipe composition based on constraints (CPU-bound)."""
     try:
-        _, disease_df, _, food_ingredients_df = load_data()
+        _, disease_df, merge_tab_df, food_ingredients_df = load_data()
 
         breed_data = disease_df[disease_df["Breed"] == request.breed]
         if breed_data.empty:
@@ -382,33 +394,50 @@ async def optimize_recipe(request: OptimizeRecipeRequest):
             cols_to_divide + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
             ].to_dict(orient='index')
 
-        # Prepare constraint mappings
-        ingredient_names = request.ingredients
-        ingr_range_dict = {ir.ingredient: (ir.min_percent, ir.max_percent) for ir in request.ingredient_ranges}
-        nutr_range_dict = {nr.nutrient: (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
+        food_keys = set(food.keys())
+        ingr_ranges = request.ingredient_ranges
 
+        if len(ingr_ranges)==0:
+            raise HTTPException(
+                status_code=400,
+                detail="Выберите хотя бы один ингредиент.",
+            )
+
+        ingredient_names = [ing.ingredient for ing in ingr_ranges]
+        nutr_ranges = {nr.nutrient: (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
+        maximize_nutrients = request.maximize_nutrients if request.maximize_nutrients else ["Влага", "Белки"]
+       
+        ingr_ranges_data = [(ing.min_percent, ing.max_percent) for ing in ingr_ranges]
+        lowest = sum([low for (low, high) in ingr_ranges_data])
+        highest = sum([high for (low, high) in ingr_ranges_data])
+       
+        if lowest > 100:
+            factor = 99 / lowest
+            ingr_ranges_data = [(low * factor, high) for (low, high) in ingr_ranges_data]
+        elif highest < 100:
+            factor = 101 / highest
+            ingr_ranges_data = [(low, high * factor) for (low, high) in ingr_ranges_data]
+				
         # Build LP problem
-        ingr_ranges = [ingr_range_dict.get(ing, (0, 100)) for ing in ingredient_names]
-        nutr_ranges = nutr_range_dict
-
         A = [
             [food[ing][nutr] if val > 0 else -food[ing][nutr]
              for ing in ingredient_names]
             for nutr in nutr_ranges
-            for val in (-nutr_ranges[nutr][0] / 100, nutr_ranges[nutr][1] / 100)
+            for val in (-nutr_ranges[nutr][0] , nutr_ranges[nutr][1] )
         ]
         b = [
-            val / 100 for nutr in nutr_ranges
+            val/100  for nutr in nutr_ranges
             for val in (-nutr_ranges[nutr][0], nutr_ranges[nutr][1])
         ]
 
         A_eq = [[1 for _ in ingredient_names]]
         b_eq = [1.0]
-        bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges]
+        bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges_data]
 
         # Objective function
-        f = [-sum(food[i][nutr] for nutr in request.maximize_nutrients if nutr in food[i])
+        f = [-sum(food[i][nutr] for nutr in maximize_nutrients if nutr in food[i])
              for i in ingredient_names]
+
 
         # Try linear programming
         res = linprog(f, A_ub=A, b_ub=b, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
@@ -418,7 +447,7 @@ async def optimize_recipe(request: OptimizeRecipeRequest):
             result = {name: round(val * 100, 2) for name, val in zip(ingredient_names, res.x)}
 
             nutrients_100g = {
-                nutr: round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)) * 100, 2)
+                nutr: round(sum(res.x[i] * food[name][nutr]*100 for i, name in enumerate(ingredient_names)), 2)
                 for nutr in cols_to_divide
             }
 
@@ -475,45 +504,14 @@ async def optimize_recipe(request: OptimizeRecipeRequest):
                 method="optimization"
             )
         else:
-            # Fallback to brute force with larger step for performance
-            step = 5  # Increased from 1 to 5 for faster computation
-            variants = []
-            ranges = [np.arange(low, high + step, step) for (low, high) in ingr_ranges]
+            fallback_method = "combinatory search"
+            best_recipe = calc_recipe(ingr_ranges_data, nutr_ranges, ingredient_names, food)
 
-            for combo in itertools.product(*ranges):
-                if abs(sum(combo) - 100) < 1e-6:
-                    variants.append(combo)
-
-            best_recipe = None
-            min_penalty = float("inf")
-
-            for combo in variants:
-                values = dict(zip(ingredient_names, combo))
-
-                totals = {nutr: 0.0 for nutr in cols_to_divide}
-                for i, ingr in enumerate(ingredient_names):
-                    for nutr in cols_to_divide:
-                        totals[nutr] += values[ingr] * food[ingr][nutr]
-
-                penalty = 0
-                for nutr in cols_to_divide:
-                    val = totals[nutr]
-                    min_val = nutr_ranges.get(nutr, (0, 100))[0]
-                    max_val = nutr_ranges.get(nutr, (0, 100))[1]
-
-                    if val < min_val:
-                        penalty += min_val - val
-                    elif val > max_val:
-                        penalty += val - max_val
-
-                if penalty < min_penalty:
-                    min_penalty = penalty
-                    best_recipe = (values, totals)
-
-            if not best_recipe:
+            if best_recipe is None:
                 raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
 
             values, totals = best_recipe
+
 
             energy_100g = (3.5 * totals["Белки"] +
                            8.5 * totals["Жиры"] +
@@ -533,14 +531,13 @@ async def optimize_recipe(request: OptimizeRecipeRequest):
                 for nutr in all_nutrients
             }
 
-            # Calculate nutrient deficiencies (if nutrient_norms are provided)
             nutrient_deficiencies = {}
-            if hasattr(request, 'nutrient_norms') and request.nutrient_norms:
-                for nutrient_name, required_amount in request.nutrient_norms.items():
-                    actual_amount = count_nutr_cont_all.get(nutrient_name, 0)
-                    deficit = required_amount - actual_amount
-                    if deficit > 0:
-                        nutrient_deficiencies[nutrient_name] = round(deficit, 2)
+            for nutrient_name, required_amount in count_nutr_cont_all.items():
+                fixed_nutrient_name = nutrient_name.split(",")[0]
+                measure = nutrient_name.split(",")[1] if nutrient_name.split(",").__len__() > 1 else ""
+                actual_amount = norms.get(fixed_nutrient_name, 0)
+                deficit = required_amount - actual_amount
+                nutrient_deficiencies[fixed_nutrient_name] = f"{round(abs(deficit), 2)}{measure}"
 
             composition = [RecipeComposition(ingredient=k, grams_per_100g=v) for k, v in values.items()]
 
@@ -567,8 +564,19 @@ async def optimize_recipe(request: OptimizeRecipeRequest):
                 ingredients_required=ingredients_required,
                 nutritional_value_total=nutritional_total,
                 nutrient_deficiencies=nutrient_deficiencies,
-                method="brute_force"
+                method=fallback_method
             )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/optimize/recipe", response_model=OptimizedRecipeResponse, tags=["Recipe Optimization"])
+async def optimize_recipe(request: OptimizeRecipeRequest):
+    """Run recipe optimization without blocking other API requests."""
+    try:
+        return await asyncio.to_thread(_optimize_recipe_impl, request)
     except HTTPException:
         raise
     except Exception as e:

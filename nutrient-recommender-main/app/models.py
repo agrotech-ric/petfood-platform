@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from enum import Enum
 
 
+
 # Enums for categorical data
 class GenderType(str, Enum):
     MALE = "male"
@@ -19,13 +20,14 @@ class ReproductiveStatus(str, Enum):
     PREGNANCY = "pregnancy"
     LACTATION = "lactation"
 
-
 class PregnancyPeriod(str, Enum):
-    FIRST_4_WEEKS = "first_4_weeks"
+    NONE = "none"
+    FIRST_4_WEEKS = "early_4_weeks"
     LAST_5_WEEKS = "last_5_weeks"
 
 
 class LactationWeek(str, Enum):
+    NONE = "none"
     WEEK_1 = "week_1"
     WEEK_2 = "week_2"
     WEEK_3 = "week_3"
@@ -62,28 +64,13 @@ class DogInfoRequest(BaseModel):
     gender: GenderType = Field(..., description="Dog gender")
     breed: str = Field(..., description="Dog breed name")
     reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
-    pregnancy_period: Optional[PregnancyPeriod] = Field(None, description="Pregnancy period (if pregnant)")
-    lactation_week: Optional[LactationWeek] = Field(None, description="Lactation week (if lactating)")
-    num_puppies: Optional[int] = Field(None, ge=0, description="Number of puppies (if lactating)")
+    pregnancy_period: Optional[PregnancyPeriod] = Field(None, description="Pregnancy period (if pregnancy)")
+    lactation_week: Optional[LactationWeek] = Field(None, description="Lactation week (if lactation)")
+    num_puppies: Optional[int] = Field(None, ge=0, description="Number of puppies (if lactation)")
     activity_level: Optional[ActivityLevel] = Field(None, description="Activity level")
 
-    @validator('reproductive_status', 'pregnancy_period', 'lactation_week', 'num_puppies')
-    def check_female_only(cls, v, values):
-        if v is not None and values.get('gender') != GenderType.FEMALE:
-            raise ValueError("Reproductive parameters are only valid for female dogs")
-        return v
 
-    @validator('pregnancy_period')
-    def check_pregnancy(cls, v, values):
-        if v is not None and values.get('reproductive_status') != ReproductiveStatus.PREGNANCY:
-            raise ValueError("Pregnancy period is only valid when reproductive_status is 'pregnancy'")
-        return v
 
-    @validator('lactation_week', 'num_puppies')
-    def check_lactation(cls, v, values):
-        if v is not None and values.get('reproductive_status') != ReproductiveStatus.LACTATION:
-            raise ValueError("Lactation parameters are only valid when reproductive_status is 'lactation'")
-        return v
 
 
 class DisorderRequest(BaseModel):
@@ -120,6 +107,7 @@ class CalorieCalculationResponse(BaseModel):
     daily_kcal: float = Field(..., description="Daily caloric requirement (kcal)")
     formula: str = Field(..., description="Calculation formula (LaTeX format)")
     reference_page: str = Field(..., description="Reference page from FEDIAF guidelines")
+    additional_text: str = Field(..., description="additional text")
     size_category: SizeCategory = Field(..., description="Size category based on breed")
     age_category: AgeCategory = Field(..., description="Age category")
 

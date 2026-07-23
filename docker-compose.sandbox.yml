@@ -180,6 +180,28 @@ services:
     networks:
       - pets_network_sandbox
 
+  recommender-service-sandbox:
+    build:
+      context: ./nutrient-recommender-main
+    container_name: pets_sandbox_recommender_service
+    environment:
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "18001:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - pets_network_sandbox
+
   notifications-service-sandbox:
     build:
       context: ./backend-main-sandbox
@@ -245,4 +267,3 @@ volumes:
   rabbitmq_data_sandbox:
   minio_data_sandbox:
   pets_photos_sandbox:
-

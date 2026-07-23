@@ -75,7 +75,10 @@ export const apiClient = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      const errorMessage = errorData.message || errorData.error || `Request failed with status ${response.status}`
+      const errorMessage = errorData.message
+        || errorData.error
+        || (typeof errorData.detail === 'string' ? errorData.detail : null)
+        || `Request failed with status ${response.status}`
       throw new Error(errorMessage)
     }
 

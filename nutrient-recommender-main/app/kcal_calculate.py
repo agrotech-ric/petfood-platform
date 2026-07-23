@@ -1,18 +1,26 @@
 import textwrap
 
-metrics_age_types = ["в годах", "в месецах"]
-gender_types = ["Самец", "Самка"]
-rep_status_types = ["Нет", "Щенность (беременность)", "Период лактации"]
-berem_time_types = ["первые 4 недедели беременности", "последние 5 недель беременности"]
-lact_time_types = ["1 неделя", "2 неделя", "3 неделя", "4 неделя"]
+metrics_age_types = ["years", "months"]
+gender_types = ["male", "female"]
+rep_status_types = [ 'none' , 'pregnancy' , 'lactation']
+berem_time_types = ["early_4_weeks", "last_5_weeks"]
+lact_time_types = ['week_1', 'week_2', 'week_3', 'week_4']
+
+lact_time_types_dict = {
+    'week_1':"1 недели", 
+    'week_2':"2 недели", 
+    'week_3':"3 недели", 
+    'week_4':"4 недели"
+   }
+
+
 age_category_types = ["puppy", "adult", "senior"]
 size_types = ["small", "medium", "large", "extra_large"]
-activity_level_cat_1 = ["Пассивный (гуляеет на поводке менее 1ч/день)", "Средний1 (1-3ч/день, низкая активность)",
-                        "Средний2 (1-3ч/день, высокая активность)",
-                        "Активный (3-6ч/день, рабочие собаки, например, овчарки)",
-                        "Высокая активность в экстремальных условиях (гонки на собачьих упряжках со скоростью 168 км/день в условиях сильного холода)",
-                        "Взрослые, склонные к ожирению"]
-activity_level_cat_2 = ["Пассивный", "Средний", "Активный"]
+activity_level_cat_1 = ["passive", "low","moderate","active",
+                        "extreme", "obesity_prone"]
+activity_level_cat_2 = ["passive", "moderate", "active"]
+
+
 other_nutrients_1 = ["Зола, г", "Клетчатка, г", "Холестерин, мг", "Сахар общее, г"]
 other_nutrients_2 = ["Холин, мг", "Селен, мкг", "Йод, мкг", "Пантотеновая кислота, мг", "Линолевая кислота, г",
                      "Фолиевая кислота, мкг", "Альфа-линоленовая кислота, г", "Арахидоновая кислота, г",
@@ -198,7 +206,7 @@ def age_type_category(size_categ, age, age_metric):
         return None
 
     else:
-        if age <= 7 * 12:
+        if age >= 12 and age <= 7 * 12:
             return age_category_types[1]
         elif age < 12:
             return age_category_types[0]
@@ -211,6 +219,7 @@ def kcal_calculate(reproductive_status, berem_time, num_pup, L_time, age_type, w
                    user_breed, age):
     formula = ""
     page = ""
+    additional_text=""
     if L_time == lact_time_types[0]:
         L = 0.75
     elif L_time == lact_time_types[1]:
@@ -220,44 +229,49 @@ def kcal_calculate(reproductive_status, berem_time, num_pup, L_time, age_type, w
     else:
         L = 1.2
 
+
     if reproductive_status == rep_status_types[1]:
         if berem_time == berem_time_types[0]:
             kcal = 132 * (weight ** 0.75)
-            formula = r"kcal = 132 \cdot вес^{0.75}  \\  \text{(первые 4 недели беременности)}"
+            formula = "pregnancy_early_4_weeks"  
+            additional_text= "(первые 4 недели беременности)"
             page = "56"
 
         else:
             kcal = 132 * (weight ** 0.75) + (26 * weight)
-            formula = r"kcal = 132 \cdot вес^{0.75} + 26 \cdot вес  \\  \text{(последние 5 недель беременности)}"
+            formula = "pregnancy_last_5_weeks"  
+            additional_text= "(последние 5 недель беременности)"
             page = "56"
 
     elif reproductive_status == rep_status_types[2]:
         if num_pup < 5:
             kcal = 145 * (weight ** 0.75) + 24 * num_pup * weight * L
-            formula = fr"kcal = 145 \cdot вес^{{0.75}} + 24 \cdot n \cdot вес \cdot L  \\  \text{{n - количество щенков}}  \\  \text{{L = {L} для {L_time}}}"
+            formula = "lactation_num_pup_less_5"  
+            additional_text= f"n - количество щенков; L = {L} для {lact_time_types_dict[L_time]}"
             page = "56"
 
         else:
             kcal = 145 * (weight ** 0.75) + (96 + 12 * num_pup - 4) * weight * L
-            formula = fr"kcal = 145 \cdot вес^{{0.75}}  + (96 + 12 \cdot n - 4) \cdot вес \cdot L    \\  \text{{n - количество щенков}}  \\  \text{{L = {L} для {L_time}}}"
+            formula = "lactation_num_pup_more_5"  
+            additional_text= f"n - количество щенков; L = {L} для {lact_time_types_dict[L_time]}"
             page = "56"
 
     else:
         if age_type == age_category_types[0]:
             if age < 2:
                 kcal = 25 * weight
-                formula = r"kcal = 25 \cdot вес"
+                formula = "puppy_2_month"
                 page = "56"
 
             elif 2 <= age < 12:
                 kcal = (254.1 - 135 * (weight / expected)) * (weight ** 0.75)
-                formula = fr"kcal = \left(254.1 - 135 \cdot \frac{{вес}}{{w}}\right) \cdot вес^{{0.75}}  \\  w = {round(expected, 2)}  \text{{кг ;  предположительный вес для породы {user_breed}}}"
+                formula = "puppy_more_2_month"
+                additional_text=f"вес_ст = {round(expected, 2)} кг;  предположительный вес для данной породы"
                 page = "56"
-
-
+ 
             else:
                 kcal = 130 * (weight ** 0.75)
-                formula = r"kcal = 130 \cdot вес^{0.75}"
+                formula = "puppy_more_12_month"
                 page = "54"
 
 
@@ -265,48 +279,48 @@ def kcal_calculate(reproductive_status, berem_time, num_pup, L_time, age_type, w
         elif age_type == age_category_types[2]:
             if activity_level == activity_level_cat_2[0]:
                 kcal = 80 * (weight ** 0.75)
-                formula = r"kcal = 80  \cdot вес^{0.75}"
+                formula = "senior_passive"
                 page = "54"
 
             elif activity_level == activity_level_cat_2[1]:
                 kcal = 95 * (weight ** 0.75)
-                formula = r"kcal = 95  \cdot вес^{0.75}"
+                formula = "senior_moderate_adult_passive"
                 page = "54"
 
             else:
                 kcal = 110 * (weight ** 0.75)
-                formula = r"kcal = 110  \cdot вес^{0.75}"
+                formula = "senior_active_adult_low"
                 page = "54"
 
         else:
             if activity_level == activity_level_cat_1[0]:
                 kcal = 95 * (weight ** 0.75)
-                formula = r"kcal = 95  \cdot вес^{0.75}"
+                formula = "senior_moderate_adult_passive"
                 page = "55"
 
             elif activity_level == activity_level_cat_1[1]:
                 kcal = 110 * (weight ** 0.75)
-                formula = r"kcal = 110  \cdot вес^{0.75}"
+                formula = "senior_active_adult_low"
                 page = "55"
 
             elif activity_level == activity_level_cat_1[2]:
                 kcal = 125 * (weight ** 0.75)
-                formula = r"kcal = 125  \cdot вес^{0.75}"
+                formula = "adult_moderate"
                 page = "55"
 
             elif activity_level == activity_level_cat_1[3]:
                 kcal = 160 * (weight ** 0.75)
-                formula = r"kcal = 160  \cdot вес^{0.75}"
+                formula = "adult_active"
                 page = "55"
 
             elif activity_level == activity_level_cat_1[4]:
                 kcal = 860 * (weight ** 0.75)
-                formula = r"kcal = 860  \cdot вес^{0.75}"
+                formula = "adult_extreme"
                 page = "55"
 
             else:
                 kcal = 90 * (weight ** 0.75)
-                formula = r"kcal = 90  \cdot вес^{0.75}"
+                formula = "adult_obesity_prone"
                 page = "55"
 
-    return kcal, formula, page
+    return kcal, formula, page, additional_text

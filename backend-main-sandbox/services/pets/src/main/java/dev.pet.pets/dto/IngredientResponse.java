@@ -8,6 +8,7 @@ public record IngredientResponse(
     String category,
     String name,
     String subtype,
+    boolean recommenderSupported,
     double portion,
     double calories,
     double protein,
@@ -59,6 +60,7 @@ public record IngredientResponse(
     public static IngredientResponse from(Ingredient ingredient) {
         return new IngredientResponse(
             ingredient.getId(), ingredient.getCategory(), ingredient.getName(), ingredient.getSubtype(),
+            ingredient.isRecommenderSupported(),
             ingredient.getPortion(), ingredient.getCalories(), ingredient.getProtein(), ingredient.getFat(),
             ingredient.getCarbs(), ingredient.getMoisture(), ingredient.getFiber(), ingredient.getAsh(),
             ingredient.getCholesterol(), ingredient.getSugar(), ingredient.getCalcium(), ingredient.getPhosphorus(),

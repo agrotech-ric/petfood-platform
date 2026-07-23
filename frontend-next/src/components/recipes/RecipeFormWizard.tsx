@@ -3,6 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ingredientService, type Ingredient } from '../../../services/ingredientService'
 import { petService, type HealthRecord, type PetProfileData } from '../../../services/petService'
 import {
+  RECOMMENDER_NUTRIENT_NAMES,
+  recommenderService,
+  toRecommenderIngredientName,
+  type RecipeOptimizationResult,
+  type RecommenderActivityLevel,
+  type RecommenderDogInfo,
+} from '../../../services/recommenderService'
+import {
   recipeService,
   type Recipe,
   type RecipeAgeCategory,
@@ -206,6 +214,200 @@ function toOptionalNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+function round(value: number, digits = 2) {
+  const factor = 10 ** digits
+  return Math.round(value * factor) / factor
+}
+
+function normalizeLabel(value: string) {
+  return value
+    .toLocaleLowerCase('ru-RU')
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function activityLevel(activity?: ActivityType): RecommenderActivityLevel {
+  const value = `${activity?.code ?? ''} ${displayName(activity ?? { id: 0 })}`.toLowerCase()
+  if (value.includes('пассив') || value.includes('passive')) return 'passive'
+  if (value.includes('средний1') || value.includes(' low')) return 'low'
+  if (value.includes('средний2') || value.includes('moderate')) return 'moderate'
+  if (value.includes('экстрем') || value.includes('extreme')) return 'extreme'
+  if (value.includes('ожир') || value.includes('obesity')) return 'obesity_prone'
+  if (value.includes('актив') || value.includes('active')) return 'active'
+  return 'moderate'
+}
+
+function reproductiveStatus(status?: ReproductiveStatus) {
+  const value = `${status?.code ?? ''} ${displayName(status ?? { id: 0 })}`.toLowerCase()
+  if (value.includes('щенн') || value.includes('pregnan')) return 'pregnancy' as const
+  if (value.includes('лактац') || value.includes('lactat')) return 'lactation' as const
+  return 'none' as const
+}
+
+function buildDogInfo(form: FormState, references: References): RecommenderDogInfo {
+  const weight = Number(form.weight)
+  const ageMonths = Number(form.ageMonths)
+  const breed = references.breeds.find(item => String(item.id) === form.breedId)
+  if (!Number.isFinite(weight) || weight <= 0) throw new Error('Укажите корректный вес питомца')
+  if (!Number.isFinite(ageMonths) || ageMonths < 0 || !form.ageMonths) {
+    throw new Error('Укажите возраст питомца')
+  }
+  if (!breed) throw new Error('Укажите породу питомца')
+
+  const status = reproductiveStatus(
+    references.reproductiveStatuses.find(item => String(item.id) === form.reproductiveStatusId),
+  )
+  const useMonths = ageMonths < 12
+  const request: RecommenderDogInfo = {
+    weight,
+    age: useMonths ? Math.max(0, Math.floor(ageMonths)) : Math.max(1, Math.floor(ageMonths / 12)),
+    age_metric: useMonths ? 'months' : 'years',
+    gender: form.gender,
+    breed: (breed.nameEn ?? breed.name ?? displayName(breed)).toLowerCase().trim(),
+    activity_level: activityLevel(
+      references.activities.find(item => String(item.id) === form.activityId),
+    ),
+  }
+
+  if (form.gender === 'female') {
+    request.reproductive_status = status
+    request.pregnancy_period = status === 'pregnancy' ? 'none' : undefined
+    request.lactation_week = status === 'lactation' ? 'none' : undefined
+    request.num_puppies = 0
+  }
+  return request
+}
+
+const MINERAL_NAMES = new Set([
+  'Кальций',
+  'Фосфор',
+  'Магний',
+  'Натрий',
+  'Калий',
+  'Железо',
+  'Медь',
+  'Цинк',
+  'Марганец',
+  'Селен',
+  'Йод',
+])
+
+function isVitamin(label: string) {
+  return label.startsWith('Витамин ')
+    || label === 'Пантотеновая кислота'
+    || label === 'Фолиевая кислота'
+}
+
+function toCalculationResult(
+  optimized: RecipeOptimizationResult,
+  norms: Record<string, number>,
+  ingredients: Ingredient[],
+  targetKcal: number,
+): RecipeCalculationResult {
+  const ingredientsByName = new Map(
+    ingredients.map(item => [normalizeLabel(toRecommenderIngredientName(item)), item]),
+  )
+  const composition = optimized.composition.map((item, index) => {
+    const ingredient = ingredientsByName.get(normalizeLabel(item.ingredient))
+    return {
+      ingredientId: ingredient?.id,
+      label: item.ingredient,
+      percent: round(item.grams_per_100g),
+      grams: round(optimized.ingredients_required[item.ingredient] ?? 0),
+      color: RESULT_COLORS[index % RESULT_COLORS.length],
+    }
+  })
+  const per100 = new Map(
+    optimized.nutritional_value_per_100g.map(item => [item.nutrient, item.value_per_100g]),
+  )
+  const nutritionKeys = [
+    ['Влага', 'moisture'],
+    ['Белки', 'protein'],
+    ['Углеводы', 'carbs'],
+    ['Жиры', 'fat'],
+  ] as const
+  const nutrition = nutritionKeys.map(([label, key], index) => ({
+    key,
+    label,
+    value: round(per100.get(label) ?? 0),
+    unit: 'г',
+    color: RESULT_COLORS[index % RESULT_COLORS.length],
+  }))
+
+  const nutrients: NonNullable<RecipeCalculationResult['nutrients']> = []
+  const minerals: NonNullable<RecipeCalculationResult['minerals']> = []
+  const vitamins: NonNullable<RecipeCalculationResult['vitamins']> = []
+  optimized.nutritional_value_total.forEach(item => {
+    if (nutritionKeys.some(([label]) => label === item.nutrient)) return
+    const value = round(item.value_per_100g)
+    const norm = norms[item.nutrient]
+    const percent = norm > 0 ? round((value / norm) * 100) : 0
+    if (MINERAL_NAMES.has(item.nutrient)) {
+      minerals.push({
+        label: item.nutrient,
+        current: value,
+        norm: round(norm ?? 0),
+        unit: item.unit,
+        percent,
+      })
+    } else if (isVitamin(item.nutrient)) {
+      vitamins.push({ label: item.nutrient, percent })
+    } else {
+      nutrients.push({ label: item.nutrient, value, unit: item.unit })
+    }
+  })
+
+  return {
+    calories: round(optimized.energy_per_100g),
+    dailyNorm: round(optimized.total_feed_grams),
+    dailyCaloriesNorm: round(targetKcal),
+    composition,
+    nutrition,
+    nutritionPer100: {
+      calories: round(optimized.energy_per_100g),
+      moisture: round(per100.get('Влага') ?? 0),
+      protein: round(per100.get('Белки') ?? 0),
+      fat: round(per100.get('Жиры') ?? 0),
+      carbs: round(per100.get('Углеводы') ?? 0),
+    },
+    nutrients,
+    minerals,
+    vitamins,
+    optimizationMethod: optimized.method,
+  }
+}
+
+function ingredientDefaultRange(category: string): Range {
+  const value = category.toLowerCase()
+  if (value.includes('мясо') || value.includes('яйца') || value.includes('молоч')) {
+    return { min: 40, max: 60 }
+  }
+  if (value.includes('масло') || value.includes('жир')) return { min: 1, max: 10 }
+  if (value.includes('круп')) return { min: 5, max: 35 }
+  if (value.includes('овощ') || value.includes('фрукт')) return { min: 5, max: 25 }
+  if (value.includes('вода')) return { min: 0, max: 30 }
+  return { min: 1, max: 100 }
+}
+
+function calculationErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : ''
+  const normalized = message.toLowerCase()
+  if (
+    normalized.includes('could not find valid recipe composition')
+    || normalized.includes('не смог подобрать состав')
+  ) {
+    return 'Не удалось подобрать состав с текущими ограничениями. Расширьте диапазоны ингредиентов или нутриентов и повторите расчёт.'
+  }
+  if (normalized.includes('выберите хотя бы один ингредиент')) {
+    return 'Выберите хотя бы один ингредиент для расчёта.'
+  }
+  if (normalized.includes('request failed with status 500') || normalized.includes('internal server error')) {
+    return 'Алгоритм не смог рассчитать выбранное сочетание ингредиентов. Проверьте ингредиенты и их допустимые диапазоны.'
+  }
+  return message || 'Не удалось рассчитать состав. Проверьте выбранные параметры.'
+}
+
 function toPayload(
   state: FormState,
   petId?: string,
@@ -230,11 +432,18 @@ function toPayload(
     symptomIds: state.symptomIds,
     targetEnergyKcal: toOptionalNumber(state.energy),
     maximizeNutrient: state.maximizeNutrient || null,
-    ingredients: state.ingredientIds.map(ingredientId => ({
-      ingredientId,
-      minPercent: state.ingredientRanges[ingredientId]?.min ?? 0,
-      maxPercent: state.ingredientRanges[ingredientId]?.max ?? 100,
-    })),
+    ingredients: state.ingredientIds.map(ingredientId => {
+      const resultItem = calculationResult?.composition?.find(
+        item => item.ingredientId === ingredientId,
+      )
+      return {
+        ingredientId,
+        minPercent: state.ingredientRanges[ingredientId]?.min ?? 0,
+        maxPercent: state.ingredientRanges[ingredientId]?.max ?? 100,
+        resultPercent: resultItem?.percent ?? null,
+        resultGrams: resultItem?.grams ?? null,
+      }
+    }),
     nutrientConstraints: Object.entries(state.nutrientRanges).map(([nutrientKey, range]) => ({
       nutrientKey,
       minValue: range.min,
@@ -454,10 +663,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [references, setReferences] = useState<References>(EMPTY_REFERENCES)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [updatingRecommendations, setUpdatingRecommendations] = useState(false)
+  const [calculating, setCalculating] = useState(false)
   const [error, setError] = useState('')
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set())
   const [calculationResult, setCalculationResult] = useState<RecipeCalculationResult | null>(null)
   const [calculationVersion, setCalculationVersion] = useState<string | null>(null)
+  const [nutrientNorms, setNutrientNorms] = useState<Record<string, number>>({})
 
   const isEdit = recipeId != null
 
@@ -534,11 +746,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
   const ingredientGroups = useMemo(() => {
     const groups = new Map<string, Ingredient[]>()
-    references.ingredients.forEach(ingredient => {
-      const group = groups.get(ingredient.category) ?? []
-      group.push(ingredient)
-      groups.set(ingredient.category, group)
-    })
+    references.ingredients
+      .filter(ingredient => ingredient.recommenderSupported)
+      .forEach(ingredient => {
+        const group = groups.get(ingredient.category) ?? []
+        group.push(ingredient)
+        groups.set(ingredient.category, group)
+      })
     return Array.from(groups, ([category, ingredients]) => ({ category, ingredients }))
   }, [references.ingredients])
 
@@ -613,16 +827,184 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     })
   }
 
-  const showSavedResult = () => {
-    if (!calculationResult) {
-      setError('Сохранённый результат расчёта отсутствует')
-      return
-    }
+  const handleUpdateRecommendations = async () => {
+    if (updatingRecommendations || calculating) return
+    setUpdatingRecommendations(true)
     setError('')
-    document.getElementById('recipe-result')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
+    try {
+      const dog = buildDogInfo(form, references)
+      const calorieResult = await recommenderService.calculateCalories(dog)
+      const targetKcal = round(calorieResult.daily_kcal)
+      const nutrientResult = await recommenderService.calculateNutrients(dog, targetKcal)
+      setNutrientNorms(nutrientResult.norms)
+
+      let recommendedIngredients: Ingredient[] = []
+      let recommendationWarning = ''
+      const condition = references.healthConditions.find(
+        item => String(item.id) === form.healthConditionId,
+      )
+      if (condition) {
+        try {
+          const recommendation = await recommenderService.recommendForDisorder({
+            breed: dog.breed,
+            disorder: displayName(condition),
+          })
+          const recommendations = new Set(
+            recommendation.recommended_ingredients.map(normalizeLabel),
+          )
+          recommendedIngredients = references.ingredients.filter(item =>
+            item.recommenderSupported
+            && recommendations.has(normalizeLabel(toRecommenderIngredientName(item)))
+          )
+          const predicted = recommendation.predicted_nutrients
+          setForm(current => ({
+            ...current,
+            nutrientRanges: {
+              ...current.nutrientRanges,
+              moisture: predicted.moisture == null
+                ? current.nutrientRanges.moisture
+                : {
+                    min: Math.max(0, round(predicted.moisture - 5)),
+                    max: Math.min(100, round(predicted.moisture + 5)),
+                  },
+              protein: predicted.protein == null
+                ? current.nutrientRanges.protein
+                : {
+                    min: Math.max(0, round(predicted.protein - 5)),
+                    max: Math.min(100, round(predicted.protein + 10)),
+                  },
+              carbs: predicted['carbohydrate (nfe)'] == null
+                ? current.nutrientRanges.carbs
+                : {
+                    min: Math.max(0, round(predicted['carbohydrate (nfe)'] - 5)),
+                    max: Math.min(100, round(predicted['carbohydrate (nfe)'] + 5)),
+                  },
+              fat: predicted.fat == null
+                ? current.nutrientRanges.fat
+                : {
+                    min: Math.max(0, round(predicted.fat - 5)),
+                    max: Math.min(100, round(predicted.fat + 5)),
+                  },
+            },
+          }))
+          if (recommendedIngredients.length === 0) {
+            recommendationWarning = 'Рекомендованные ингредиенты не найдены в каталоге'
+          }
+        } catch {
+          recommendationWarning = 'Калорийность обновлена. Рекомендации по выбранному заболеванию недоступны'
+        }
+      }
+
+      setForm(current => {
+        const ingredientIds = recommendedIngredients.length > 0
+          ? recommendedIngredients.map(item => item.id)
+          : current.ingredientIds
+        const ranges = { ...current.ingredientRanges }
+        recommendedIngredients.forEach(item => {
+          ranges[item.id] = ranges[item.id] ?? ingredientDefaultRange(item.category)
+        })
+        return {
+          ...current,
+          energy: String(targetKcal),
+          ageCategory: calorieResult.age_category === 'puppy'
+            ? 'puppies'
+            : calorieResult.age_category === 'senior' ? 'senior' : 'adults',
+          breedSize: calorieResult.size_category === 'small'
+            ? 'small'
+            : calorieResult.size_category === 'medium' ? 'medium' : 'large',
+          ingredientIds,
+          ingredientRanges: ranges,
+        }
+      })
+      setError(recommendationWarning)
+      requestAnimationFrame(showOptimization)
+    } catch (errorValue) {
+      setError(errorValue instanceof Error ? errorValue.message : 'Не удалось обновить рекомендации')
+    } finally {
+      setUpdatingRecommendations(false)
+    }
+  }
+
+  const handleCalculate = async () => {
+    if (calculating || updatingRecommendations) return
+    setCalculating(true)
+    setError('')
+    try {
+      const dog = buildDogInfo(form, references)
+      const targetKcal = Number(form.energy)
+      if (!Number.isFinite(targetKcal) || targetKcal <= 0) {
+        throw new Error('Укажите целевую энергию')
+      }
+      const selectedIngredients = form.ingredientIds.map(ingredientId => {
+        const ingredient = references.ingredients.find(item => item.id === ingredientId)
+        if (!ingredient) throw new Error(`Ингредиент ${ingredientId} не найден`)
+        return ingredient
+      })
+      if (selectedIngredients.length === 0) {
+        throw new Error('Выберите хотя бы один ингредиент')
+      }
+      const unsupportedIngredients = selectedIngredients.filter(
+        ingredient => !ingredient.recommenderSupported,
+      )
+      if (unsupportedIngredients.length > 0) {
+        const names = unsupportedIngredients
+          .slice(0, 3)
+          .map(toRecommenderIngredientName)
+          .join('», «')
+        const remaining = unsupportedIngredients.length - 3
+        throw new Error(
+          `Алгоритм пока не поддерживает ${unsupportedIngredients.length === 1 ? 'ингредиент' : 'ингредиенты'} «${names}»`
+          + (remaining > 0 ? ` и ещё ${remaining}` : '')
+          + `. Уберите ${unsupportedIngredients.length === 1 ? 'его' : 'их'} из состава или выберите ингредиенты из штатного каталога.`,
+        )
+      }
+
+      const norms = Object.keys(nutrientNorms).length > 0
+        ? nutrientNorms
+        : (await recommenderService.calculateNutrients(dog, targetKcal)).norms
+      setNutrientNorms(norms)
+
+      const optimized = await recommenderService.optimizeRecipe({
+        weight: dog.weight,
+        age: dog.age,
+        breed: dog.breed,
+        reproductive_status: dog.reproductive_status,
+        ingredients: selectedIngredients.map(toRecommenderIngredientName),
+        ingredient_ranges: selectedIngredients.map(ingredient => {
+          const range = form.ingredientRanges[ingredient.id] ?? { min: 0, max: 100 }
+          return {
+            ingredient: toRecommenderIngredientName(ingredient),
+            min_percent: range.min,
+            max_percent: range.max,
+          }
+        }),
+        nutrient_ranges: Object.entries(form.nutrientRanges).map(([key, range]) => ({
+          nutrient: RECOMMENDER_NUTRIENT_NAMES[key] ?? key,
+          min_value: range.min,
+          max_value: range.max,
+        })),
+        maximize_nutrients: form.maximizeNutrient
+          ? [RECOMMENDER_NUTRIENT_NAMES[form.maximizeNutrient] ?? form.maximizeNutrient]
+          : [],
+        target_kcal: targetKcal,
+      })
+      if (!optimized.success) throw new Error('Алгоритм не смог подобрать состав')
+
+      setCalculationResult(
+        toCalculationResult(optimized, norms, references.ingredients, targetKcal),
+      )
+      setCalculationVersion('recommender-1.0.0')
+      requestAnimationFrame(() => {
+        document.getElementById('recipe-result')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      })
+    } catch (errorValue) {
+      setError(calculationErrorMessage(errorValue))
+    } finally {
+      setCalculating(false)
+    }
   }
 
   const handleSave = async () => {
@@ -674,7 +1056,22 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         )}
       </div>
 
-      {error && <div className={styles.formError}>{error}</div>}
+      {error && (
+        <div className={styles.errorToast} role="alert" aria-live="assertive">
+          <div>
+            <p className={styles.errorToastTitle}>Не удалось выполнить действие</p>
+            <p className={styles.errorToastMessage}>{error}</p>
+          </div>
+          <button
+            type="button"
+            className={styles.errorToastClose}
+            aria-label="Закрыть уведомление"
+            onClick={() => setError('')}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {(isEdit || step === 1) && (
         <>
@@ -909,8 +1306,12 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             )}
           </div>
           {isEdit && (
-            <button className={styles.updateRecommendationsBtn} onClick={showOptimization}>
-              Обновить рекомендации
+            <button
+              className={styles.updateRecommendationsBtn}
+              disabled={updatingRecommendations || calculating}
+              onClick={() => void handleUpdateRecommendations()}
+            >
+              {updatingRecommendations ? 'Обновление...' : 'Обновить рекомендации'}
             </button>
           )}
         </>
@@ -1095,10 +1496,12 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           <button
             className={styles.primaryBtn}
             style={{ marginTop: 24 }}
-            disabled={saving}
-            onClick={isEdit ? showSavedResult : () => void handleSave()}
+            disabled={saving || calculating || updatingRecommendations}
+            onClick={isEdit ? () => void handleCalculate() : () => void handleSave()}
           >
-            {isEdit ? 'Рассчитать оптимальный состав' : saving ? 'Сохранение...' : 'Сохранить черновик'}
+            {isEdit
+              ? calculating ? 'Расчёт...' : 'Рассчитать оптимальный состав'
+              : saving ? 'Сохранение...' : 'Сохранить черновик'}
           </button>
         </div>
       )}

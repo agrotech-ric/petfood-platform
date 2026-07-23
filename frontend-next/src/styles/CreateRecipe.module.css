@@ -82,6 +82,56 @@
   font-size: 13px;
 }
 
+.errorToast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1200;
+  display: flex;
+  width: min(420px, calc(100vw - 32px));
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-error, #d9534f);
+  border-left-width: 4px;
+  border-radius: 7px;
+  background: var(--color-surface);
+  box-shadow: 0 8px 24px var(--color-shadow);
+  color: var(--color-text);
+}
+
+.errorToastTitle {
+  margin: 0 0 5px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.errorToastMessage {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.errorToastClose {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin: -5px -7px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 22px;
+  line-height: 28px;
+  cursor: pointer;
+}
+
+.errorToastClose:hover {
+  color: var(--color-text);
+}
+
 /* ── Card ───────────────────────────────────────────── */
 .card {
   width: 100%;

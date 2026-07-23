@@ -29,7 +29,7 @@ docker run --rm -it \
 
 Dev-proxy настроен в `vite.config.ts` (см. `frontend-next/.env`):
 - `/api` → по умолчанию **sandbox gateway** `http://10.1.10.144:18190`
-- `/recommender` → main nginx `http://10.1.10.144:5555`
+- `/recommender` → sandbox recommender `http://10.1.10.144:18001`
 
 Переключение на **main** backend:
 
@@ -41,7 +41,7 @@ VITE_API_PROXY_TARGET=http://10.1.10.144:5555
 
 ```env
 VITE_API_PROXY_TARGET=http://10.1.10.144:8090
-VITE_RECOMMENDER_PROXY_TARGET=http://10.1.10.144:8000
+VITE_RECOMMENDER_PROXY_TARGET=http://10.1.10.144:18001
 ```
 
 Если нужно переопределить базовый URL (например, для prod), используй:
@@ -49,4 +49,3 @@ VITE_RECOMMENDER_PROXY_TARGET=http://10.1.10.144:8000
 ```env
 VITE_API_BASE_URL=
 ```
-

@@ -5,6 +5,7 @@ export type Ingredient = {
   category: string
   name: string
   subtype: string | null
+  recommenderSupported: boolean
   portion: number
   calories: number
   protein: number
@@ -54,7 +55,10 @@ export type Ingredient = {
   updatedAt?: string
 }
 
-export type IngredientPayload = Omit<Ingredient, 'id' | 'createdAt' | 'updatedAt'>
+export type IngredientPayload = Omit<
+  Ingredient,
+  'id' | 'recommenderSupported' | 'createdAt' | 'updatedAt'
+>
 
 export const EMPTY_INGREDIENT: IngredientPayload = {
   name: '', subtype: null, category: '', portion: 100,
@@ -71,6 +75,7 @@ export const EMPTY_INGREDIENT: IngredientPayload = {
 export function toIngredientPayload(values: Partial<Ingredient>): IngredientPayload {
   const payloadValues = { ...values }
   delete payloadValues.id
+  delete payloadValues.recommenderSupported
   delete payloadValues.createdAt
   delete payloadValues.updatedAt
   const merged = { ...EMPTY_INGREDIENT, ...payloadValues }

@@ -17,6 +17,8 @@ public class Ingredient {
     private String name;
     @Column(length = 255)
     private String subtype;
+    @Column(name = "recommender_supported", nullable = false)
+    private boolean recommenderSupported;
 
     private double portion;
     private double calories;
@@ -76,6 +78,10 @@ public class Ingredient {
     public void setName(String name) { this.name = name; }
     public String getSubtype() { return subtype; }
     public void setSubtype(String subtype) { this.subtype = subtype; }
+    public boolean isRecommenderSupported() { return recommenderSupported; }
+    public void setRecommenderSupported(boolean recommenderSupported) {
+        this.recommenderSupported = recommenderSupported;
+    }
     public double getPortion() { return portion; }
     public void setPortion(double portion) { this.portion = portion; }
     public double getCalories() { return calories; }
