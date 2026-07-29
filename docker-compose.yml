@@ -20,6 +20,15 @@ services:
     networks:
       - pets_network
 
+  adminer:
+    image: adminer:latest
+    container_name: pets_adminer_ctn
+    ports:
+      - "8089:8080"
+    restart: unless-stopped
+    networks:
+      - pets_network
+
   redis:
     image: redis:7.2-alpine
     container_name: pets_redis
