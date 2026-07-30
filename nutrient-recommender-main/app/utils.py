@@ -1,6 +1,6 @@
 import pandas as pd
 
-from collections import Counter
+from collections import Counter, defaultdict
 from typing import Dict, Tuple, List
 import numpy as np
 
@@ -378,16 +378,20 @@ def define_ingredients(high_nutr,low_nutr,ingr_rec,ingredirents_df,group_results
  
 def transl_ingredient(ing, to_lang):
     _, _, _, ingredients_df,_ = load_data()
-    if to_lang=="en":
-       return ingredients_df.loc[ingredients_df["ingredient_format_cat"] == ing,"full_name_ingredient"].iloc[0]
-    if to_lang=="ru":
-       return ingredients_df.loc[ingredients_df["full_name_ingredient"] == ing,"ingredient_format_cat"].iloc[0]
+    try:
+        if to_lang=="en":
+           return ingredients_df.loc[ingredients_df["ingredient_format_cat"] == ing,"full_name_ingredient"].iloc[0]
+        if to_lang=="ru":
+           return ingredients_df.loc[ingredients_df["full_name_ingredient"] == ing,"ingredient_format_cat"].iloc[0]
+    except IndexError:
+        raise ValueError(f"Ingredient '{ing}' not found in translation table")
 
 def transl_nutr(nutrient, to_lang):
     _, _, _, _,nutrients_transl = load_data()
-    if to_lang=="en":
-       return  nutrients_transl.loc[nutrients_transl["name_ru"].str.contains(nutrient, case=False, na=False),"name_in_database"].iloc[0]
-    if to_lang=="ru":
-       return nutrients_transl.loc[nutrients_transl["name_in_database"] == nutrient,"name_ru"].iloc[0]
-
-
+    try:
+        if to_lang=="en":
+           return  nutrients_transl.loc[nutrients_transl["name_ru"].str.contains(nutrient, case=False, na=False),"name_in_database"].iloc[0]
+        if to_lang=="ru":
+           return nutrients_transl.loc[nutrients_transl["name_in_database"] == nutrient,"name_ru"].iloc[0]
+    except IndexError:
+        raise ValueError(f"Nutrient '{nutrient}' not found in translation table")

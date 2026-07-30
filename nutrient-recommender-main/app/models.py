@@ -70,12 +70,11 @@ class DogInfoRequest(BaseModel):
     activity_level: Optional[ActivityLevel] = Field(None, description="Activity level")
 
 
-
-
-
 class DisorderRequest(BaseModel):
     breed: str = Field(..., description="Dog breed name")
     disorder: str = Field(..., description="Disorder/disease name")
+    age: int = Field(..., ge=0, description="Dog age")
+    age_metric: AgeMetricType = Field(..., description="Age measurement unit")
 
 
 class IngredientRange(BaseModel):
@@ -126,16 +125,18 @@ class NutrientNormsResponse(BaseModel):
     norms: Dict[str, float] = Field(..., description="List of nutrient requirements")
 
 
-class NutrientRange(BaseModel):
-    min: float = Field(..., description="minimym main nutr")
-    max: float = Field(..., description="maximum main nutr")
+class NutrientRangeSimple(BaseModel):
+    min: float = Field(..., description="minimum main nutrient value")
+    max: float = Field(..., description="maximum main nutrient value")
+
 
 class DisorderRecommendationsResponse(BaseModel):
     disorder: str = Field(..., description="Disorder name")
     disorder_type: str = Field(..., description="Disorder category")
     breed_size: str = Field(..., description="Breed size category")
     recommended_ingredients: List[str] = Field(..., description="Top recommended ingredients")
-    nutrients_ranges: Dict[str, NutrientRange] = Field(..., description="Recommend optimal nutrient levels")
+    nutrients_ranges: Dict[str, NutrientRangeSimple] = Field(..., description="Recommend optimal nutrient levels")
+
 
 class RecipeIngredient(BaseModel):
     ingredient: str = Field(..., description="Ingredient name")
