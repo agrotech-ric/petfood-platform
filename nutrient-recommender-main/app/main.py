@@ -228,8 +228,8 @@ async def calculate_nutrient_norms(request: DogInfoRequest, target_kcal: float):
 async def get_disorder_recommendations(request: DisorderRequest):
     """Get ingredient and nutrient recommendations based on breed disorder"""
     try:
-        _, disease_df, merge_tab_df, ingredients_df,nutrients_transl = load_data()
-        model_encoding,corpus_embeddings, dog_food_df = build_unsup_ml_model()
+        _, disease_df, merge_tab_df, ingredients_df, nutrients_transl = load_data()
+        model_encoding, corpus_embeddings, dog_food_df = build_unsup_ml_model()
 
         disorder_keywords = get_disorder_keywords()
 
@@ -250,31 +250,30 @@ async def get_disorder_recommendations(request: DisorderRequest):
         max_weight = breed_data["max_weight"].values[0]
         avg_weight = (min_weight + max_weight) / 2
         breed_size = size_category(avg_weight)
-        age_type_categ = age_type_category(size_categ, request.age, request.age_metric.value)
+        age_type_categ = age_type_category(breed_size, request.age, request.age_metric.value)
 
         query = f"{age_type_categ}, {breed_size} breed size, {keywords}, {disorder_type}"
 
-        high_nutrients, low_nutrients, ingredients= ingr_nutr_food_find(query,dog_food_df,corpus_embeddings,model_encoding)
+        high_nutrients, low_nutrients, ingredients = ingr_nutr_food_find(query, dog_food_df, corpus_embeddings, model_encoding)
         group_results = ingredients_category_nutrient_analysis(ingredients_df)
-        finish_ingr_list, finish_ingr_list_norm_name, maxim_main_nutr = define_ingredients(high_nutrients, low_nutrients,ingredients,ingredients_df,group_results,merge_tab_df)
+        finish_ingr_list, finish_ingr_list_norm_name, maxim_main_nutr = define_ingredients(high_nutrients, low_nutrients, ingredients, ingredients_df, group_results, merge_tab_df)
         
         nutr_ranges = {}
-        nutr_ranges['moisture_per'] = {"min":65,"max" 95}
+        nutr_ranges['moisture_per'] = {"min": 65, "max": 95}
         
-        s = food_df[(food_df["food_form"] == "wet food") &(food_df["moisture_per"] > 0.5) ]["protein_per"]
-        protein_min=(100-nutr_ranges['moisture_per']["min"])*0.25
-        protein_min=protein_min if protein_min > s.mean()-s.std() else s.mean()-s.std()
-        nutr_ranges['protein_per'] ={"min":int(protein_min), "max":30}
+        s = dog_food_df[(dog_food_df["food_form"] == "wet food") & (dog_food_df["moisture_per"] > 0.5)]["protein_per"]
+        protein_min = (100 - nutr_ranges['moisture_per']["min"]) * 0.25
+        protein_min = protein_min if protein_min > s.mean() - s.std() else s.mean() - s.std()
+        nutr_ranges['protein_per'] = {"min": int(protein_min), "max": 30}
         
-        s = food_df[(food_df["food_form"] == "wet food") &(food_df["moisture_per"] > 0.5) ]["fats_per"]
-        fats_min= (100-nutr_ranges['moisture_per']["min"])*0.085
-        fats_min=fats_min if fats_min > s.mean()-s.std() else s.mean()-s.std()
-        nutr_ranges['fats_per'] = {"min": int(fats_min), "max":15} 
+        s = dog_food_df[(dog_food_df["food_form"] == "wet food") & (dog_food_df["moisture_per"] > 0.5)]["fats_per"]
+        fats_min = (100 - nutr_ranges['moisture_per']["min"]) * 0.085
+        fats_min = fats_min if fats_min > s.mean() - s.std() else s.mean() - s.std()
+        nutr_ranges['fats_per'] = {"min": int(fats_min), "max": 15}
         
-        carb_max=100-nutr_ranges['protein_per']["min"]-nutr_ranges['fats_per']["min"]-nutr_ranges['moisture_per']["min"]
-        nutr_ranges['carbohydrate_per'] = {"min": 5 , "max":int(carb_max) }
+        carb_max = 100 - nutr_ranges['protein_per']["min"] - nutr_ranges['fats_per']["min"] - nutr_ranges['moisture_per']["min"]
+        nutr_ranges['carbohydrate_per'] = {"min": 5, "max": int(carb_max)}
         
-   
         return DisorderRecommendationsResponse(
             disorder=request.disorder,
             disorder_type=disorder_type,
@@ -288,11 +287,10 @@ async def get_disorder_recommendations(request: DisorderRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResponse:
     """Optimize food recipe composition based on constraints (CPU-bound)."""
     try:
-        _, disease_df, merge_tab_df, ingredients_df,nutrients_transl = load_data()
+        _, disease_df, merge_tab_df, ingredients_df, nutrients_transl = load_data()
 
         breed_data = disease_df[disease_df["Breed"] == request.breed]
         if breed_data.empty:
