@@ -1,18 +1,20 @@
+
+type NutrientRange = {
+  min: number;
+  max: number;
+};
+
 export type DisorderRecommendation = {
   disorder: string;
+  disorder_type: string;
   breed_size: string;
   recommended_ingredients: string[];
-  top_ingredients_with_scores: Array<{
-    ingredient: string;
-    score: number;
-    category: string;
-  }>;
-  predicted_nutrients: {
-    protein: number;
-    fat: number;
-    'carbohydrate (nfe)': number;
-    'crude fibre': number;
-    moisture?: number;
+
+  nutrients_ranges: {
+    moisture_per: NutrientRange;
+    protein_per: NutrientRange;
+    fats_per: NutrientRange;
+    carbohydrate_per: NutrientRange;
   };
 };
 
@@ -26,10 +28,10 @@ export type IngredientRangesType = {
 };
 
 export type NutrientRangesType = {
-  moisture: RangeValue;
-  protein: RangeValue;
-  carbs: RangeValue;
-  fats: RangeValue;
+  moisture_per: RangeValue;
+  protein_per: RangeValue;
+  carbohydrate_per: RangeValue;
+  fats_per: RangeValue;
 };
 
 export type VetRequest = {

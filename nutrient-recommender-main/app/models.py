@@ -126,20 +126,16 @@ class NutrientNormsResponse(BaseModel):
     norms: Dict[str, float] = Field(..., description="List of nutrient requirements")
 
 
-class IngredientRecommendation(BaseModel):
-    ingredient: str = Field(..., description="Ingredient name")
-    score: float = Field(..., description="Recommendation score (0-1)")
-    category: str = Field(..., description="Ingredient category")
-
+class NutrientRange(BaseModel):
+    min: float = Field(..., description="minimym main nutr")
+    max: float = Field(..., description="maximum main nutr")
 
 class DisorderRecommendationsResponse(BaseModel):
     disorder: str = Field(..., description="Disorder name")
     disorder_type: str = Field(..., description="Disorder category")
     breed_size: str = Field(..., description="Breed size category")
     recommended_ingredients: List[str] = Field(..., description="Top recommended ingredients")
-    top_ingredients_with_scores: List[IngredientRecommendation] = Field(..., description="Detailed ingredient scores")
-    predicted_nutrients: Dict[str, float] = Field(..., description="Predicted optimal nutrient levels")
-
+    nutrients_ranges: Dict[str, NutrientRange] = Field(..., description="Recommend optimal nutrient levels")
 
 class RecipeIngredient(BaseModel):
     ingredient: str = Field(..., description="Ingredient name")
