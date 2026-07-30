@@ -107,7 +107,7 @@ def prepocess_food(food: pd.DataFrame) -> pd.DataFrame:
 
 def load_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame,pd.DataFrame,]:
     """Load all CSV data files"""
-    if 'food_df' not in _data_cache:
+    if 'dog_food_df' not in _data_cache:
         dog_food_df = pd.read_csv("data/dog_food_data.csv")
         disease_df = pd.read_csv("data/Disease.csv")
         merge_tab_df = pd.read_csv("data/mapping_ingredients.csv")
@@ -142,7 +142,7 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame,
 
 def build_unsup_ml_model():
     if 'model_encoding' in _model_cache:
-        return _model_cache, _data_cache
+        return _model_cache['model_encoding'],_model_cache['corpus_embeddings'], _data_cache["dog_food_df"]
 
     dog_food_df, _, _, _ , _ = load_data()
     device = "cuda" if torch.cuda.is_available() else "cpu"
