@@ -24,13 +24,12 @@ import type {
 } from '../types/vetRecommendation';
 
 const DEFAULT_NUTRIENT_RANGES: NutrientRangesType = {
-  moisture: { min: 70, max: 90 },
-  protein: { min: 10, max: 25 },
-  carbs: { min: 5, max: 20 },
-  fats: { min: 5, max: 30 }
+  moisture_per: { min: 65, max: 90 },
+  protein_per: { min: 10, max: 65 },
+  carbohydrate_per: { min: 10, max: 20 },
+  fats_per: { min: 5, max: 10 }
 };
 
-const NUTRIENT_RANGE_MARGIN = 5;
 
 export const UserRecommendationCreate = () => {
   const { id } = useParams<{ id: string }>();
@@ -264,7 +263,7 @@ export const UserRecommendationCreate = () => {
 
       setDisorderRecommendation(recommendation);
       populateRecommendedIngredients(recommendation);
-      setNutrientRangesFromPredicted(recommendation.predicted_nutrients);
+      setNutrientRangesFromPredicted(recommendation.nutrients_ranges);
       setShowIngredientForm(true);
     } catch (err) {
       showActionError(
@@ -289,27 +288,26 @@ export const UserRecommendationCreate = () => {
     setIngredientRanges(newRanges);
   };
 
-  const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['predicted_nutrients']) => {
+  const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['nutrients_ranges']) => {
     setNutrientRanges({
-      moisture: {
-        min: Math.max(0, (predicted.moisture || 70) - 5),
-        max: Math.min(100, (predicted.moisture || 90) + 5)
+      moisture_per: {
+        min: predicted.moisture_per ,
+        max: predicted.moisture_per 
       },
-      protein: {
-        min: Math.max(0, predicted.protein - 5),
-        max: Math.min(100, predicted.protein + 10)
+      protein_per: {
+        min: predicted.protein_per ,
+        max: predicted.protein_per 
       },
-      carbs: {
-        min: Math.max(0, predicted['carbohydrate (nfe)'] - 5),
-        max: Math.min(100, predicted['carbohydrate (nfe)'] + 5)
+      carbohydrate_per: {
+        min: predicted.carbohydrate_per ,
+        max: predicted.carbohydrate_per
       },
-      fats: {
-        min: Math.max(0, predicted.fat - 5),
-        max: Math.min(100, predicted.fat + 5)
+      fats_per: {
+        min: predicted.fats_per ,
+        max: predicted.fats_per
       }
     });
   };
-
   const toggleIngredient = (ingredient: string) => {
     if (selectedIngredients.includes(ingredient)) {
       setSelectedIngredients(prev => prev.filter(i => i !== ingredient));
@@ -378,10 +376,10 @@ export const UserRecommendationCreate = () => {
       }));
 
       const nutrient_ranges = [
-        { nutrient: 'Влага', min_value: nutrientRanges.moisture.min, max_value: nutrientRanges.moisture.max },
-        { nutrient: 'Белки', min_value: nutrientRanges.protein.min, max_value: nutrientRanges.protein.max },
-        { nutrient: 'Углеводы', min_value: nutrientRanges.carbs.min, max_value: nutrientRanges.carbs.max },
-        { nutrient: 'Жиры', min_value: nutrientRanges.fats.min, max_value: nutrientRanges.fats.max }
+        { nutrient: 'Влага', min_value: nutrientRanges.moisture_per.min, max_value: nutrientRanges.moisture_per.max },
+        { nutrient: 'Белки', min_value: nutrientRanges.protein_per.min, max_value: nutrientRanges.protein_per.max },
+        { nutrient: 'Углеводы', min_value: nutrientRanges.carbohydrate_per.min, max_value: nutrientRanges.carbohydrate_per.max },
+        { nutrient: 'Жиры', min_value: nutrientRanges.fats_per.min, max_value: nutrientRanges.fats_per.max }
       ];
 
       const optimizationResult = await vetService.optimizeRecipe({

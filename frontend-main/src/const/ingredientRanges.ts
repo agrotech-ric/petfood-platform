@@ -1,9 +1,9 @@
 export const INGREDIENT_RANGE_DEFAULTS = {
-  proteins: { min: 40, max: 60 },
+  proteins: { min: 50, max: 90 },
   oils: { min: 1, max: 10 },
   carbonates_cer: { min: 5, max: 35 },
   carbonates_veg: { min: 5, max: 25 },
-  water: { min: 0, max: 30 },
+  water: { min: 1, max: 3 },
   other: { min: 1, max: 3 }
 };
 
@@ -28,7 +28,7 @@ export const getDefaultRangeForIngredient = (
   
   // Check water specifically
   if (cleanIngredient.includes("Вода")) {
-    return INGREDIENT_RANGE_DEFAULTS.water;
+    return { min: 0, max: 30 };
   }
   
   // Find which category this ingredient belongs to

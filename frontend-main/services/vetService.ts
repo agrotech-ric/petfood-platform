@@ -34,31 +34,23 @@ export type BreedInfo = {
   };
 };
 
+
+type NutrientRange = {
+  min: number;
+  max: number;
+};
+
 export type DisorderRecommendation = {
   disorder: string;
   disorder_type: string;
   breed_size: string;
   recommended_ingredients: string[];
-  top_ingredients_with_scores: Array<{
-    ingredient: string;
-    score: number;
-    category: string;
-  }>;
-  predicted_nutrients: {
-    protein: number;
-    fat: number;
-    'carbohydrate (nfe)': number;
-    'crude fibre': number;
-    calcium: number;
-    phospohorus: number;
-    potassium: number;
-    sodium: number;
-    magnesium: number;
-    'vitamin e': number;
-    'vitamin c': number;
-    'omega-3-fatty acids': number;
-    'omega-6-fatty acids': number;
-    moisture?: number;
+
+  nutrients_ranges: {
+    moisture_per: NutrientRange;
+    protein_per: NutrientRange;
+    fats_per: NutrientRange;
+    carbohydrate_per: NutrientRange;
   };
 };
 
