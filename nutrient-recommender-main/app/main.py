@@ -12,7 +12,6 @@ import itertools
 from app.models import *
 from app.utils import (
     load_data, build_unsup_ml_model, get_disorder_keywords,
-    get_ingredient_categories,
     
     ingr_nutr_food_find, ingredients_category_nutrient_analysis, define_ingredients, 
     transl_ingredient,transl_nutr

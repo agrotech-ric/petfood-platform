@@ -105,7 +105,7 @@ def prepocess_food(food: pd.DataFrame) -> pd.DataFrame:
              'dha': 'dha_g'})
     return food
 
-def load_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def load_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame,pd.DataFrame,]:
     """Load all CSV data files"""
     if 'food_df' not in _data_cache:
         dog_food_df = pd.read_csv("data/dog_food_data.csv")
@@ -187,47 +187,6 @@ def get_disorder_keywords() -> Dict[str, str]:
    "weight management":"weight management overweight",
    "food sensitivity":"food sensitivity hypoallergenic stomach"	}
 
-#----------------------------
-def build_ml_models():
-   
-    return _model_cache
-
-def get_ingredient_categories(merge_tab_df: pd.DataFrame, ingredients_df: pd.DataFrame) -> Dict[str, List[str]]:
-    """Get ingredient category mappings"""
-    proteins = merge_tab_df[merge_tab_df["Type"].isin(["Яйца и Молочные продукты", "Мясо"])]["Ingredient"].tolist()
-    oils = merge_tab_df[merge_tab_df["Type"].isin(["Масло и жир"])]["Ingredient"].tolist()
-    carbonates_cer = merge_tab_df[merge_tab_df["Type"].isin(["Крупы"])]["Ingredient"].tolist()
-    carbonates_veg = merge_tab_df[merge_tab_df["Type"].isin(["Зелень и специи", "Овощи и фрукты"])][
-        "Ingredient"].tolist()
-    other = merge_tab_df[merge_tab_df["Type"].isin(["Вода, соль и сахар"])]["Ingredient"].tolist()
-    water = ["Вода — Обыкновенный"]
-
-    proteins_full = ingredients_df[ingredients_df["Категория"].isin(["Яйца и Молочные продукты", "Мясо"])][
-        "ингредиент и описание"].tolist()
-    oils_full = ingredients_df[ingredients_df["Категория"].isin(["Масло и жир"])][
-        "ингредиент и описание"].tolist()
-    carbonates_cer_full = ingredients_df[ingredients_df["Категория"].isin(["Крупы"])][
-        "ингредиент и описание"].tolist()
-    carbonates_veg_full = \
-    ingredients_df[ingredients_df["Категория"].isin(["Зелень и специи", "Овощи и фрукты"])][
-        "ингредиент и описание"].tolist()
-    other_full = ingredients_df[ingredients_df["Категория"].isin(["Вода, соль и сахар"])][
-        "ингредиент и описание"].tolist()
-
-    return {
-        'proteins': proteins,
-        'oils': oils,
-        'carbonates_cer': carbonates_cer,
-        'carbonates_veg': carbonates_veg,
-        'other': other,
-        'water': water,
-        'proteins_full': proteins_full,
-        'oils_full': oils_full,
-        'carbonates_cer_full': carbonates_cer_full,
-        'carbonates_veg_full': carbonates_veg_full,
-        'other_full': other_full
-    }
-#----------------------------
 
 def ingredient_freq(series):
     cnt = Counter()
