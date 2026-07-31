@@ -5,7 +5,7 @@ import itertools
 # ---- Расчёт соотношения ингредиентов альтернативным методом
 # ---- Метод перебора всех возможных соотношений ингредиентов с выбором варианта с минимальным отклонением от нутриентных показателей
 
-main_nutrs=['Влага', 'Белки', 'Углеводы', 'Жиры']
+main_nutrs=['moisture_per', 'protein_per', 'carbohydrate_per', 'fats_per']
 
 
 def calc_recipe(ingr_ranges, nutr_ranges, ingredient_names, food):
