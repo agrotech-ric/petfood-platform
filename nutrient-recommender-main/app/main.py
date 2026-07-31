@@ -343,8 +343,8 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
             )
 
         ingredient_names = [transl_ingredient(ing.ingredient,"en") for ing in ingr_ranges]
-        nutr_ranges = {get_en_name[nr.nutrient]: (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
-        maximize_nutrients = [get_en_name[nr] for nr in request.maximize_nutrients] if request.maximize_nutrients else ["moisture_per", "protein_per"]
+        nutr_ranges = {get_en_name.get(nr.nutrient,nr.nutrient): (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
+        maximize_nutrients = [get_en_name.get(nr, nr) for nr in request.maximize_nutrients] if request.maximize_nutrients else ["moisture_per", "protein_per"]
 
         ingr_ranges_data = [(ing.min_percent, ing.max_percent) for ing in ingr_ranges]
         lowest = sum([low for (low, high) in ingr_ranges_data])
