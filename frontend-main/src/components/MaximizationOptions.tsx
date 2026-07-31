@@ -7,10 +7,10 @@ type MaximizationOptionsProps = {
 };
 
 const NUTRIENT_OPTIONS = [
-  { value: 'moisture', label: 'Влага' },
-  { value: 'protein', label: 'Белки' },
-  { value: 'carbs', label: 'Углеводы' },
-  { value: 'fats', label: 'Жиры' }
+  { value: 'moisture_per', label: 'Влага' },
+  { value: 'protein_per', label: 'Белки' },
+  { value: 'carbohydrate_per', label: 'Углеводы' },
+  { value: 'fats_per', label: 'Жиры' }
 ];
 
 export const MaximizationOptions = ({ maximizeNutrients, onToggle }: MaximizationOptionsProps) => {
