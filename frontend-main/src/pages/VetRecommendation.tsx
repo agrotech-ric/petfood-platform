@@ -472,6 +472,8 @@ export const VetRecommendation = () => {
               isCalculatingKcal={isCalculatingKcal}
               onRecalculate={handleRecalculateNutrients}
               errorMessage={kcalError}
+              formula={formula}
+              referencePage={referencePage}
               additionalText={additionalText}
             />
 
