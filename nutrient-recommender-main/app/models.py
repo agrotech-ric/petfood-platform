@@ -97,7 +97,7 @@ class OptimizeRecipeRequest(BaseModel):
     ingredients: List[str] = Field(..., min_items=1, description="List of ingredient names")
     ingredient_ranges: List[IngredientRange] = Field(..., description="Constraints for each ingredient")
     nutrient_ranges: List[NutrientRange] = Field(..., description="Nutritional constraints")
-    maximize_nutrients: List[str] = Field(default=['moisture', 'protein'], description="Nutrients to maximize")
+    maximize_nutrients: List[str] = Field(default=['moisture_per', 'protein_per'], description="Nutrients to maximize")
     target_kcal: float = Field(..., gt=0, description="Target daily caloric intake")
 
 
