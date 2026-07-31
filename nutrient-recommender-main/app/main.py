@@ -359,7 +359,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 				
         # Build LP problem
         A = [
-            [food[ing][nutr] if val > 0 else -food[ing][nutr]
+            [food[ing][nutr]/100 if val > 0 else -food[ing][nutr]/100
              for ing in ingredient_names]
             for nutr in nutr_ranges
             for val in (-nutr_ranges[nutr][0] , nutr_ranges[nutr][1] )
@@ -457,7 +457,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
 
             values, totals = best_recipe
-
+            nutrients_100g=totals
 
             energy_100g = (3.5 * nutrients_100g["protein_per"] +
                            8.5 * nutrients_100g["fats_per"] +
