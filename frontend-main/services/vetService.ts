@@ -162,6 +162,8 @@ export const vetService = {
   async getDisorderRecommendations(request: {
     breed: string;
     disorder: string;
+    age: number;
+    age_metric: 'years' | 'months';
   }): Promise<DisorderRecommendation> {
     try {
       const normalizedRequest = {

@@ -264,9 +264,15 @@ export const VetRecommendation = () => {
     setCalculationError(null);
 
     try {
+      const petAge = request.birthDate
+        ? calculatePetAge(request.birthDate)
+        : { age: 2, age_metric: 'years' as const };
+
       const recommendation = await vetService.getDisorderRecommendations({
         breed: englishBreedName,
-        disorder: selectedDisease
+        disorder: selectedDisease,
+        age: Math.floor(petAge.age),
+        age_metric: petAge.age_metric
       });
 
       setDisorderRecommendation(recommendation);
@@ -286,22 +292,10 @@ export const VetRecommendation = () => {
 
   const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['nutrients_ranges']) => {
     setNutrientRanges({
-      moisture_per: {
-        min: predicted.moisture_per ,
-        max: predicted.moisture_per 
-      },
-      protein_per: {
-        min: predicted.protein_per ,
-        max: predicted.protein_per 
-      },
-      carbohydrate_per: {
-        min: predicted.carbohydrate_per ,
-        max: predicted.carbohydrate_per
-      },
-      fats_per: {
-        min: predicted.fats_per ,
-        max: predicted.fats_per
-      }
+      moisture_per: predicted.moisture_per,
+      protein_per: predicted.protein_per,
+      carbohydrate_per: predicted.carbohydrate_per,
+      fats_per: predicted.fats_per
     });
   };
 
@@ -518,5 +512,3 @@ export const VetRecommendation = () => {
     </div>
   );
 };
-
-
