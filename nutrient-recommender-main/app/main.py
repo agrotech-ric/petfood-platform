@@ -387,7 +387,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 
             nutrients_100g = {
                  nutr: 
-                round(sum(res.x[i] * food[name][nutr]*100 for i, name in enumerate(ingredient_names)), 2)
+                round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)), 2)
                 for nutr in main_nutrs
             }
 
