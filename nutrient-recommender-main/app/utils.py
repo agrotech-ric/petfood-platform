@@ -300,10 +300,9 @@ def find_ingredient(ingredirents_df, high_nutr_list, low_nutr_list, source_ingr_
     return best_full_name
 
 def output_name(best_full_name,ingredirents_df):
-      best_full_name_result = (ingredirents_df.loc[ ingredirents_df["full_name_ingredient"] == best_full_name, ["name_ingredient_ru", "format_ingredient_ru"]].iloc[0] )
-      answer = f"{best_full_name_result['name_ingredient_ru']}-{best_full_name_result['format_ingredient_ru']}"
-      return answer 
-
+      answer = ingredirents_df.loc[ingredirents_df["full_name_ingredient"] == best_full_name,"ingredient_format_cat"].iloc[0] 
+      return answer
+      
 def group_high_nutr_rec(high_nutr,group_results):
     grouped_high_nutr = defaultdict(list)
     for nutr in high_nutr:
