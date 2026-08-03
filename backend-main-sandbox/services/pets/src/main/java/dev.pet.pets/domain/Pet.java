@@ -71,6 +71,9 @@ public class Pet {
     @Column(name = "photo_object_key", length = 512)
     private String photoObjectKey;
 
+    @Column(name = "comments")
+    private String comments;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
         name = "reproductive_status_id",
@@ -180,6 +183,14 @@ public class Pet {
 
     public void setPhotoObjectKey(String photoObjectKey) {
         this.photoObjectKey = photoObjectKey;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
     }
 
 }

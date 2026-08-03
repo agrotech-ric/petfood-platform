@@ -1,11 +1,14 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MOCK_INGREDIENTS, FILTER_GROUPS, type Ingredient } from '../data/ingredientsMock'
+import { ingredientService, type Ingredient } from '../../services/ingredientService'
+import { useTranslation } from '../../context/LanguageContext'
+import { FILTER_GROUPS } from '../data/ingredientOptions'
 import styles from '../styles/Ingredients.module.css'
 import SearchIcon from '../assets/icons/search.svg?react'
 
 type SortKey = keyof Ingredient
 type SortDir = 'asc' | 'desc'
+type IngredientSource = 'all' | 'system' | 'mine'
 
 type ActiveFilter = { group: string; key: string; label: string }
 
@@ -23,11 +26,16 @@ const TABLE_COLS: { key: SortKey; label: string }[] = [
 
 export function IngredientsPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
+  const [source, setSource] = useState<IngredientSource>('all')
   const [sortKey, setSortKey] = useState<SortKey>('category')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([])
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown on outside click
@@ -40,6 +48,29 @@ export function IngredientsPage() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    ingredientService.list({
+      search,
+      nutrients: activeFilters.map(filter => filter.key),
+      source,
+      sort: sortKey,
+      direction: sortDir,
+    })
+      .then(data => {
+        if (!cancelled) setIngredients(data)
+      })
+      .catch(() => {
+        if (!cancelled) setError('Не удалось загрузить ингредиенты')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [search, source, sortKey, sortDir, activeFilters])
 
   const toggleFilter = (group: string, key: string, label: string) => {
     setActiveFilters(prev => {
@@ -61,29 +92,6 @@ export function IngredientsPage() {
       setSortDir('asc')
     }
   }
-
-  const filtered = useMemo(() => {
-    let data = [...MOCK_INGREDIENTS]
-
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      data = data.filter(i =>
-        i.name.toLowerCase().includes(q) ||
-        i.category.toLowerCase().includes(q) ||
-        (i.subtype ?? '').toLowerCase().includes(q)
-      )
-    }
-
-    data.sort((a, b) => {
-      const av = a[sortKey] ?? ''
-      const bv = b[sortKey] ?? ''
-      if (av < bv) return sortDir === 'asc' ? -1 : 1
-      if (av > bv) return sortDir === 'asc' ? 1 : -1
-      return 0
-    })
-
-    return data
-  }, [search, sortKey, sortDir])
 
   const isFilterActive = (key: string) => activeFilters.some(f => f.key === key)
 
@@ -117,6 +125,34 @@ export function IngredientsPage() {
 
         {/* Filter dropdowns */}
         <div className={styles.filterRow} ref={dropdownRef}>
+          <div className={styles.filterDropdown}>
+            <button
+              className={`${styles.filterBtn} ${source !== 'all' ? styles.filterBtnActive : ''}`}
+              onClick={() => setOpenGroup(openGroup === 'source' ? null : 'source')}
+            >
+              {t('ingredients.source')}: {t(`ingredients.source.${source}`)}
+              <span className={styles.filterChevron}>▼</span>
+            </button>
+            {openGroup === 'source' && (
+              <div className={styles.dropdownMenu}>
+                {(['all', 'system', 'mine'] as const).map(option => (
+                  <div
+                    key={option}
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      setSource(option)
+                      setOpenGroup(null)
+                    }}
+                  >
+                    <span
+                      className={`${styles.radio} ${source === option ? styles.radioChecked : ''}`}
+                    />
+                    {t(`ingredients.source.${option}`)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {Object.entries(FILTER_GROUPS).map(([groupName, items]) => {
             const isOpen = openGroup === groupName
             const hasActive = items.some(i => isFilterActive(i.key))
@@ -183,13 +219,22 @@ export function IngredientsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={TABLE_COLS.length} className={styles.emptyRow}>Ничего не найдено</td></tr>
+              {loading || error || ingredients.length === 0 ? (
+                <tr><td colSpan={TABLE_COLS.length} className={styles.emptyRow}>
+                  {loading ? 'Загрузка...' : error || 'Ничего не найдено'}
+                </td></tr>
               ) : (
-                filtered.map(item => (
+                ingredients.map(item => (
                   <tr key={item.id} onClick={() => navigate(`/ingredients/${item.id}`)}>
                     <td>{item.category}</td>
-                    <td>{item.name}</td>
+                    <td>
+                      <span className={styles.ingredientName}>
+                        {item.name}
+                        {!item.system && (
+                          <span className={styles.ownerBadge}>{t('ingredients.mineBadge')}</span>
+                        )}
+                      </span>
+                    </td>
                     <td>{item.subtype ?? '—'}</td>
                     <td>{item.protein}</td>
                     <td>{item.fat}</td>

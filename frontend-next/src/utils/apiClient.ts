@@ -75,7 +75,10 @@ export const apiClient = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      const errorMessage = errorData.message || errorData.error || `Request failed with status ${response.status}`
+      const errorMessage = errorData.message
+        || errorData.error
+        || (typeof errorData.detail === 'string' ? errorData.detail : null)
+        || `Request failed with status ${response.status}`
       throw new Error(errorMessage)
     }
 
@@ -89,6 +92,28 @@ export const apiClient = {
       fullUrl,
       {
         method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      timeout,
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Update failed')
+    }
+
+    return parseJsonBody<T>(response)
+  },
+
+  put: async <T>(endpoint: string, data: any, timeout = 15000): Promise<T> => {
+    const fullUrl = `${apiBaseUrl}${endpoint}`
+
+    const response = await fetchWithTimeout(
+      fullUrl,
+      {
+        method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -122,4 +147,3 @@ export const apiClient = {
     }
   },
 }
-

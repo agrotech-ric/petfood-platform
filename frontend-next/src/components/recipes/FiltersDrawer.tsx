@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { FilterGroup } from '../../data/recipesMock'
+import type { FilterGroup } from '../../data/recipeOptions'
 import styles from '../../styles/Recipes.module.css'
 
 type Props = {
@@ -77,7 +77,7 @@ export function FiltersDrawer({ isOpen, groups, activeKeys, onToggleOption, onCl
                   )}
                   <div className={styles.filterOptionsList}>
                     {visibleOptions.map(opt => {
-                      const isActive = activeKeys.has(opt.key)
+                      const isActive = activeKeys.has(`${group.key}:${opt.key}`)
                       return (
                         <label key={opt.key} className={styles.filterOption}>
                           <span

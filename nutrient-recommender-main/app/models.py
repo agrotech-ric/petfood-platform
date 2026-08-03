@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from enum import Enum
 
 
+
 # Enums for categorical data
 class GenderType(str, Enum):
     MALE = "male"
@@ -19,13 +20,14 @@ class ReproductiveStatus(str, Enum):
     PREGNANCY = "pregnancy"
     LACTATION = "lactation"
 
-
 class PregnancyPeriod(str, Enum):
-    FIRST_4_WEEKS = "first_4_weeks"
+    NONE = "none"
+    FIRST_4_WEEKS = "early_4_weeks"
     LAST_5_WEEKS = "last_5_weeks"
 
 
 class LactationWeek(str, Enum):
+    NONE = "none"
     WEEK_1 = "week_1"
     WEEK_2 = "week_2"
     WEEK_3 = "week_3"
@@ -62,33 +64,17 @@ class DogInfoRequest(BaseModel):
     gender: GenderType = Field(..., description="Dog gender")
     breed: str = Field(..., description="Dog breed name")
     reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
-    pregnancy_period: Optional[PregnancyPeriod] = Field(None, description="Pregnancy period (if pregnant)")
-    lactation_week: Optional[LactationWeek] = Field(None, description="Lactation week (if lactating)")
-    num_puppies: Optional[int] = Field(None, ge=0, description="Number of puppies (if lactating)")
+    pregnancy_period: Optional[PregnancyPeriod] = Field(None, description="Pregnancy period (if pregnancy)")
+    lactation_week: Optional[LactationWeek] = Field(None, description="Lactation week (if lactation)")
+    num_puppies: Optional[int] = Field(None, ge=0, description="Number of puppies (if lactation)")
     activity_level: Optional[ActivityLevel] = Field(None, description="Activity level")
-
-    @validator('reproductive_status', 'pregnancy_period', 'lactation_week', 'num_puppies')
-    def check_female_only(cls, v, values):
-        if v is not None and values.get('gender') != GenderType.FEMALE:
-            raise ValueError("Reproductive parameters are only valid for female dogs")
-        return v
-
-    @validator('pregnancy_period')
-    def check_pregnancy(cls, v, values):
-        if v is not None and values.get('reproductive_status') != ReproductiveStatus.PREGNANCY:
-            raise ValueError("Pregnancy period is only valid when reproductive_status is 'pregnancy'")
-        return v
-
-    @validator('lactation_week', 'num_puppies')
-    def check_lactation(cls, v, values):
-        if v is not None and values.get('reproductive_status') != ReproductiveStatus.LACTATION:
-            raise ValueError("Lactation parameters are only valid when reproductive_status is 'lactation'")
-        return v
 
 
 class DisorderRequest(BaseModel):
     breed: str = Field(..., description="Dog breed name")
     disorder: str = Field(..., description="Disorder/disease name")
+    age: int = Field(..., ge=0, description="Dog age")
+    age_metric: AgeMetricType = Field(..., description="Age measurement unit")
 
 
 class IngredientRange(BaseModel):
@@ -103,16 +89,29 @@ class NutrientRange(BaseModel):
     max_value: float = Field(..., ge=0, le=100, description="Maximum value per 100g")
 
 
+class IngredientProfile(BaseModel):
+    ingredient: str = Field(..., description="Ingredient name used in ingredient ranges")
+    nutrients: Dict[str, float] = Field(
+        ...,
+        description="Nutrient values per 100g using internal recommender nutrient keys",
+    )
+
+
 class OptimizeRecipeRequest(BaseModel):
     weight: float = Field(..., gt=0, description="Dog weight in kg")
     age: int = Field(..., ge=0, description="Dog age")
+    age_metric: AgeMetricType = Field(AgeMetricType.YEARS, description="Age measurement unit")
     breed: str = Field(..., description="Dog breed name")
     reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
     ingredients: List[str] = Field(..., min_items=1, description="List of ingredient names")
     ingredient_ranges: List[IngredientRange] = Field(..., description="Constraints for each ingredient")
     nutrient_ranges: List[NutrientRange] = Field(..., description="Nutritional constraints")
-    maximize_nutrients: List[str] = Field(default=['moisture', 'protein'], description="Nutrients to maximize")
+    maximize_nutrients: List[str] = Field(default=['moisture_per', 'protein_per'], description="Nutrients to maximize")
     target_kcal: float = Field(..., gt=0, description="Target daily caloric intake")
+    ingredient_profiles: List[IngredientProfile] = Field(
+        default_factory=list,
+        description="Optional request-scoped custom ingredient profiles",
+    )
 
 
 # Response Models
@@ -120,6 +119,7 @@ class CalorieCalculationResponse(BaseModel):
     daily_kcal: float = Field(..., description="Daily caloric requirement (kcal)")
     formula: str = Field(..., description="Calculation formula (LaTeX format)")
     reference_page: str = Field(..., description="Reference page from FEDIAF guidelines")
+    additional_text: str = Field(..., description="additional text")
     size_category: SizeCategory = Field(..., description="Size category based on breed")
     age_category: AgeCategory = Field(..., description="Age category")
 
@@ -138,10 +138,9 @@ class NutrientNormsResponse(BaseModel):
     norms: Dict[str, float] = Field(..., description="List of nutrient requirements")
 
 
-class IngredientRecommendation(BaseModel):
-    ingredient: str = Field(..., description="Ingredient name")
-    score: float = Field(..., description="Recommendation score (0-1)")
-    category: str = Field(..., description="Ingredient category")
+class NutrientRangeSimple(BaseModel):
+    min: float = Field(..., description="minimum main nutrient value")
+    max: float = Field(..., description="maximum main nutrient value")
 
 
 class DisorderRecommendationsResponse(BaseModel):
@@ -149,8 +148,7 @@ class DisorderRecommendationsResponse(BaseModel):
     disorder_type: str = Field(..., description="Disorder category")
     breed_size: str = Field(..., description="Breed size category")
     recommended_ingredients: List[str] = Field(..., description="Top recommended ingredients")
-    top_ingredients_with_scores: List[IngredientRecommendation] = Field(..., description="Detailed ingredient scores")
-    predicted_nutrients: Dict[str, float] = Field(..., description="Predicted optimal nutrient levels")
+    nutrients_ranges: Dict[str, NutrientRangeSimple] = Field(..., description="Recommend optimal nutrient levels")
 
 
 class RecipeIngredient(BaseModel):

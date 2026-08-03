@@ -126,6 +126,16 @@ public class PetSearchService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public boolean isFavorite(Jwt jwt, UUID petId) {
+        UUID ownerId = UUID.fromString(jwt.getSubject());
+        Pet pet = pets.findById(petId).orElseThrow(() -> new NotFoundException("pet not found"));
+        if (!ownerId.equals(pet.getOwnerId())) {
+            throw new ForbiddenOperationException("you can only view favorite status for your own pets");
+        }
+        return favorites.existsByIdOwnerIdAndIdPetId(ownerId, petId);
+    }
+
     private PetListItemResponse toListItem(Pet pet, PetSearchRow row) {
         PetListItemResponse item = new PetListItemResponse();
         BeanUtils.copyProperties(PetMapper.toDto(pet), item);

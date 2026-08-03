@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   // On the server, the gateway/recommender are usually available via nginx (5555),
   // while direct service ports (8090/8000) may not be published.
   const apiTarget = env.VITE_API_PROXY_TARGET || 'http://10.1.10.144:5555'
-  const recommenderTarget = env.VITE_RECOMMENDER_PROXY_TARGET || 'http://10.1.10.144:5555'
+  const recommenderTarget = env.VITE_RECOMMENDER_PROXY_TARGET || 'http://10.1.10.144:18001'
 
   return {
     plugins: [svgr(), react()],
@@ -26,9 +26,9 @@ export default defineConfig(({ mode }) => {
         '/recommender': {
           target: recommenderTarget,
           changeOrigin: true,
+          rewrite: path => path.replace(/^\/recommender/, ''),
         },
       },
     },
   }
 })
-

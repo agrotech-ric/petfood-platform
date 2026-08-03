@@ -72,7 +72,8 @@ Sandbox — **отдельная** БД, пользователи и порты.
 
 ```bash
 docker compose -f docker-compose.sandbox.yml up -d --build account-service-sandbox
-# аналогично: gateway-service-sandbox, auth-service-sandbox, pets-service-sandbox, notifications-service-sandbox
+# аналогично: gateway-service-sandbox, auth-service-sandbox, pets-service-sandbox,
+# notifications-service-sandbox, recommender-service-sandbox
 ```
 
 Проверка логов:
@@ -187,6 +188,10 @@ API: `src/utils/apiClient.ts` — всегда `credentials: 'include'` (cookie 
 
 - Профиль: `services/profileService.ts` → `GET/PATCH /api/v1/account`, `GET /api/v1/account/profile/me`, `GET /api/v1/account/profile/me/activity`
 - Фото/аватар: presigned URL через `petService` (MinIO sandbox)
+- Профиль питомца: данные карточки через `petService.getPet()` (`comments` — описание питомца), питание через `petService.getPetFoods()`, противопоказания через `petService.getContraindications()`/`updateContraindications()`, текущее состояние/история болезней через health records (`conditionName`, `conditionStatus: current|history`, `notes`, `symptomIds`), графики через health records (`recordDate`, `weightKg`, `activityHours`); не добавлять локальные-only строки в графики без сохранения через API.
+- Ингредиенты: каталог и CRUD через `services/ingredientService.ts` → `/api/v1/ingredients`; системные ингредиенты глобальны и доступны только для чтения, пользовательские принадлежат создавшему их аккаунту и не выдаются другим пользователям; значения формы хранятся на backend, фильтры нутриентов означают наличие значения больше нуля.
+- Рецепты: контракт и CRUD через `services/recipeService.ts` → `/api/v1/recipes`; рецепты не разделяются на домашние/коммерческие, pets-service хранит входные параметры и необязательный снимок `calculationResult`, но не реализует расчёт или оптимизацию состава.
+- Расчёт рецептов: `services/recommenderService.ts` → `/recommender`; sandbox-контейнер использует алгоритм из `nutrient-recommender-main`; возраст всегда передаётся вместе с `age_metric`, а нутриентный профиль выбранных пользовательских ингредиентов — в необязательном request-scoped поле `ingredient_profiles` с внутренними ключами модели (`*_per`, `*_mg`, `*_mcg`, `*_g`).
 - Не дублировать `fetch` — расширять существующие service-файлы
 
 ### Навигация «назад» с Edit Profile

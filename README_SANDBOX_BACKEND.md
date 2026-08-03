@@ -14,6 +14,7 @@ This project can run a fully isolated PetFood backend stack alongside the main o
 - Account: `http://10.1.10.144:18181`
 - Pets: `http://10.1.10.144:18183`
 - Notifications: `http://10.1.10.144:18184`
+- Recommender: `http://10.1.10.144:18001`
 - MinIO S3 API: `http://10.1.10.144:19100`
 - MinIO Console: `http://10.1.10.144:19101`
 
@@ -46,6 +47,7 @@ In `frontend-next/.env` set:
 
 ```env
 VITE_API_PROXY_TARGET=http://10.1.10.144:18190
+VITE_RECOMMENDER_PROXY_TARGET=http://10.1.10.144:18001
 ```
 
 Then restart Vite dev server (`npm run dev` or the `petfood_frontend_next_dev` container) so `/api/*` proxies to sandbox gateway.
@@ -56,4 +58,3 @@ Then restart Vite dev server (`npm run dev` or the `petfood_frontend_next_dev` c
 
 ## Auth fix (sandbox only)
 `/api/v1/pets` requires authentication (`401` without token). Previously `permitAll` allowed anonymous access but controller expected `Jwt`, causing `500`.
-

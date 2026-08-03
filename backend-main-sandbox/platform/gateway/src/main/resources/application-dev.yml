@@ -24,7 +24,7 @@ spring:
         - id: pets
           uri: ${PETS_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/api/v1/pets/**
+            - Path=/api/v1/pets/**,/api/v1/ingredients/**,/api/v1/recipes/**
 
         # --- Auth JWKs ---
         - id: auth-jwks

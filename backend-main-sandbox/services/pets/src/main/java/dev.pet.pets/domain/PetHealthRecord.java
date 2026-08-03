@@ -1,6 +1,7 @@
 package dev.pet.pets.domain;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,15 +36,29 @@ public class PetHealthRecord {
     @Column(name = "notes")
     private String notes;
 
+    @Column(name = "condition_name")
+    private String conditionName;
+
+    @Column(name = "condition_status", nullable = false)
+    private String conditionStatus;
+
     @Column(name = "weight_kg", nullable = false)
     private Double weightKg;
+
+    @Column(name = "activity_hours")
+    private Double activityHours;
+
+    @Column(name = "record_date")
+    private LocalDate recordDate;
 
     @Column(name = "created_at", nullable = false)
     private java.time.LocalDateTime createdAt;
 
     public PetHealthRecord() {
         this.createdAt = java.time.LocalDateTime.now();
+        this.recordDate = LocalDate.now();
         this.weightKg = 0.0;
+        this.conditionStatus = "current";
     }
 
     public UUID getId() {
@@ -90,12 +105,44 @@ public class PetHealthRecord {
         this.notes = notes;
     }
 
+    public String getConditionName() {
+        return conditionName;
+    }
+
+    public void setConditionName(String conditionName) {
+        this.conditionName = conditionName;
+    }
+
+    public String getConditionStatus() {
+        return conditionStatus;
+    }
+
+    public void setConditionStatus(String conditionStatus) {
+        this.conditionStatus = conditionStatus;
+    }
+
     public Double getWeightKg() {
         return weightKg;
     }
 
     public void setWeightKg(Double weightKg) {
         this.weightKg = weightKg;
+    }
+
+    public Double getActivityHours() {
+        return activityHours;
+    }
+
+    public void setActivityHours(Double activityHours) {
+        this.activityHours = activityHours;
+    }
+
+    public LocalDate getRecordDate() {
+        return recordDate;
+    }
+
+    public void setRecordDate(LocalDate recordDate) {
+        this.recordDate = recordDate;
     }
 
     public java.time.LocalDateTime getCreatedAt() {

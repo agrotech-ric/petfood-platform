@@ -49,6 +49,12 @@ public class GlobalExceptionHandler {
             .body(new ApiError("constraint_violation", ex.getMessage()));
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex) {
+        return ResponseEntity.badRequest()
+            .body(new ApiError("bad_request", ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleOther(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
