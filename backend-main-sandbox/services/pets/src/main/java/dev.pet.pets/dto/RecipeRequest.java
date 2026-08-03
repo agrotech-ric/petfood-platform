@@ -14,7 +14,6 @@ public record RecipeRequest(
     UUID petId,
     @NotBlank @Size(max = 255) String name,
     String description,
-    @NotBlank @Pattern(regexp = "domestic|commercial") String type,
     @NotBlank @Pattern(regexp = "wet|dry") String format,
     @NotBlank @Pattern(regexp = "puppies|adults|senior") String ageCategory,
     @NotBlank @Pattern(regexp = "all|small|medium|large") String breedSize,

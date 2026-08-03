@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { petService, type HealthRecord, type PetContraindications, type PetProfileData } from '../../services/petService'
 import { recipeService, type RecipeListItem } from '../../services/recipeService'
 import { referenceService, type ActivityType, type Symptom } from '../../services/referenceService'
-import { RECIPE_FORMAT_LABELS, RECIPE_TYPE_LABELS } from '../data/recipeOptions'
+import { RECIPE_FORMAT_LABELS } from '../data/recipeOptions'
 import styles from '../styles/PetProfile.module.css'
 import EditIcon from '../assets/icons/edit.svg?react'
 import EditIcon1 from '../assets/icons/edit1.svg?react'
@@ -62,7 +62,6 @@ type ActivityEntry = {
 type PetFoodView = {
   id: string
   name: string
-  type: string
   format: string
   calories: number | string
   lastModified: string
@@ -95,7 +94,6 @@ function mapPetRecipes(recipes: RecipeListItem[]): PetFoodView[] {
   return recipes.map((recipe) => ({
     id: String(recipe.id),
     name: recipe.name,
-    type: RECIPE_TYPE_LABELS[recipe.type],
     format: RECIPE_FORMAT_LABELS[recipe.format],
     calories: recipe.calories ?? '—',
     lastModified: formatShortDate(recipe.updatedAt),
@@ -336,7 +334,6 @@ function TabFood({ foods }: { foods: PetFoodView[] }) {
           <thead>
             <tr>
               <th>Корм</th>
-              <th>Тип</th>
               <th>Формат</th>
               <th>Калорийность</th>
               <th>Последнее изменения</th>
@@ -345,11 +342,10 @@ function TabFood({ foods }: { foods: PetFoodView[] }) {
           </thead>
           <tbody>
             {foods.length === 0 ? (
-              <tr><td colSpan={6}>Записей пока нет</td></tr>
+              <tr><td colSpan={5}>Записей пока нет</td></tr>
             ) : foods.map(f => (
               <tr key={f.id}>
                 <td>{f.name}</td>
-                <td>{f.type}</td>
                 <td>{f.format}</td>
                 <td>{f.calories}</td>
                 <td>{f.lastModified}</td>

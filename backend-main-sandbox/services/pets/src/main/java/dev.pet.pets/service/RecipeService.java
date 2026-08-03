@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RecipeService {
 
     private static final Set<String> SORTABLE_FIELDS = Set.of(
-        "name", "type", "format", "ageCategory", "breedSize", "status", "createdAt", "updatedAt"
+        "name", "format", "ageCategory", "breedSize", "status", "createdAt", "updatedAt"
     );
     private static final Set<String> NUTRIENT_KEYS = Set.of(
         "calories", "protein", "fat", "carbs", "moisture", "fiber", "ash", "cholesterol", "sugar",
@@ -66,7 +66,6 @@ public class RecipeService {
     public List<RecipeListItemResponse> listMine(
         Jwt jwt,
         String query,
-        List<String> types,
         List<String> formats,
         List<String> ageCategories,
         List<String> breedSizes,
@@ -93,7 +92,6 @@ public class RecipeService {
                     cb.like(cb.lower(root.get("description")), pattern)
                 ));
             }
-            addIn(predicates, root.get("type"), types);
             addIn(predicates, root.get("format"), formats);
             addIn(predicates, root.get("ageCategory"), ageCategories);
             addIn(predicates, root.get("breedSize"), breedSizes);
@@ -162,7 +160,6 @@ public class RecipeService {
         recipe.setPet(resolvePet(request.petId(), ownerId));
         recipe.setName(request.name().trim());
         recipe.setDescription(blankToNull(request.description()));
-        recipe.setType(request.type());
         recipe.setFormat(request.format());
         recipe.setAgeCategory(request.ageCategory());
         recipe.setBreedSize(request.breedSize());
@@ -321,7 +318,6 @@ public class RecipeService {
             recipe.getPet() == null ? null : recipe.getPet().getId(),
             recipe.getPet() == null ? null : recipe.getPet().getName(),
             recipe.getName(),
-            recipe.getType(),
             recipe.getFormat(),
             recipe.getAgeCategory(),
             recipe.getBreedSize(),
@@ -347,7 +343,6 @@ public class RecipeService {
             recipe.getPet() == null ? null : recipe.getPet().getName(),
             recipe.getName(),
             recipe.getDescription(),
-            recipe.getType(),
             recipe.getFormat(),
             recipe.getAgeCategory(),
             recipe.getBreedSize(),

@@ -32,9 +32,6 @@ public class Recipe {
     @Column
     private String description;
 
-    @Column(name = "recipe_type", nullable = false, length = 32)
-    private String type;
-
     @Column(name = "food_format", nullable = false, length = 32)
     private String format;
 
@@ -121,8 +118,6 @@ public class Recipe {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
     public String getFormat() { return format; }
     public void setFormat(String format) { this.format = format; }
     public String getAgeCategory() { return ageCategory; }

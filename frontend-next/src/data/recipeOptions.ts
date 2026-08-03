@@ -9,14 +9,6 @@ export type FilterGroup = {
 
 export const STATIC_RECIPE_FILTER_GROUPS: FilterGroup[] = [
   {
-    key: 'type',
-    title: 'Тип',
-    options: [
-      { key: 'domestic', label: 'Домашний' },
-      { key: 'commercial', label: 'Коммерческий' },
-    ],
-  },
-  {
     key: 'format',
     title: 'Формат',
     options: [
@@ -44,11 +36,6 @@ export const STATIC_RECIPE_FILTER_GROUPS: FilterGroup[] = [
     ],
   },
 ]
-
-export const RECIPE_TYPE_LABELS = {
-  domestic: 'Домашний',
-  commercial: 'Коммерческий',
-} as const
 
 export const RECIPE_FORMAT_LABELS = {
   wet: 'Влажный',

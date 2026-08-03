@@ -6,14 +6,12 @@ import {
   type RecipeBreedSize,
   type RecipeFormat,
   type RecipeListItem,
-  type RecipeType,
 } from '../../services/recipeService'
 import { ingredientService } from '../../services/ingredientService'
 import { referenceService, type RefItem } from '../../services/referenceService'
 import {
   RECIPE_AGE_LABELS,
   RECIPE_FORMAT_LABELS,
-  RECIPE_TYPE_LABELS,
   STATIC_RECIPE_FILTER_GROUPS,
   type FilterGroup,
 } from '../data/recipeOptions'
@@ -118,7 +116,6 @@ export function RecipesPage() {
     const ids = (groupKey: string) => values(groupKey).map(Number).filter(Number.isInteger)
 
     return {
-      types: values('type') as RecipeType[],
       formats: values('format') as RecipeFormat[],
       ageCategories: values('ageCategory') as RecipeAgeCategory[],
       breedSizes: values('breedSize') as RecipeBreedSize[],
@@ -236,7 +233,6 @@ export function RecipesPage() {
             <thead>
               <tr>
                 <th>Название</th>
-                <th>Тип</th>
                 <th>Формат</th>
                 <th>Возрастная категория</th>
                 <th>Последнее изменения</th>
@@ -245,15 +241,15 @@ export function RecipesPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className={styles.emptyRow}>Загрузка...</td></tr>
+                <tr><td colSpan={5} className={styles.emptyRow}>Загрузка...</td></tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className={styles.emptyRow}>
+                  <td colSpan={5} className={styles.emptyRow}>
                     Не удалось загрузить рецепты
                   </td>
                 </tr>
               ) : recipes.length === 0 ? (
-                <tr><td colSpan={6} className={styles.emptyRow}>Ничего не найдено</td></tr>
+                <tr><td colSpan={5} className={styles.emptyRow}>Ничего не найдено</td></tr>
               ) : (
                 recipes.map(item => (
                   <tr
@@ -269,7 +265,6 @@ export function RecipesPage() {
                     }}
                   >
                     <td>{item.name}</td>
-                    <td>{RECIPE_TYPE_LABELS[item.type]}</td>
                     <td>{RECIPE_FORMAT_LABELS[item.format]}</td>
                     <td>{RECIPE_AGE_LABELS[item.ageCategory]}</td>
                     <td>{formatDate(item.updatedAt)}</td>

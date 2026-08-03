@@ -21,7 +21,6 @@ import {
   type RecipeFormat,
   type RecipeGender,
   type RecipePayload,
-  type RecipeType,
 } from '../../../services/recipeService'
 import {
   referenceService,
@@ -38,7 +37,6 @@ import {
   RECIPE_FORMAT_LABELS,
   RECIPE_MAXIMIZE_OPTIONS,
   RECIPE_NUTRIENT_LIMITS,
-  RECIPE_TYPE_LABELS,
 } from '../../data/recipeOptions'
 import DeleteIcon from '../../assets/icons/delete.svg?react'
 import { CalorieFormula } from './CalorieFormula'
@@ -52,7 +50,6 @@ type FormState = {
   petId: string | null
   name: string
   description: string
-  type: RecipeType
   format: RecipeFormat
   ageCategory: RecipeAgeCategory
   breedSize: RecipeBreedSize
@@ -94,7 +91,6 @@ function createInitialState(): FormState {
     petId: null,
     name: '',
     description: '',
-    type: 'domestic',
     format: 'wet',
     ageCategory: 'adults',
     breedSize: 'all',
@@ -146,7 +142,6 @@ function stateFromRecipe(recipe: Recipe): FormState {
     petId: recipe.petId ?? null,
     name: recipe.name,
     description: recipe.description ?? '',
-    type: recipe.type,
     format: recipe.format,
     ageCategory: recipe.ageCategory,
     breedSize: recipe.breedSize,
@@ -429,7 +424,6 @@ function toPayload(
     petId: petId ?? state.petId,
     name: state.name.trim(),
     description: state.description.trim() || null,
-    type: state.type,
     format: state.format,
     ageCategory: state.ageCategory,
     breedSize: state.breedSize,
@@ -1074,23 +1068,6 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 </div>
               </div>
               <div className={styles.formColumn}>
-                <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel}>Тип корма</label>
-                  <div className={styles.radioGroup}>
-                    {(Object.entries(RECIPE_TYPE_LABELS) as [RecipeType, string][]).map(([value, label]) => (
-                      <label key={value} className={styles.radioLabel}>
-                        <input
-                          type="radio"
-                          className={styles.radioInput}
-                          name="recipeType"
-                          checked={form.type === value}
-                          onChange={() => setField('type', value)}
-                        />
-                        {label.toLowerCase()}
-                      </label>
-                    ))}
-                  </div>
-                </div>
                 {!isEdit && (
                   <div className={styles.fieldGroup}>
                     <label className={styles.fieldLabel}>Формат</label>

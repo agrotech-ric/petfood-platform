@@ -68,9 +68,9 @@ export const MOCK_PET: PetProfile = {
 }
 
 export const MOCK_PET_FOODS: PetFood[] = [
-  { id: 1, name: 'Пауч Royal Canine для щенков с курицей', type: 'коммерческий', format: 'влажный', calories: 240, lastModified: '24.01.2026' },
-  { id: 2, name: 'Сухой корм Royal Canine для щенков с говядиной', type: 'коммерческий', format: 'сухой', calories: 345, lastModified: '18.09.2026' },
-  { id: 3, name: 'Рецепт "курица с рисом"', type: 'домашний', format: 'влажный', calories: 356, lastModified: '01.03.2026' },
+  { id: 1, name: 'Пауч Royal Canine для щенков с курицей', format: 'влажный', calories: 240, lastModified: '24.01.2026' },
+  { id: 2, name: 'Сухой корм Royal Canine для щенков с говядиной', format: 'сухой', calories: 345, lastModified: '18.09.2026' },
+  { id: 3, name: 'Рецепт "курица с рисом"', format: 'влажный', calories: 356, lastModified: '01.03.2026' },
 ]
 
 export const MOCK_CURRENT_CONDITION: PetCurrentCondition = {

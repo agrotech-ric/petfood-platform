@@ -9,7 +9,6 @@ import {
   RECIPE_AGE_LABELS,
   RECIPE_BREED_SIZE_LABELS,
   RECIPE_FORMAT_LABELS,
-  RECIPE_TYPE_LABELS,
 } from '../data/recipeOptions'
 import styles from '../styles/RecipeProfile.module.css'
 import DeleteIcon from '../assets/icons/delete.svg?react'
@@ -495,7 +494,6 @@ export function RecipeProfilePage() {
         </div>
         <div className={styles.recipeMeta}>
           {[
-            { label: 'Тип', value: RECIPE_TYPE_LABELS[recipe.type] },
             { label: 'Формат', value: RECIPE_FORMAT_LABELS[recipe.format] },
             { label: 'Возраст', value: RECIPE_AGE_LABELS[recipe.ageCategory] },
             { label: 'Размер породы', value: RECIPE_BREED_SIZE_LABELS[recipe.breedSize] },

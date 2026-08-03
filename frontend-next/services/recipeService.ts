@@ -1,6 +1,5 @@
 import { apiClient } from '../src/utils/apiClient'
 
-export type RecipeType = 'domestic' | 'commercial'
 export type RecipeFormat = 'wet' | 'dry'
 export type RecipeAgeCategory = 'puppies' | 'adults' | 'senior'
 export type RecipeBreedSize = 'all' | 'small' | 'medium' | 'large'
@@ -81,7 +80,6 @@ export type RecipePayload = {
   petId?: string | null
   name: string
   description?: string | null
-  type: RecipeType
   format: RecipeFormat
   ageCategory: RecipeAgeCategory
   breedSize: RecipeBreedSize
@@ -106,7 +104,6 @@ export type RecipeListItem = {
   petId?: string | null
   petName?: string | null
   name: string
-  type: RecipeType
   format: RecipeFormat
   ageCategory: RecipeAgeCategory
   breedSize: RecipeBreedSize
@@ -147,7 +144,6 @@ export type Recipe = RecipeListItem & {
 export type RecipeListParams = {
   petId?: string
   search?: string
-  types?: RecipeType[]
   formats?: RecipeFormat[]
   ageCategories?: RecipeAgeCategory[]
   breedSizes?: RecipeBreedSize[]
@@ -157,7 +153,7 @@ export type RecipeListParams = {
   symptomIds?: number[]
   ingredientIds?: number[]
   status?: RecipeStatus
-  sort?: 'name' | 'type' | 'format' | 'ageCategory' | 'breedSize' | 'status' | 'createdAt' | 'updatedAt'
+  sort?: 'name' | 'format' | 'ageCategory' | 'breedSize' | 'status' | 'createdAt' | 'updatedAt'
   direction?: 'asc' | 'desc'
 }
 
@@ -170,7 +166,6 @@ export const recipeService = {
     const params = new URLSearchParams()
     if (filters.petId) params.set('petId', filters.petId)
     if (filters.search?.trim()) params.set('q', filters.search.trim())
-    appendMany(params, 'types', filters.types)
     appendMany(params, 'formats', filters.formats)
     appendMany(params, 'ageCategories', filters.ageCategories)
     appendMany(params, 'breedSizes', filters.breedSizes)
