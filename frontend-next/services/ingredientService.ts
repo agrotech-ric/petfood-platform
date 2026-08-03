@@ -6,6 +6,8 @@ export type Ingredient = {
   name: string
   subtype: string | null
   recommenderSupported: boolean
+  ownerId: string | null
+  system: boolean
   portion: number
   calories: number
   protein: number
@@ -57,7 +59,7 @@ export type Ingredient = {
 
 export type IngredientPayload = Omit<
   Ingredient,
-  'id' | 'recommenderSupported' | 'createdAt' | 'updatedAt'
+  'id' | 'recommenderSupported' | 'ownerId' | 'system' | 'createdAt' | 'updatedAt'
 >
 
 export const EMPTY_INGREDIENT: IngredientPayload = {
@@ -76,6 +78,8 @@ export function toIngredientPayload(values: Partial<Ingredient>): IngredientPayl
   const payloadValues = { ...values }
   delete payloadValues.id
   delete payloadValues.recommenderSupported
+  delete payloadValues.ownerId
+  delete payloadValues.system
   delete payloadValues.createdAt
   delete payloadValues.updatedAt
   const merged = { ...EMPTY_INGREDIENT, ...payloadValues }
@@ -90,15 +94,17 @@ export function toIngredientPayload(values: Partial<Ingredient>): IngredientPayl
 type ListParams = {
   search?: string
   nutrients?: string[]
+  source?: 'all' | 'system' | 'mine'
   sort?: keyof Ingredient
   direction?: 'asc' | 'desc'
 }
 
 export const ingredientService = {
-  list: ({ search, nutrients, sort, direction }: ListParams = {}) => {
+  list: ({ search, nutrients, source, sort, direction }: ListParams = {}) => {
     const params = new URLSearchParams()
     if (search?.trim()) params.set('q', search.trim())
     nutrients?.forEach(nutrient => params.append('nutrients', nutrient))
+    if (source && source !== 'all') params.set('source', source)
     if (sort) params.set('sort', String(sort))
     if (direction) params.set('direction', direction)
     const query = params.toString()

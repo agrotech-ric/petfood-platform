@@ -80,7 +80,6 @@ export const RECIPE_MAXIMIZE_OPTIONS = [
   { key: 'fat', label: 'Жиры' },
   { key: 'carbs', label: 'Углеводы' },
   { key: 'vitaminA', label: 'Витамин А' },
-  { key: 'vitaminC', label: 'Витамин С' },
   { key: 'calcium', label: 'Кальций' },
   { key: 'phosphorus', label: 'Фосфор' },
 ] as const

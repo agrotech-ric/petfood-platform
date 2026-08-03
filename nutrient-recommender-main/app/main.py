@@ -11,8 +11,10 @@ import itertools
 
 from app.models import *
 from app.utils import (
-    load_data, build_ml_models, get_disorder_keywords,
-    get_ingredient_categories
+    load_data, build_unsup_ml_model, get_disorder_keywords,
+    
+    ingr_nutr_food_find, ingredients_category_nutrient_analysis, define_ingredients, 
+    transl_ingredient,transl_nutr
 )
 
 from app.kcal_calculate import (
@@ -39,12 +41,54 @@ app.add_middleware(
 )
 
 
+def describe_constraint_conflicts(A, b, A_eq, b_eq, bounds, nutr_ranges, ingredient_names, food):
+    """Describe the largest nutrient violations at the closest ingredient composition."""
+    ingredient_count = len(ingredient_names)
+    constraint_count = len(A)
+    if constraint_count == 0:
+        return ""
+
+    diagnostic = linprog(
+        np.concatenate([np.zeros(ingredient_count), np.ones(constraint_count)]),
+        A_ub=np.hstack([np.asarray(A), -np.eye(constraint_count)]),
+        b_ub=b,
+        A_eq=np.hstack([np.asarray(A_eq), np.zeros((len(A_eq), constraint_count))]),
+        b_eq=b_eq,
+        bounds=[*bounds, *[(0, None) for _ in range(constraint_count)]],
+        method="highs",
+    )
+    if not diagnostic.success:
+        return ""
+
+    composition = diagnostic.x[:ingredient_count]
+    conflicts = []
+    for nutrient, (minimum, maximum) in nutr_ranges.items():
+        actual = sum(
+            composition[index] * food[ingredient][nutrient]
+            for index, ingredient in enumerate(ingredient_names)
+        )
+        display_name = transl_nutr(nutrient, "ru").split(",")[0]
+        if actual < minimum - 0.01:
+            conflicts.append((
+                minimum - actual,
+                f"{display_name}: получается {actual:.2f}%, требуется не менее {minimum:.2f}%",
+            ))
+        elif actual > maximum + 0.01:
+            conflicts.append((
+                actual - maximum,
+                f"{display_name}: получается {actual:.2f}%, требуется не более {maximum:.2f}%",
+            ))
+
+    conflicts.sort(key=lambda item: item[0], reverse=True)
+    return "; ".join(message for _, message in conflicts[:3])
+
+
 # Load data on startup
 @app.on_event("startup")
 async def startup_event():
     """Load data and build models on startup"""
     load_data()
-    build_ml_models()
+    build_unsup_ml_model()
 
 
 @app.get("/", tags=["Health"])
@@ -61,7 +105,7 @@ async def root():
 async def get_breeds():
     """Get list of all available dog breeds"""
     try:
-        _, disease_df, _, _ = load_data()
+        _, disease_df, _, _, _  = load_data()
         breeds = sorted(disease_df["Breed"].unique().tolist())
         return BreedsListResponse(breeds=breeds, count=breeds.__len__())
     except Exception as e:
@@ -72,7 +116,7 @@ async def get_breeds():
 async def get_breed_details(breed: str):
     """Get details about a specific breed"""
     try:
-        _, disease_df, _, _ = load_data()
+        _, disease_df, _, _, _  = load_data()
         breed_data = disease_df[disease_df["Breed"] == breed]
 
         if breed_data.empty:
@@ -102,7 +146,7 @@ async def get_breed_details(breed: str):
 async def calculate_calories(request: DogInfoRequest):
     """Calculate daily caloric requirements for a dog"""
     try:
-        _, disease_df, _, _ = load_data()
+        _, disease_df, _, _, _  = load_data()
 
         # Get breed info
         breed_data = disease_df[disease_df["Breed"] == request.breed]
@@ -158,7 +202,7 @@ async def calculate_calories(request: DogInfoRequest):
 async def calculate_protein(request: DogInfoRequest, target_kcal: float):
     """Calculate daily protein requirements"""
     try:
-        _, disease_df, _, _ = load_data()
+        _, disease_df, _, _, _   = load_data()
 
         breed_data = disease_df[disease_df["Breed"] == request.breed]
         if breed_data.empty:
@@ -193,7 +237,7 @@ async def calculate_protein(request: DogInfoRequest, target_kcal: float):
 async def calculate_nutrient_norms(request: DogInfoRequest, target_kcal: float):
     """Calculate nutrient norms for a dog"""
     try:
-        _, disease_df, _, _ = load_data()
+        _, disease_df, _, _, _ = load_data()
 
         breed_data = disease_df[disease_df["Breed"] == request.breed]
         if breed_data.empty:
@@ -226,8 +270,9 @@ async def calculate_nutrient_norms(request: DogInfoRequest, target_kcal: float):
 async def get_disorder_recommendations(request: DisorderRequest):
     """Get ingredient and nutrient recommendations based on breed disorder"""
     try:
-        _, disease_df, merge_tab_df, food_ingredients_df = load_data()
-        models = build_ml_models()
+        _, disease_df, merge_tab_df, ingredients_df, nutrients_transl = load_data()
+        model_encoding, corpus_embeddings, dog_food_df = build_unsup_ml_model()
+
         disorder_keywords = get_disorder_keywords()
 
         # Get breed and disorder info
@@ -239,111 +284,44 @@ async def get_disorder_recommendations(request: DisorderRequest):
         if disorder_data.empty:
             raise HTTPException(status_code=404, detail=f"Disorder '{request.disorder}' not found for breed")
 
-        breed_size = disorder_data["breed_size_category"].values[0]
         disorder_type = disorder_data["Disorder"].values[0]
-
         # Build query vector
         keywords = disorder_keywords.get(disorder_type, request.disorder).lower()
-        kw_tfidf = models['vectorizer'].transform([keywords])
-        kw_reduced = models['svd'].transform(kw_tfidf)
 
-        cat_vec = models['encoder'].transform([[breed_size, "Adult"]])
-        kw_combined = hstack([csr_matrix(kw_reduced), cat_vec])
+        min_weight = breed_data["min_weight"].values[0]
+        max_weight = breed_data["max_weight"].values[0]
+        avg_weight = (min_weight + max_weight) / 2
+        breed_size = size_category(avg_weight)
+        age_type_categ = age_type_category(breed_size, request.age, request.age_metric.value)
 
+        query = f"{age_type_categ}, {breed_size} breed size, {keywords}, {disorder_type}"
 
-        # Build query vector
-        kw_tfidf_wet = models['vectorizer_wet'].transform([keywords])
-        kw_reduced_wet = models['svd_wet'].transform(kw_tfidf_wet)
-
-        cat_vec_wet = models['encoder_wet'].transform([[breed_size, "Adult"]])
-        kw_combined_wet = hstack([csr_matrix(kw_reduced_wet), cat_vec_wet])
-
-
-        # Predict nutrients
-        nutrient_preds = {}
-        for nut, model in models['nutrient_models'].items():
-            pred = model.predict(kw_combined_wet)[0]
-            sc = models['scalers'].get(nut)
-            if sc:
-                pred = sc.inverse_transform([[pred]])[0][0]
-            nutrient_preds[nut] = round(pred, 2)
-
-        # Rank ingredients
-        ing_scores = {
-            ing: clf.decision_function(kw_combined)[0]
-            for ing, clf in models['ingredient_models'].items()
-        }
-        top_ings = sorted(ing_scores.items(), key=lambda x: x[1], reverse=True)[:20]
-
-        # Get ingredient categories
-        categories = get_ingredient_categories(merge_tab_df, food_ingredients_df)
-        dele = merge_tab_df[merge_tab_df["Standart"].isna()]["Ingredient"].tolist()
-
-        # Select best ingredients by category
-        prot = sorted([i for i in top_ings if i[0].title() in categories['proteins'] and i[0].title() not in dele],
-                      key=lambda x: x[1], reverse=True)[:1]
-        prot = [i.title() for i, _ in prot]
-        prot = merge_tab_df[merge_tab_df["Ingredient"].isin(prot)]["Standart"].tolist()
-
-        carb_cer = sorted(
-            [i for i in top_ings if i[0].title() in categories['carbonates_cer'] and i[0].title() not in dele],
-            key=lambda x: x[1], reverse=True)[:1]
-        carb_cer = [i.title() for i, _ in carb_cer]
-        carb_cer = merge_tab_df[merge_tab_df["Ingredient"].isin(carb_cer)]["Standart"].tolist()
-
-        carb_veg = sorted(
-            [i for i in top_ings if i[0].title() in categories['carbonates_veg'] and i[0].title() not in dele],
-            key=lambda x: x[1], reverse=True)[:1]
-        carb_veg = [i.title() for i, _ in carb_veg]
-        carb_veg = merge_tab_df[merge_tab_df["Ingredient"].isin(carb_veg)]["Standart"].tolist()
-
-        fat = sorted([i for i in top_ings if i[0].title() in categories['oils'] and i[0].title() not in dele],
-                     key=lambda x: x[1], reverse=True)[:1]
-        fat = [i.title() for i, _ in fat]
-        fat = merge_tab_df[merge_tab_df["Ingredient"].isin(fat)]["Standart"].tolist()
-
-        oth = sorted([i for i in top_ings[:20] if i[0].title() in categories['other'] and i[0].title() not in dele],
-                     key=lambda x: x[1], reverse=True)[:1]
-        if len(oth) > 0:
-            oth = [i.title() for i, _ in oth]
-            oth = merge_tab_df[merge_tab_df["Ingredient"].isin(oth)]["Standart"].tolist()
-        else:
-            oth = []
-
-        ingredients_finish = list(
-            set(prot) | set(carb_cer) | set(carb_veg) | set(fat) | set(oth) | set(categories['water']))
-        ingredients_finish = [i for i in ingredients_finish if i]
-
-        # Format top ingredients with scores
-        top_ingredients_formatted = []
-        for ing, score in top_ings[:10]:
-            category = "Unknown"
-            if ing.title() in categories['proteins']:
-                category = "Protein"
-            elif ing.title() in categories['oils']:
-                category = "Fat"
-            elif ing.title() in categories['carbonates_cer']:
-                category = "Carbohydrate (Cereal)"
-            elif ing.title() in categories['carbonates_veg']:
-                category = "Carbohydrate (Vegetable)"
-            elif ing.title() in categories['other']:
-                category = "Other"
-
-            top_ingredients_formatted.append(
-                IngredientRecommendation(
-                    ingredient=ing.title(),
-                    score=float(score),
-                    category=category
-                )
-            )
-
+        high_nutrients, low_nutrients, ingredients = ingr_nutr_food_find(query, dog_food_df, corpus_embeddings, model_encoding)
+        group_results = ingredients_category_nutrient_analysis(ingredients_df)
+        finish_ingr_list, finish_ingr_list_norm_name, maxim_main_nutr = define_ingredients(high_nutrients, low_nutrients, ingredients, ingredients_df, group_results, merge_tab_df)
+        
+        nutr_ranges = {}
+        nutr_ranges['moisture_per'] = {"min": 65, "max": 95}
+        
+        s = dog_food_df[(dog_food_df["food_form"] == "wet food") & (dog_food_df["moisture_per"] > 0.5)]["protein_per"]
+        protein_min = (100 - nutr_ranges['moisture_per']["min"]) * 0.25
+        protein_min = protein_min if protein_min > s.mean() - s.std() else s.mean() - s.std()
+        nutr_ranges['protein_per'] = {"min": int(protein_min), "max": 30}
+        
+        s = dog_food_df[(dog_food_df["food_form"] == "wet food") & (dog_food_df["moisture_per"] > 0.5)]["fats_per"]
+        fats_min = (100 - nutr_ranges['moisture_per']["min"]) * 0.085
+        fats_min = fats_min if fats_min > s.mean() - s.std() else s.mean() - s.std()
+        nutr_ranges['fats_per'] = {"min": int(fats_min), "max": 15}
+        
+        carb_max = 100 - nutr_ranges['protein_per']["min"] - nutr_ranges['fats_per']["min"] - nutr_ranges['moisture_per']["min"]
+        nutr_ranges['carbohydrate_per'] = {"min": 5, "max": int(carb_max)}
+        
         return DisorderRecommendationsResponse(
             disorder=request.disorder,
             disorder_type=disorder_type,
             breed_size=breed_size,
-            recommended_ingredients=ingredients_finish,
-            top_ingredients_with_scores=top_ingredients_formatted,
-            predicted_nutrients=nutrient_preds
+            recommended_ingredients=finish_ingr_list_norm_name,
+            nutrients_ranges=nutr_ranges
         )
     except HTTPException:
         raise
@@ -354,7 +332,7 @@ async def get_disorder_recommendations(request: DisorderRequest):
 def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResponse:
     """Optimize food recipe composition based on constraints (CPU-bound)."""
     try:
-        _, disease_df, merge_tab_df, food_ingredients_df = load_data()
+        _, disease_df, merge_tab_df, ingredients_df, nutrients_transl = load_data()
 
         breed_data = disease_df[disease_df["Breed"] == request.breed]
         if breed_data.empty:
@@ -365,7 +343,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
         avg_weight = (min_weight + max_weight) / 2
 
         size_categ = size_category(avg_weight)
-        age_type_categ = age_type_category(size_categ, request.age, "years")
+        age_type_categ = age_type_category(size_categ, request.age, request.age_metric.value)
 
         reproductive_status = request.reproductive_status.value if request.reproductive_status else None
 
@@ -377,24 +355,42 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
         )
 
         # Prepare nutrient columns
-        cols_to_divide = ['Влага', 'Белки', 'Углеводы', 'Жиры']
-        other_nutrients_1 = ["Зола, г", "Клетчатка, г", "Холестерин, мг", "Сахар общее, г"]
-        other_nutrients_2 = ["Холин, мг", "Селен, мкг", "Йод, мкг", "Пантотеновая кислота, мг",
-                             "Линолевая кислота, г", "Фолиевая кислота, мкг",
-                             "Альфа-линоленовая кислота, г", "Арахидоновая кислота, г",
-                             "ЭПК (50-60%) + ДГК (40-50%), г"]
-        major_minerals = ["Кальций, мг", "Медь, мг", "Железо, мг", "Магний, мг", "Фосфор, мг",
-                          "Калий, мг", "Натрий, мг", "Цинк, мг", "Марганец, мг"]
-        vitamins = ["Витамин A, мкг", "Витамин E, мг", "Витамин Д, мкг",
-                    "Витамин В1 (тиамин), мг", "Витамин В2 (Рибофлавин), мг",
-                    "Витамин В3 (Ниацин), мг", "Витамин В6, мг", "Витамин В12, мкг"]
+        main_nutrs=['moisture_per', 'protein_per', 'carbohydrate_per', 'fats_per']
+        other_nutrients_1=['ash_g', 'fiber_g', 'cholesterol_mg', 'total_sugar_g']
+        other_nutrients_2 = ['choline_mg', 'selenium_mcg', 'iodine_mcg', 'linoleic_acid_g','alpha_linolenic_acid_g', 'arachidonic_acid_g', 'epa_g', 'dha_g']
+        other_nutrients=other_nutrients_1+other_nutrients_2
+        major_minerals=['calcium_mg', 'phosphorus_mg', 'magnesium_mg', 'sodium_mg', 'potassium_mg', 'iron_mg', 'copper_mg', 'zinc_mg', 'manganese_mg']
+        vitamins=['vitamin_a_mcg', 'vitamin_e_mg', 'vitamin_d_mcg', 'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b5_mg', 
+                'vitamin_b6_mg', 'vitamin_b9_mcg', 'vitamin_b12_mcg', 'vitamin_c_mg', 'vitamin_k_mcg']
+
+
+        all_nutrs = main_nutrs+major_minerals+vitamins+other_nutrients
+
+        get_en_name={
+            'Влага':'moisture_per', 
+            'Белки': 'protein_per', 
+            'Углеводы':'carbohydrate_per',
+             'Жиры': 'fats_per'
+        }
+
+        def nutrient_key(name):
+            if name in all_nutrs:
+                return name
+            if name in get_en_name:
+                return get_en_name[name]
+            return transl_nutr(name, "en")
 
         # Create food dict
-        food = food_ingredients_df.set_index("ингредиент и описание")[
-            cols_to_divide + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
-            ].to_dict(orient='index')
+        food = ingredients_df.set_index("full_name_ingredient")[all_nutrs].to_dict(orient='index') 
 
-        food_keys = set(food.keys())
+        custom_names = set()
+        for profile in request.ingredient_profiles:
+            custom_names.add(profile.ingredient)
+            food[profile.ingredient] = {
+                nutrient: float(profile.nutrients.get(nutrient, 0) or 0)
+                for nutrient in all_nutrs
+            }
+
         ingr_ranges = request.ingredient_ranges
 
         if len(ingr_ranges)==0:
@@ -403,10 +399,13 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 detail="Выберите хотя бы один ингредиент.",
             )
 
-        ingredient_names = [ing.ingredient for ing in ingr_ranges]
-        nutr_ranges = {nr.nutrient: (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
-        maximize_nutrients = request.maximize_nutrients if request.maximize_nutrients else ["Влага", "Белки"]
-       
+        ingredient_names = [
+            ing.ingredient if ing.ingredient in custom_names else transl_ingredient(ing.ingredient, "en")
+            for ing in ingr_ranges
+        ]
+        nutr_ranges = {nutrient_key(nr.nutrient): (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
+        maximize_nutrients = [nutrient_key(nr) for nr in request.maximize_nutrients] if request.maximize_nutrients else ["moisture_per", "protein_per"]
+
         ingr_ranges_data = [(ing.min_percent, ing.max_percent) for ing in ingr_ranges]
         lowest = sum([low for (low, high) in ingr_ranges_data])
         highest = sum([high for (low, high) in ingr_ranges_data])
@@ -420,7 +419,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 				
         # Build LP problem
         A = [
-            [food[ing][nutr] if val > 0 else -food[ing][nutr]
+            [food[ing][nutr]/100 if val > 0 else -food[ing][nutr]/100
              for ing in ingredient_names]
             for nutr in nutr_ranges
             for val in (-nutr_ranges[nutr][0] , nutr_ranges[nutr][1] )
@@ -447,13 +446,14 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
             result = {name: round(val * 100, 2) for name, val in zip(ingredient_names, res.x)}
 
             nutrients_100g = {
-                nutr: round(sum(res.x[i] * food[name][nutr]*100 for i, name in enumerate(ingredient_names)), 2)
-                for nutr in cols_to_divide
+                 nutr: 
+                round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)), 2)
+                for nutr in main_nutrs
             }
 
-            energy_100g = (3.5 * nutrients_100g["Белки"] +
-                           8.5 * nutrients_100g["Жиры"] +
-                           3.5 * nutrients_100g["Углеводы"])
+            energy_100g = (3.5 * nutrients_100g["protein_per"] +
+                           8.5 * nutrients_100g["fats_per"] +
+                           3.5 * nutrients_100g["carbohydrate_per"])
 
             needed_feed_g = (request.target_kcal * 100) / energy_100g
 
@@ -462,35 +462,49 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 for name, weight in result.items()
             }
 
-            all_nutrients = cols_to_divide + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
+
             count_nutr_cont_all = {
-                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()),
+                nutr: round(sum(amount * food[ingredient][nutr] / 100 for ingredient, amount in ingredients_required.items()),
                             2)
-                for nutr in all_nutrients
+                for nutr in all_nutrs
             }
 
             nutrient_deficiencies = {}
-            for nutrient_name, required_amount in count_nutr_cont_all.items():
+            for nutrient_key_name, required_amount in count_nutr_cont_all.items():
+                nutrient_name = transl_nutr(nutrient_key_name, "ru")
                 fixed_nutrient_name = nutrient_name.split(",")[0]
-                measure = nutrient_name.split(",")[1] if nutrient_name.split(",").__len__() > 1 else ""
-                actual_amount = norms.get(fixed_nutrient_name, 0)
-                deficit = required_amount - actual_amount
+                measure = nutrient_name.split(",")[1] if len(nutrient_name.split(",")) > 1 else ""
+                normal_amount = norms.get(nutrient_key_name, 0)
+                deficit = required_amount - normal_amount
                 nutrient_deficiencies[fixed_nutrient_name] = f"{round(abs(deficit), 2)}{measure}"
-            composition = [RecipeComposition(ingredient=k, grams_per_100g=v) for k, v in result.items()]
+            composition = [
+                RecipeComposition(
+                    ingredient=k if k in custom_names else transl_ingredient(k, "ru"),
+                    grams_per_100g=v,
+                )
+                for k, v in result.items()
+            ]
 
             nutritional_100g = [
-                NutritionalValue(nutrient=k, value_per_100g=v, unit="г")
+                NutritionalValue(nutrient=transl_nutr(k,"ru").split(",")[0], value_per_100g=v, unit="г")
                 for k, v in nutrients_100g.items()
             ]
 
             nutritional_total = [
                 NutritionalValue(
-                    nutrient=k.split(",")[0],
+                    nutrient=transl_nutr(k,"ru").split(",")[0],
                     value_per_100g=v,
-                    unit=k.split(",")[-1].strip() if "," in k else "г"
+                    unit="г" if k in main_nutrs else (
+                        transl_nutr(k,"ru").split(",")[-1].strip() if "," in transl_nutr(k,"ru") else "г"
+                    )
                 )
                 for k, v in count_nutr_cont_all.items()
             ]
+
+            ingredients_required_ru = {
+                (name if name in custom_names else transl_ingredient(name,"ru")): round((weight * needed_feed_g / 100), 2)
+                for name, weight in result.items()
+            }
 
             return OptimizedRecipeResponse(
                 success=True,
@@ -498,12 +512,21 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 nutritional_value_per_100g=nutritional_100g,
                 energy_per_100g=round(energy_100g, 2),
                 total_feed_grams=round(needed_feed_g, 2),
-                ingredients_required=ingredients_required,
+                ingredients_required=ingredients_required_ru,
                 nutritional_value_total=nutritional_total,
                 nutrient_deficiencies=nutrient_deficiencies,
                 method="optimization"
             )
         else:
+            if res.status == 2:
+                details = describe_constraint_conflicts(
+                    A, b, A_eq, b_eq, bounds, nutr_ranges, ingredient_names, food,
+                )
+                message = "Не удалось подобрать состав с текущими ограничениями."
+                if details:
+                    message += f" Ближайший возможный состав нарушает ограничения: {details}."
+                raise HTTPException(status_code=400, detail=message)
+
             fallback_method = "combinatory search"
             best_recipe = calc_recipe(ingr_ranges_data, nutr_ranges, ingredient_names, food)
 
@@ -511,11 +534,11 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
 
             values, totals = best_recipe
+            nutrients_100g=totals
 
-
-            energy_100g = (3.5 * totals["Белки"] +
-                           8.5 * totals["Жиры"] +
-                           3.5 * totals["Углеводы"])
+            energy_100g = (3.5 * nutrients_100g["protein_per"] +
+                           8.5 * nutrients_100g["fats_per"] +
+                           3.5 * nutrients_100g["carbohydrate_per"])
 
             needed_feed_g = (request.target_kcal * 100) / energy_100g
 
@@ -524,36 +547,50 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 for name, weight in values.items()
             }
 
-            all_nutrients = cols_to_divide + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
+            all_nutrients = main_nutrs + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
             count_nutr_cont_all = {
-                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()),
+                nutr: round(sum(amount * food[ingredient][nutr] / 100 for ingredient, amount in ingredients_required.items()),
                             2)
                 for nutr in all_nutrients
             }
 
             nutrient_deficiencies = {}
-            for nutrient_name, required_amount in count_nutr_cont_all.items():
+            for nutrient_key_name, required_amount in count_nutr_cont_all.items():
+                nutrient_name = transl_nutr(nutrient_key_name, "ru")
                 fixed_nutrient_name = nutrient_name.split(",")[0]
-                measure = nutrient_name.split(",")[1] if nutrient_name.split(",").__len__() > 1 else ""
-                actual_amount = norms.get(fixed_nutrient_name, 0)
-                deficit = required_amount - actual_amount
+                measure = nutrient_name.split(",")[1] if len(nutrient_name.split(",")) > 1 else ""
+                normal_amount = norms.get(nutrient_key_name, 0)
+                deficit = required_amount - normal_amount
                 nutrient_deficiencies[fixed_nutrient_name] = f"{round(abs(deficit), 2)}{measure}"
 
-            composition = [RecipeComposition(ingredient=k, grams_per_100g=v) for k, v in values.items()]
+            composition = [
+                RecipeComposition(
+                    ingredient=k if k in custom_names else transl_ingredient(k, "ru"),
+                    grams_per_100g=v,
+                )
+                for k, v in values.items()
+            ]
 
             nutritional_100g = [
-                NutritionalValue(nutrient=k, value_per_100g=round(v, 2), unit="г")
+                NutritionalValue(nutrient=transl_nutr(k,"ru").split(",")[0], value_per_100g=round(v, 2), unit="г")
                 for k, v in totals.items()
             ]
 
             nutritional_total = [
                 NutritionalValue(
-                    nutrient=k.split(",")[0],
+                    nutrient=transl_nutr(k,"ru").split(",")[0],
                     value_per_100g=v,
-                    unit=k.split(",")[-1].strip() if "," in k else "г"
+                    unit="г" if k in main_nutrs else (
+                        transl_nutr(k,"ru").split(",")[-1].strip() if "," in transl_nutr(k,"ru") else "г"
+                    )
                 )
                 for k, v in count_nutr_cont_all.items()
             ]
+
+            ingredients_required_ru = {
+                (name if name in custom_names else transl_ingredient(name,"ru")): round((weight * needed_feed_g / 100), 2)
+                for name, weight in values.items()
+            }
 
             return OptimizedRecipeResponse(
                 success=True,
@@ -561,7 +598,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 nutritional_value_per_100g=nutritional_100g,
                 energy_per_100g=round(energy_100g, 2),
                 total_feed_grams=round(needed_feed_g, 2),
-                ingredients_required=ingredients_required,
+                ingredients_required=ingredients_required_ru,
                 nutritional_value_total=nutritional_total,
                 nutrient_deficiencies=nutrient_deficiencies,
                 method=fallback_method

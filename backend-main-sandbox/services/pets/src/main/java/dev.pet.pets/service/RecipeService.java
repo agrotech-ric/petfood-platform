@@ -190,11 +190,15 @@ public class RecipeService {
         recipe.setStatus(calculated ? "calculated" : "draft");
         recipe.setUpdatedAt(now);
 
-        replaceIngredients(recipe, request.ingredients());
+        replaceIngredients(recipe, request.ingredients(), ownerId);
         replaceNutrientConstraints(recipe, request.nutrientConstraints());
     }
 
-    private void replaceIngredients(Recipe recipe, List<RecipeIngredientRequest> requests) {
+    private void replaceIngredients(
+        Recipe recipe,
+        List<RecipeIngredientRequest> requests,
+        UUID ownerId
+    ) {
         List<RecipeIngredientRequest> safeRequests = requests == null ? List.of() : requests;
         Set<Long> ids = safeRequests.stream()
             .map(RecipeIngredientRequest::ingredientId)
@@ -214,6 +218,11 @@ public class RecipeService {
         Map<Long, Ingredient> ingredientsById = ingredientRepository.findAllById(ids).stream()
             .collect(Collectors.toMap(Ingredient::getId, Function.identity()));
         if (ingredientsById.size() != ids.size()) {
+            throw new BadRequestException("One or more ingredients do not exist");
+        }
+        if (ingredientsById.values().stream().anyMatch(
+            ingredient -> ingredient.getOwnerId() != null && !ownerId.equals(ingredient.getOwnerId())
+        )) {
             throw new BadRequestException("One or more ingredients do not exist");
         }
 

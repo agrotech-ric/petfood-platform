@@ -101,6 +101,10 @@
   color: var(--color-text);
 }
 
+.noticeToast {
+  border-color: var(--color-accent-alt);
+}
+
 .errorToastTitle {
   margin: 0 0 5px;
   font-size: 14px;
@@ -356,11 +360,25 @@
 
 /* ── Step 2: energy ─────────────────────────────────── */
 .energyRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 48px;
+  margin-bottom: 24px;
+}
+
+.energyControls {
   display: flex;
-  align-items: center;
-  gap: 32px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.energyTitle {
+  margin: 0 0 3px;
+  color: var(--color-accent-alt);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .energyInput {
@@ -378,25 +396,46 @@
 }
 
 .energyHint {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.energyFormula {
-  margin-left: auto;
   font-size: 13px;
   color: var(--color-text-muted);
 }
 
-.formulaLink {
-  color: var(--color-accent-alt);
-  cursor: pointer;
-  text-decoration: underline;
-  margin-right: 8px;
+.formulaSection {
+  min-width: 0;
 }
 
-.formulaText {
-  font-style: italic;
+.formulaTitle {
+  margin: 0 0 10px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.formulaImage {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 52px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+:global([data-theme='dark']) .formulaImage {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.formulaDescription,
+.formulaSource {
+  margin: 10px 0 0;
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.formulaSource a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ── Step 2: ingredient accordion ──────────────────── */
@@ -733,10 +772,15 @@
 }
 
 .donutWrapper {
+  width: 100%;
+  max-width: 400px;
+  height: 280px;
+  margin: 0 auto 12px;
   display: flex;
   justify-content: center;
-  margin-bottom: 12px;
 }
+
+.donutWrapper svg { overflow: visible; }
 
 .donutLegend {
   font-size: 12px;
@@ -821,82 +865,11 @@
 .barChartsRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 72px;
+  padding: 0 30px 8px;
   margin-bottom: 16px;
   width: 100%;
   max-width: 1176px;
-}
-
-.barChartTitle {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-accent-alt);
-  margin: 0 0 12px;
-}
-
-.barItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 12px;
-}
-
-.barLabel {
-  width: 110px;
-  flex-shrink: 0;
-  color: var(--color-text);
-  text-align: right;
-  font-size: 11px;
-}
-
-.barTrack {
-  flex: 1;
-  height: 16px;
-  background: var(--color-bg-muted);
-  border-radius: 4px;
-  position: relative;
-  overflow: visible;
-}
-
-.barFill {
-  height: 100%;
-  border-radius: 4px;
-}
-
-.barFillOrange { background: var(--color-accent-alt); }
-.barFillBlue { background: #4a90d9; }
-
-.normLine {
-  position: absolute;
-  top: -3px;
-  bottom: -3px;
-  width: 2px;
-  background: #333;
-  left: 66.67%;
-}
-
-.barPercent {
-  width: 40px;
-  flex-shrink: 0;
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.normHeader {
-  display: flex;
-  justify-content: flex-end;
-  font-size: 11px;
-  color: var(--color-text-muted);
-  margin-bottom: 4px;
-  padding-right: 44px;
-}
-
-.barAxisLabel {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  text-align: center;
-  margin-top: 8px;
 }
 
 /* ── Responsive ──────────────────────────────────────── */
@@ -906,6 +879,11 @@
   .barChartsRow,
   .nutrientsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .barChartsRow {
+    gap: 28px;
+    padding: 0;
   }
 
   .metricsRow {
@@ -957,13 +935,8 @@
   }
 
   .energyRow {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 1fr;
     gap: 10px;
-  }
-
-  .energyFormula {
-    margin-left: 0;
   }
 
   .barLabel {

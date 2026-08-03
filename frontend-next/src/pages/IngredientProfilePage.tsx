@@ -87,14 +87,18 @@ export function IngredientProfilePage() {
         </button>
         <h1 className={styles.headerTitle}>Профиль ингредиента</h1>
         <div className={styles.headerActions}>
-          <button className={styles.editBtn} onClick={() => navigate(`/ingredients/${item.id}/edit`)}>
-            <EditIcon width={20} height={20} className="no-filter" />
-            Изменить
-          </button>
-          <button className={styles.deleteBtn} onClick={handleDelete}>
-            <DeleteIcon width={20} height={20} className="no-filter" />
-            Удалить
-          </button>
+          {!item.system && (
+            <>
+              <button className={styles.editBtn} onClick={() => navigate(`/ingredients/${item.id}/edit`)}>
+                <EditIcon width={20} height={20} className="no-filter" />
+                Изменить
+              </button>
+              <button className={styles.deleteBtn} onClick={handleDelete}>
+                <DeleteIcon width={20} height={20} className="no-filter" />
+                Удалить
+              </button>
+            </>
+          )}
         </div>
       </div>
 

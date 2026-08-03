@@ -6,6 +6,8 @@ import dev.pet.pets.service.IngredientService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,34 +22,43 @@ public class IngredientController {
 
     @GetMapping
     public List<IngredientResponse> list(
+        @AuthenticationPrincipal Jwt jwt,
         @RequestParam(required = false) String q,
         @RequestParam(required = false) String category,
         @RequestParam(required = false) List<String> nutrients,
+        @RequestParam(defaultValue = "all") String source,
         @RequestParam(defaultValue = "category") String sort,
         @RequestParam(defaultValue = "asc") String direction
     ) {
-        return service.list(q, category, nutrients, sort, direction);
+        return service.list(jwt, q, category, nutrients, source, sort, direction);
     }
 
     @GetMapping("/{id}")
-    public IngredientResponse get(@PathVariable long id) {
-        return service.get(id);
+    public IngredientResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable long id) {
+        return service.get(jwt, id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public IngredientResponse create(@Valid @RequestBody IngredientRequest request) {
-        return service.create(request);
+    public IngredientResponse create(
+        @AuthenticationPrincipal Jwt jwt,
+        @Valid @RequestBody IngredientRequest request
+    ) {
+        return service.create(jwt, request);
     }
 
     @PatchMapping("/{id}")
-    public IngredientResponse update(@PathVariable long id, @Valid @RequestBody IngredientRequest request) {
-        return service.update(id, request);
+    public IngredientResponse update(
+        @AuthenticationPrincipal Jwt jwt,
+        @PathVariable long id,
+        @Valid @RequestBody IngredientRequest request
+    ) {
+        return service.update(jwt, id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable long id) {
-        service.delete(id);
+    public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable long id) {
+        service.delete(jwt, id);
     }
 }

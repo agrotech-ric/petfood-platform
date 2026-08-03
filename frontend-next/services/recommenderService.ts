@@ -40,17 +40,13 @@ export type DisorderRecommendation = {
   disorder_type: string
   breed_size: string
   recommended_ingredients: string[]
-  top_ingredients_with_scores: Array<{
-    ingredient: string
-    score: number
-    category: string
-  }>
-  predicted_nutrients: Record<string, number>
+  nutrients_ranges: Record<string, { min: number; max: number }>
 }
 
 export type RecipeOptimizationRequest = {
   weight: number
   age: number
+  age_metric: 'years' | 'months'
   breed: string
   reproductive_status?: 'none' | 'pregnancy' | 'lactation'
   ingredients: string[]
@@ -66,6 +62,10 @@ export type RecipeOptimizationRequest = {
   }>
   maximize_nutrients: string[]
   target_kcal: number
+  ingredient_profiles?: Array<{
+    ingredient: string
+    nutrients: Record<string, number>
+  }>
 }
 
 export type RecipeOptimizationResult = {
@@ -127,12 +127,86 @@ export const RECOMMENDER_NUTRIENT_NAMES: Record<string, string> = {
   vitaminB12: 'Витамин В12, мкг',
 }
 
+const MODEL_NUTRIENT_LABELS: Record<string, string> = {
+  calcium_mg: 'Кальций',
+  phosphorus_mg: 'Фосфор',
+  magnesium_mg: 'Магний',
+  sodium_mg: 'Натрий',
+  potassium_mg: 'Калий',
+  iron_mg: 'Железо',
+  copper_mg: 'Медь',
+  zinc_mg: 'Цинк',
+  manganese_mg: 'Марганец',
+  vitamin_a_mcg: 'Витамин A',
+  vitamin_d_mcg: 'Витамин Д',
+  vitamin_e_mg: 'Витамин E',
+  vitamin_b1_mg: 'Витамин В1 (тиамин)',
+  vitamin_b2_mg: 'Витамин В2 (рибофлавин)',
+  vitamin_b3_mg: 'Витамин В3 (ниацин)',
+  vitamin_b5_mg: 'Пантотеновая кислота',
+  vitamin_b6_mg: 'Витамин В6',
+  vitamin_b9_mcg: 'Фолиевая кислота',
+  vitamin_b12_mcg: 'Витамин В12',
+  vitamin_c_mg: 'Витамин C',
+  vitamin_k_mcg: 'Витамин K',
+  selenium_mcg: 'Селен',
+  iodine_mcg: 'Йод',
+  choline_mg: 'Холин',
+  linoleic_acid_g: 'Линолевая кислота',
+  alpha_linolenic_acid_g: 'Альфа-линоленовая кислота',
+  arachidonic_acid_g: 'Арахидоновая кислота',
+  epa_dha: 'ЭПК (50-60%) + ДГК (40-50%)',
+}
+
 export function toRecommenderIngredientName(
   ingredient: Pick<Ingredient, 'name' | 'subtype'>,
 ): string {
   return ingredient.subtype
     ? `${ingredient.name} — ${ingredient.subtype}`
     : ingredient.name
+}
+
+export function toRecommenderIngredientProfile(ingredient: Ingredient) {
+  return {
+    ingredient: toRecommenderIngredientName(ingredient),
+    nutrients: {
+      moisture_per: ingredient.moisture,
+      protein_per: ingredient.protein,
+      carbohydrate_per: ingredient.carbs,
+      fats_per: ingredient.fat,
+      ash_g: ingredient.ash,
+      fiber_g: ingredient.fiber,
+      cholesterol_mg: ingredient.cholesterol,
+      total_sugar_g: ingredient.sugar,
+      choline_mg: ingredient.choline,
+      selenium_mcg: ingredient.selenium,
+      iodine_mcg: ingredient.iodine,
+      vitamin_b5_mg: ingredient.vitaminB5,
+      linoleic_acid_g: ingredient.linoleic,
+      vitamin_b9_mcg: ingredient.vitaminB9,
+      alpha_linolenic_acid_g: ingredient.alphaLinolenic,
+      arachidonic_acid_g: ingredient.arachidonic,
+      epa_g: ingredient.epa,
+      dha_g: ingredient.dha,
+      calcium_mg: ingredient.calcium,
+      copper_mg: ingredient.copper,
+      iron_mg: ingredient.iron,
+      magnesium_mg: ingredient.magnesium,
+      phosphorus_mg: ingredient.phosphorus,
+      potassium_mg: ingredient.potassium,
+      sodium_mg: ingredient.sodium,
+      zinc_mg: ingredient.zinc,
+      manganese_mg: ingredient.manganese,
+      vitamin_a_mcg: ingredient.vitaminA,
+      vitamin_e_mg: ingredient.vitaminE,
+      vitamin_d_mcg: ingredient.vitaminD,
+      vitamin_b1_mg: ingredient.vitaminB1,
+      vitamin_b2_mg: ingredient.vitaminB2,
+      vitamin_b3_mg: ingredient.vitaminB3,
+      vitamin_b6_mg: ingredient.vitaminB6,
+      vitamin_b12_mcg: ingredient.vitaminB12,
+    },
+  }
 }
 
 const STANDARD_TIMEOUT_MS = 45_000
@@ -152,14 +226,25 @@ export const recommenderService = {
       STANDARD_TIMEOUT_MS,
     ),
 
-  calculateNutrients: (request: RecommenderDogInfo, targetKcal: number) =>
-    apiClient.post<NutrientCalculation>(
+  calculateNutrients: async (request: RecommenderDogInfo, targetKcal: number) => {
+    const result = await apiClient.post<NutrientCalculation>(
       `/recommender/calculate/nutrients?target_kcal=${encodeURIComponent(targetKcal)}`,
       request,
       STANDARD_TIMEOUT_MS,
-    ),
+    )
+    return {
+      norms: Object.fromEntries(
+        Object.entries(result.norms).map(([key, value]) => [MODEL_NUTRIENT_LABELS[key] ?? key, value]),
+      ),
+    }
+  },
 
-  recommendForDisorder: (request: { breed: string; disorder: string }) =>
+  recommendForDisorder: (request: {
+    breed: string
+    disorder: string
+    age: number
+    age_metric: 'years' | 'months'
+  }) =>
     apiClient.post<DisorderRecommendation>(
       '/recommender/recommendations/disorder',
       request,

@@ -6,6 +6,8 @@ import {
   RECOMMENDER_NUTRIENT_NAMES,
   recommenderService,
   toRecommenderIngredientName,
+  toRecommenderIngredientProfile,
+  type CalorieCalculation,
   type RecipeOptimizationResult,
   type RecommenderActivityLevel,
   type RecommenderDogInfo,
@@ -39,6 +41,9 @@ import {
   RECIPE_TYPE_LABELS,
 } from '../../data/recipeOptions'
 import DeleteIcon from '../../assets/icons/delete.svg?react'
+import { CalorieFormula } from './CalorieFormula'
+import { NutrientBalanceChart } from './NutrientBalanceChart'
+import { RecipeDonutChart, RECIPE_CHART_COLORS } from './RecipeDonutChart'
 import styles from '../../styles/CreateRecipe.module.css'
 
 type Range = { min: number; max: number }
@@ -352,7 +357,13 @@ function toCalculationResult(
         percent,
       })
     } else if (isVitamin(item.nutrient)) {
-      vitamins.push({ label: item.nutrient, percent })
+      vitamins.push({
+        label: item.nutrient,
+        current: value,
+        norm: round(norm ?? 0),
+        unit: item.unit,
+        percent,
+      })
     } else {
       nutrients.push({ label: item.nutrient, value, unit: item.unit })
     }
@@ -460,64 +471,7 @@ function formatRangeBackground(min: number, max: number, lower: number, upper: n
   return `linear-gradient(90deg, var(--color-border) 0%, var(--color-border) ${start}%, var(--color-accent-alt) ${start}%, var(--color-accent-alt) ${end}%, var(--color-border) ${end}%, var(--color-border) 100%)`
 }
 
-const RESULT_COLORS = ['#4a90d9', '#70d35b', '#ef4d3c', '#f4c44e', '#8b6fc0']
-
-function ResultDonut({ data }: { data: Array<{ value: number; color: string }> }) {
-  const radius = 60
-  const circumference = 2 * Math.PI * radius
-  const total = data.reduce((sum, item) => sum + Math.max(item.value, 0), 0)
-  let offset = 0
-
-  if (total <= 0) return null
-
-  return (
-    <svg width="160" height="160" viewBox="0 0 160 160" aria-hidden="true">
-      {data.map((item, index) => {
-        const dash = (Math.max(item.value, 0) / total) * circumference
-        const currentOffset = offset
-        offset += dash
-        return (
-          <circle
-            key={index}
-            cx="80"
-            cy="80"
-            r={radius}
-            fill="none"
-            stroke={item.color}
-            strokeWidth="28"
-            strokeDasharray={`${dash} ${circumference - dash}`}
-            strokeDashoffset={-currentOffset + circumference * 0.25}
-            style={{ transform: 'rotate(-90deg)', transformOrigin: '80px 80px' }}
-          />
-        )
-      })}
-    </svg>
-  )
-}
-
-function ResultBar({
-  label,
-  percent,
-  blue,
-}: {
-  label: string
-  percent: number
-  blue?: boolean
-}) {
-  return (
-    <div className={styles.barItem}>
-      <span className={styles.barLabel}>{label}</span>
-      <div className={styles.barTrack}>
-        <div
-          className={`${styles.barFill} ${blue ? styles.barFillBlue : styles.barFillOrange}`}
-          style={{ width: `${Math.min(Math.max(percent, 0), 150) / 1.5}%` }}
-        />
-        <span className={styles.normLine} />
-      </div>
-      <span className={styles.barPercent}>{percent}%</span>
-    </div>
-  )
-}
+const RESULT_COLORS = RECIPE_CHART_COLORS
 
 function EditCalculationResult({ result }: { result: RecipeCalculationResult }) {
   const composition = result.composition ?? []
@@ -548,9 +502,11 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
           <div className={styles.chartCard}>
             <p className={styles.chartTitle}>Состав рациона</p>
             <div className={styles.donutWrapper}>
-              <ResultDonut data={composition.map((item, index) => ({
+              <RecipeDonutChart data={composition.map((item, index) => ({
+                name: item.label,
                 value: item.percent,
                 color: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length],
+                label: `${item.percent}%`,
               }))} />
             </div>
             <table className={styles.compositionTable}>
@@ -572,9 +528,11 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
           <div className={styles.chartCard}>
             <p className={styles.chartTitle}>Питательная ценность</p>
             <div className={styles.donutWrapper}>
-              <ResultDonut data={nutrition.map((item, index) => ({
+              <RecipeDonutChart data={nutrition.map((item, index) => ({
+                name: item.label,
                 value: item.value,
                 color: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length],
+                label: `${item.value} ${item.unit}`,
               }))} />
             </div>
             <div className={styles.donutLegend}>
@@ -616,33 +574,10 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
           {(minerals.length > 0 || vitamins.length > 0) && (
             <div className={styles.barChartsRow}>
               {minerals.length > 0 && (
-                <div>
-                  <p className={styles.barChartTitle}>Минералы</p>
-                  <div className={styles.normHeader}>Норма</div>
-                  {minerals.map((item, index) => (
-                    <ResultBar
-                      key={`${item.key ?? item.label}-${index}`}
-                      label={item.label}
-                      percent={item.percent}
-                    />
-                  ))}
-                  <p className={styles.barAxisLabel}>Процентное соотношение с нормой (%)</p>
-                </div>
+                <NutrientBalanceChart title="Минералы" items={minerals} />
               )}
               {vitamins.length > 0 && (
-                <div>
-                  <p className={styles.barChartTitle}>Витамины</p>
-                  <div className={styles.normHeader}>Норма</div>
-                  {vitamins.map((item, index) => (
-                    <ResultBar
-                      key={`${item.key ?? item.label}-${index}`}
-                      label={item.label}
-                      percent={item.percent}
-                      blue
-                    />
-                  ))}
-                  <p className={styles.barAxisLabel}>Процентное соотношение с нормой (%)</p>
-                </div>
+                <NutrientBalanceChart title="Витамины" items={vitamins} />
               )}
             </div>
           )}
@@ -666,10 +601,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [updatingRecommendations, setUpdatingRecommendations] = useState(false)
   const [calculating, setCalculating] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set())
   const [calculationResult, setCalculationResult] = useState<RecipeCalculationResult | null>(null)
   const [calculationVersion, setCalculationVersion] = useState<string | null>(null)
   const [nutrientNorms, setNutrientNorms] = useState<Record<string, number>>({})
+  const [recommendedEnergy, setRecommendedEnergy] = useState<number | null>(null)
+  const [calorieCalculation, setCalorieCalculation] = useState<CalorieCalculation | null>(null)
 
   const isEdit = recipeId != null
 
@@ -729,6 +667,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         let next = recipe ? stateFromRecipe(recipe) : createInitialState()
         if (!recipe && pet) next = prefillFromPet(next, pet, records, loadedReferences)
         setForm(next)
+        setRecommendedEnergy(recipe?.targetEnergyKcal ?? null)
         setCalculationResult(recipe?.calculationResult ?? null)
         setCalculationVersion(recipe?.calculationVersion ?? null)
       } catch (errorValue) {
@@ -743,6 +682,25 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     void load()
     return () => { cancelled = true }
   }, [originPetId, recipeId])
+
+  useEffect(() => {
+    if (!isEdit || loading || calorieCalculation) return
+
+    let cancelled = false
+    const loadCalorieFormula = async () => {
+      try {
+        const result = await recommenderService.calculateCalories(buildDogInfo(form, references))
+        if (cancelled) return
+        setCalorieCalculation(result)
+        setRecommendedEnergy(round(result.daily_kcal))
+      } catch {
+        // Formula details are supplemental; the saved recipe remains usable without them.
+      }
+    }
+
+    void loadCalorieFormula()
+    return () => { cancelled = true }
+  }, [calorieCalculation, form, isEdit, loading, references])
 
   const ingredientGroups = useMemo(() => {
     const groups = new Map<string, Ingredient[]>()
@@ -818,6 +776,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     }
     setError('')
     setStep(2)
+    void handleUpdateRecommendations()
   }
 
   const showOptimization = () => {
@@ -831,10 +790,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     if (updatingRecommendations || calculating) return
     setUpdatingRecommendations(true)
     setError('')
+    setNotice('')
     try {
       const dog = buildDogInfo(form, references)
       const calorieResult = await recommenderService.calculateCalories(dog)
       const targetKcal = round(calorieResult.daily_kcal)
+      setRecommendedEnergy(targetKcal)
+      setCalorieCalculation(calorieResult)
       const nutrientResult = await recommenderService.calculateNutrients(dog, targetKcal)
       setNutrientNorms(nutrientResult.norms)
 
@@ -843,11 +805,15 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
       const condition = references.healthConditions.find(
         item => String(item.id) === form.healthConditionId,
       )
-      if (condition) {
+      const healthyCondition = condition?.code === 'healthy'
+        || normalizeLabel(displayName(condition ?? { id: 0 })) === normalizeLabel('Здоровый')
+      if (condition && !healthyCondition) {
         try {
           const recommendation = await recommenderService.recommendForDisorder({
             breed: dog.breed,
             disorder: displayName(condition),
+            age: dog.age,
+            age_metric: dog.age_metric,
           })
           const recommendations = new Set(
             recommendation.recommended_ingredients.map(normalizeLabel),
@@ -856,42 +822,30 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             item.recommenderSupported
             && recommendations.has(normalizeLabel(toRecommenderIngredientName(item)))
           )
-          const predicted = recommendation.predicted_nutrients
+          const predicted = recommendation.nutrients_ranges
           setForm(current => ({
             ...current,
             nutrientRanges: {
               ...current.nutrientRanges,
-              moisture: predicted.moisture == null
+              moisture: predicted.moisture_per == null
                 ? current.nutrientRanges.moisture
-                : {
-                    min: Math.max(0, round(predicted.moisture - 5)),
-                    max: Math.min(100, round(predicted.moisture + 5)),
-                  },
-              protein: predicted.protein == null
+                : predicted.moisture_per,
+              protein: predicted.protein_per == null
                 ? current.nutrientRanges.protein
-                : {
-                    min: Math.max(0, round(predicted.protein - 5)),
-                    max: Math.min(100, round(predicted.protein + 10)),
-                  },
-              carbs: predicted['carbohydrate (nfe)'] == null
+                : predicted.protein_per,
+              carbs: predicted.carbohydrate_per == null
                 ? current.nutrientRanges.carbs
-                : {
-                    min: Math.max(0, round(predicted['carbohydrate (nfe)'] - 5)),
-                    max: Math.min(100, round(predicted['carbohydrate (nfe)'] + 5)),
-                  },
-              fat: predicted.fat == null
+                : predicted.carbohydrate_per,
+              fat: predicted.fats_per == null
                 ? current.nutrientRanges.fat
-                : {
-                    min: Math.max(0, round(predicted.fat - 5)),
-                    max: Math.min(100, round(predicted.fat + 5)),
-                  },
+                : predicted.fats_per,
             },
           }))
           if (recommendedIngredients.length === 0) {
-            recommendationWarning = 'Рекомендованные ингредиенты не найдены в каталоге'
+            recommendationWarning = 'Калорийность рассчитана. Подходящие рекомендованные ингредиенты не найдены в каталоге, поэтому текущий состав не изменён.'
           }
         } catch {
-          recommendationWarning = 'Калорийность обновлена. Рекомендации по выбранному заболеванию недоступны'
+          recommendationWarning = 'Калорийность рассчитана. Для выбранного состояния нет персональных рекомендаций, поэтому используются базовые параметры.'
         }
       }
 
@@ -916,7 +870,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           ingredientRanges: ranges,
         }
       })
-      setError(recommendationWarning)
+      setNotice(recommendationWarning)
       requestAnimationFrame(showOptimization)
     } catch (errorValue) {
       setError(errorValue instanceof Error ? errorValue.message : 'Не удалось обновить рекомендации')
@@ -967,6 +921,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
       const optimized = await recommenderService.optimizeRecipe({
         weight: dog.weight,
         age: dog.age,
+        age_metric: dog.age_metric,
         breed: dog.breed,
         reproductive_status: dog.reproductive_status,
         ingredients: selectedIngredients.map(toRecommenderIngredientName),
@@ -983,10 +938,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           min_value: range.min,
           max_value: range.max,
         })),
-        maximize_nutrients: form.maximizeNutrient
-          ? [RECOMMENDER_NUTRIENT_NAMES[form.maximizeNutrient] ?? form.maximizeNutrient]
+        maximize_nutrients: form.maximizeNutrient && RECOMMENDER_NUTRIENT_NAMES[form.maximizeNutrient]
+          ? [RECOMMENDER_NUTRIENT_NAMES[form.maximizeNutrient]]
           : [],
         target_kcal: targetKcal,
+        ingredient_profiles: selectedIngredients
+          .filter(ingredient => !ingredient.system)
+          .map(toRecommenderIngredientProfile),
       })
       if (!optimized.success) throw new Error('Алгоритм не смог подобрать состав')
 
@@ -1067,6 +1025,23 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             className={styles.errorToastClose}
             aria-label="Закрыть уведомление"
             onClick={() => setError('')}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {notice && (
+        <div className={`${styles.errorToast} ${styles.noticeToast}`} role="status" aria-live="polite">
+          <div>
+            <p className={styles.errorToastTitle}>Рекомендации обновлены</p>
+            <p className={styles.errorToastMessage}>{notice}</p>
+          </div>
+          <button
+            type="button"
+            className={styles.errorToastClose}
+            aria-label="Закрыть уведомление"
+            onClick={() => setNotice('')}
           >
             ×
           </button>
@@ -1186,22 +1161,17 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 </select>
               </div>
               <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Возраст</label>
-                <select
-                  className={styles.fieldSelect}
+                <label className={styles.fieldLabel}>Возраст (месяцев)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="360"
+                  step="1"
+                  className={styles.fieldInput}
                   value={form.ageMonths}
                   onChange={event => setField('ageMonths', event.target.value)}
-                >
-                  <option value="">Не указан</option>
-                  <option value="3">3 месяца</option>
-                  <option value="6">6 месяцев</option>
-                  <option value="12">1 год</option>
-                  <option value="24">2 года</option>
-                  <option value="36">3 года</option>
-                  <option value="60">5 лет</option>
-                  <option value="84">7 лет</option>
-                  <option value="120">10 лет</option>
-                </select>
+                  placeholder="Например, 18"
+                />
               </div>
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>Уровень активности</label>
@@ -1300,8 +1270,12 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
               </div>
             </div>
             {!isEdit && (
-              <button className={styles.primaryBtn} onClick={handleContinue}>
-                Продолжить
+              <button
+                className={styles.primaryBtn}
+                disabled={updatingRecommendations}
+                onClick={handleContinue}
+              >
+                {updatingRecommendations ? 'Расчёт...' : 'Продолжить'}
               </button>
             )}
           </div>
@@ -1319,18 +1293,21 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
       {(isEdit || step === 2) && (
         <div id="recipe-optimization" className={styles.card}>
-          <p className={styles.sectionTitle}>Целевая энергия (ккал)</p>
           <div className={styles.energyRow}>
-            <input
-              className={styles.energyInput}
-              type="number"
-              min="0.1"
-              value={form.energy}
-              onChange={event => setField('energy', event.target.value)}
-            />
-            <span className={styles.energyHint}>
-              Рекомендуемая: {form.energy || '—'} ккал
-            </span>
+            <div className={styles.energyControls}>
+              <p className={styles.energyTitle}>Целевая энергия (ккал)</p>
+              <input
+                className={styles.energyInput}
+                type="number"
+                min="0.1"
+                value={form.energy}
+                onChange={event => setField('energy', event.target.value)}
+              />
+              <span className={styles.energyHint}>
+                Рекомендуемая: {recommendedEnergy ?? '—'} ккал
+              </span>
+            </div>
+            <CalorieFormula calculation={calorieCalculation} />
           </div>
 
           <p className={styles.sectionTitle}>Выбор ингредиентов</p>

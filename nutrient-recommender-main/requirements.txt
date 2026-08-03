@@ -6,3 +6,5 @@ numpy
 scikit-learn
 pydantic
 python-multipart
+torch
+sentence_transformers

@@ -335,38 +335,33 @@
 
 .chartCard {
   min-width: 0;
-  height: 270px;
-  padding: 19px 42px 16px;
-  overflow: hidden;
+  min-height: 0;
+  padding: 24px 32px;
 }
 
 .chartTitle {
   margin: 0;
   color: var(--color-accent-alt);
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .donutWrapper {
-  height: 150px;
+  width: 100%;
+  max-width: 400px;
+  height: 280px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .donutWrapper svg {
-  width: 110px;
-  height: 110px;
   overflow: visible;
 }
 
 .nutritionChartCard .donutWrapper {
-  height: 110px;
-}
-
-.nutritionChartCard .donutWrapper svg {
-  width: 90px;
-  height: 90px;
+  height: 280px;
 }
 
 .compositionTable {
@@ -374,12 +369,12 @@
   margin-top: 0;
   border-collapse: collapse;
   table-layout: auto;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .compositionTable th,
 .compositionTable td {
-  padding: 5px 3px;
+  padding: 7px 4px;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
 }
@@ -403,30 +398,30 @@
 .legendName {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
 }
 
 .compositionDot,
 .legendDot {
-  width: 7px;
-  height: 7px;
+  width: 9px;
+  height: 9px;
   display: inline-block;
   flex: 0 0 auto;
   border-radius: 50%;
 }
 
 .nutritionLegendTitle {
-  margin: 4px 0;
-  padding-bottom: 5px;
+  margin: 6px 0;
+  padding-bottom: 7px;
   border-bottom: 1px solid var(--color-accent-alt);
   color: var(--color-text);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .donutLegend {
   color: var(--color-text-muted);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .donutLegendRow {
@@ -434,15 +429,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 3px 0;
+  padding: 5px 0;
 }
 
 .nutritionSummary {
-  margin-top: 7px;
-  padding-top: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--color-border);
   color: var(--color-text-muted);
-  font-size: 8px;
+  font-size: 11px;
 }
 
 .calculationPending {
@@ -454,7 +449,6 @@
 }
 
 .nutrientsCard {
-  min-height: 680px;
   padding: 20px 38px;
   margin-bottom: 32px;
 }
@@ -487,6 +481,170 @@
   flex: 0 0 auto;
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+.balanceCharts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 72px;
+  margin-top: 26px;
+  padding: 0 30px 8px;
+}
+
+.balanceChart {
+  min-width: 0;
+  padding-top: 28px;
+}
+
+.balanceTitle {
+  margin: 0 49px 12px 135px;
+  color: var(--color-accent-alt);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.balanceNormRow {
+  display: grid;
+  grid-template-columns: minmax(92px, 128px) minmax(100px, 1fr) 42px;
+  gap: 7px;
+  height: 14px;
+}
+
+.balanceNormTrack {
+  position: relative;
+}
+
+.balanceNorm {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.balanceNorm::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  border-top: 6px solid var(--color-text-secondary);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+
+.balanceRows {
+  height: 286px;
+  display: grid;
+}
+
+.balanceRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(92px, 128px) minmax(100px, 1fr) 42px;
+  align-items: center;
+  gap: 7px;
+  min-height: 0;
+  outline: none;
+}
+
+.balanceLabel {
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: right;
+}
+
+.balanceTrack {
+  position: relative;
+  height: 22px;
+  border-left: 1px solid var(--color-border-strong);
+}
+
+.balanceFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 2px;
+  border-radius: 0 11px 11px 0;
+}
+
+.balanceFillEnough {
+  background: #4a90d9;
+}
+
+.balanceFillLow {
+  background: var(--color-accent-alt);
+}
+
+.balanceNormLine {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  border-left: 1px dashed var(--color-text-secondary);
+}
+
+.balancePercent {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.balanceTooltip {
+  position: absolute;
+  z-index: 5;
+  left: 100px;
+  top: 50%;
+  min-width: 138px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  transform: translateY(-50%);
+  padding: 9px 11px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 7px;
+  background: var(--color-surface-elevated);
+  box-shadow: 0 3px 10px var(--color-shadow-strong);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.25;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.balanceTooltip strong {
+  margin-bottom: 2px;
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.balanceRow:hover .balanceTooltip,
+.balanceRow:focus-visible .balanceTooltip {
+  display: flex;
+}
+
+.balanceAxis {
+  position: relative;
+  height: 16px;
+  margin: 0 49px 0 135px;
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.balanceAxis span {
+  position: absolute;
+  top: 3px;
+  transform: translateX(-50%);
+  color: var(--color-text-muted);
+  font-size: 9px;
+}
+
+.balanceCaption {
+  margin: 5px 0 0 135px;
+  color: var(--color-text);
+  font-size: 10px;
+  text-align: center;
 }
 
 .digestionCard {
@@ -698,6 +856,11 @@
     min-height: 0;
   }
 
+  .donutWrapper,
+  .nutritionChartCard .donutWrapper {
+    height: 260px;
+  }
+
   .nutrientsCard {
     min-height: 0;
   }
@@ -706,6 +869,26 @@
     grid-auto-flow: row;
     grid-template-rows: none;
     grid-template-columns: 1fr;
+  }
+
+  .balanceCharts {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 0;
+  }
+
+  .balanceRows {
+    height: auto;
+    gap: 7px;
+  }
+
+  .balanceRow {
+    min-height: 20px;
+  }
+
+  .balanceTitle {
+    margin-right: 49px;
+    margin-left: 135px;
   }
 }
 
@@ -722,5 +905,24 @@
   .tabs {
     gap: 8px;
     justify-content: space-between;
+  }
+
+
+  .balanceRow {
+    grid-template-columns: minmax(78px, 105px) minmax(80px, 1fr) 38px;
+  }
+
+  .balanceAxis {
+    margin-left: 112px;
+    margin-right: 45px;
+  }
+
+  .balanceCaption {
+    margin-left: 112px;
+  }
+
+  .balanceTitle {
+    margin-right: 45px;
+    margin-left: 112px;
   }
 }

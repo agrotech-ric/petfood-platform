@@ -3,6 +3,8 @@ package dev.pet.pets.service;
 import dev.pet.pets.domain.Ingredient;
 import dev.pet.pets.dto.IngredientRequest;
 import dev.pet.pets.dto.IngredientResponse;
+import dev.pet.pets.error.BadRequestException;
+import dev.pet.pets.error.ForbiddenOperationException;
 import dev.pet.pets.error.NotFoundException;
 import dev.pet.pets.repo.IngredientRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -11,8 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,14 +40,27 @@ public class IngredientService {
 
     @Transactional(readOnly = true)
     public List<IngredientResponse> list(
+        Jwt jwt,
         String query,
         String category,
         List<String> nutrients,
+        String source,
         String sortBy,
         String direction
     ) {
+        UUID ownerId = subject(jwt);
         Specification<Ingredient> specification = (root, criteriaQuery, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            if ("system".equalsIgnoreCase(source)) {
+                predicates.add(cb.isNull(root.get("ownerId")));
+            } else if ("mine".equalsIgnoreCase(source)) {
+                predicates.add(cb.equal(root.get("ownerId"), ownerId));
+            } else {
+                predicates.add(cb.or(
+                    cb.isNull(root.get("ownerId")),
+                    cb.equal(root.get("ownerId"), ownerId)
+                ));
+            }
             if (query != null && !query.isBlank()) {
                 String pattern = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
                 predicates.add(cb.or(
@@ -73,13 +90,17 @@ public class IngredientService {
     }
 
     @Transactional(readOnly = true)
-    public IngredientResponse get(long id) {
-        return IngredientResponse.from(find(id));
+    public IngredientResponse get(Jwt jwt, long id) {
+        return IngredientResponse.from(findVisible(id, subject(jwt)));
     }
 
     @Transactional
-    public IngredientResponse create(IngredientRequest request) {
+    public IngredientResponse create(Jwt jwt, IngredientRequest request) {
+        UUID ownerId = subject(jwt);
+        ensureUniqueName(request, ownerId, null);
         Ingredient ingredient = new Ingredient();
+        ingredient.setOwnerId(ownerId);
+        ingredient.setRecommenderSupported(true);
         apply(ingredient, request);
         OffsetDateTime now = OffsetDateTime.now();
         ingredient.setCreatedAt(now);
@@ -88,21 +109,46 @@ public class IngredientService {
     }
 
     @Transactional
-    public IngredientResponse update(long id, IngredientRequest request) {
-        Ingredient ingredient = find(id);
+    public IngredientResponse update(Jwt jwt, long id, IngredientRequest request) {
+        UUID ownerId = subject(jwt);
+        Ingredient ingredient = findOwned(id, ownerId);
+        ensureUniqueName(request, ownerId, id);
         apply(ingredient, request);
         ingredient.setUpdatedAt(OffsetDateTime.now());
         return IngredientResponse.from(repository.save(ingredient));
     }
 
     @Transactional
-    public void delete(long id) {
-        repository.delete(find(id));
+    public void delete(Jwt jwt, long id) {
+        repository.delete(findOwned(id, subject(jwt)));
     }
 
-    private Ingredient find(long id) {
-        return repository.findById(id)
+    private Ingredient findVisible(long id, UUID ownerId) {
+        Ingredient ingredient = repository.findById(id)
             .orElseThrow(() -> new NotFoundException("Ingredient not found: " + id));
+        if (ingredient.getOwnerId() != null && !ingredient.getOwnerId().equals(ownerId)) {
+            throw new NotFoundException("Ingredient not found: " + id);
+        }
+        return ingredient;
+    }
+
+    private Ingredient findOwned(long id, UUID ownerId) {
+        Ingredient ingredient = findVisible(id, ownerId);
+        if (ingredient.getOwnerId() == null) {
+            throw new ForbiddenOperationException("System ingredients are read-only");
+        }
+        return ingredient;
+    }
+
+    private UUID subject(Jwt jwt) {
+        return UUID.fromString(jwt.getSubject());
+    }
+
+    private void ensureUniqueName(IngredientRequest request, UUID ownerId, Long excludedId) {
+        String subtype = request.subtype() == null ? "" : request.subtype().trim();
+        if (repository.existsVisibleDuplicate(request.name().trim(), subtype, ownerId, excludedId)) {
+            throw new BadRequestException("Ingredient with this name and subtype already exists");
+        }
     }
 
     private void apply(Ingredient ingredient, IngredientRequest request) {

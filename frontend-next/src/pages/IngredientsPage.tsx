@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ingredientService, type Ingredient } from '../../services/ingredientService'
+import { useTranslation } from '../../context/LanguageContext'
 import { FILTER_GROUPS } from '../data/ingredientOptions'
 import styles from '../styles/Ingredients.module.css'
 import SearchIcon from '../assets/icons/search.svg?react'
 
 type SortKey = keyof Ingredient
 type SortDir = 'asc' | 'desc'
+type IngredientSource = 'all' | 'system' | 'mine'
 
 type ActiveFilter = { group: string; key: string; label: string }
 
@@ -24,7 +26,9 @@ const TABLE_COLS: { key: SortKey; label: string }[] = [
 
 export function IngredientsPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
+  const [source, setSource] = useState<IngredientSource>('all')
   const [sortKey, setSortKey] = useState<SortKey>('category')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [openGroup, setOpenGroup] = useState<string | null>(null)
@@ -52,6 +56,7 @@ export function IngredientsPage() {
     ingredientService.list({
       search,
       nutrients: activeFilters.map(filter => filter.key),
+      source,
       sort: sortKey,
       direction: sortDir,
     })
@@ -65,7 +70,7 @@ export function IngredientsPage() {
         if (!cancelled) setLoading(false)
       })
     return () => { cancelled = true }
-  }, [search, sortKey, sortDir, activeFilters])
+  }, [search, source, sortKey, sortDir, activeFilters])
 
   const toggleFilter = (group: string, key: string, label: string) => {
     setActiveFilters(prev => {
@@ -120,6 +125,34 @@ export function IngredientsPage() {
 
         {/* Filter dropdowns */}
         <div className={styles.filterRow} ref={dropdownRef}>
+          <div className={styles.filterDropdown}>
+            <button
+              className={`${styles.filterBtn} ${source !== 'all' ? styles.filterBtnActive : ''}`}
+              onClick={() => setOpenGroup(openGroup === 'source' ? null : 'source')}
+            >
+              {t('ingredients.source')}: {t(`ingredients.source.${source}`)}
+              <span className={styles.filterChevron}>▼</span>
+            </button>
+            {openGroup === 'source' && (
+              <div className={styles.dropdownMenu}>
+                {(['all', 'system', 'mine'] as const).map(option => (
+                  <div
+                    key={option}
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      setSource(option)
+                      setOpenGroup(null)
+                    }}
+                  >
+                    <span
+                      className={`${styles.radio} ${source === option ? styles.radioChecked : ''}`}
+                    />
+                    {t(`ingredients.source.${option}`)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {Object.entries(FILTER_GROUPS).map(([groupName, items]) => {
             const isOpen = openGroup === groupName
             const hasActive = items.some(i => isFilterActive(i.key))
@@ -194,7 +227,14 @@ export function IngredientsPage() {
                 ingredients.map(item => (
                   <tr key={item.id} onClick={() => navigate(`/ingredients/${item.id}`)}>
                     <td>{item.category}</td>
-                    <td>{item.name}</td>
+                    <td>
+                      <span className={styles.ingredientName}>
+                        {item.name}
+                        {!item.system && (
+                          <span className={styles.ownerBadge}>{t('ingredients.mineBadge')}</span>
+                        )}
+                      </span>
+                    </td>
                     <td>{item.subtype ?? '—'}</td>
                     <td>{item.protein}</td>
                     <td>{item.fat}</td>

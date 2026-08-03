@@ -55,7 +55,14 @@ export type RecipeCalculationResult = {
     unit: string
     percent: number
   }>
-  vitamins?: Array<{ key?: string; label: string; percent: number }>
+  vitamins?: Array<{
+    key?: string
+    label: string
+    current?: number
+    norm?: number
+    unit?: string
+    percent: number
+  }>
   digestion?: {
     protein: Array<{ time: number; remaining: number }>
     fat: Array<{ time: number; remaining: number }>

@@ -2,6 +2,7 @@ package dev.pet.pets.dto;
 
 import dev.pet.pets.domain.Ingredient;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 public record IngredientResponse(
     Long id,
@@ -9,6 +10,8 @@ public record IngredientResponse(
     String name,
     String subtype,
     boolean recommenderSupported,
+    UUID ownerId,
+    boolean system,
     double portion,
     double calories,
     double protein,
@@ -60,7 +63,7 @@ public record IngredientResponse(
     public static IngredientResponse from(Ingredient ingredient) {
         return new IngredientResponse(
             ingredient.getId(), ingredient.getCategory(), ingredient.getName(), ingredient.getSubtype(),
-            ingredient.isRecommenderSupported(),
+            ingredient.isRecommenderSupported(), ingredient.getOwnerId(), ingredient.getOwnerId() == null,
             ingredient.getPortion(), ingredient.getCalories(), ingredient.getProtein(), ingredient.getFat(),
             ingredient.getCarbs(), ingredient.getMoisture(), ingredient.getFiber(), ingredient.getAsh(),
             ingredient.getCholesterol(), ingredient.getSugar(), ingredient.getCalcium(), ingredient.getPhosphorus(),

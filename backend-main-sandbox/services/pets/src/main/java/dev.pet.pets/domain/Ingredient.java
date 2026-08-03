@@ -2,6 +2,7 @@ package dev.pet.pets.domain;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "ingredients", schema = "pets")
@@ -19,6 +20,8 @@ public class Ingredient {
     private String subtype;
     @Column(name = "recommender_supported", nullable = false)
     private boolean recommenderSupported;
+    @Column(name = "owner_id")
+    private UUID ownerId;
 
     private double portion;
     private double calories;
@@ -82,6 +85,8 @@ public class Ingredient {
     public void setRecommenderSupported(boolean recommenderSupported) {
         this.recommenderSupported = recommenderSupported;
     }
+    public UUID getOwnerId() { return ownerId; }
+    public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
     public double getPortion() { return portion; }
     public void setPortion(double portion) { this.portion = portion; }
     public double getCalories() { return calories; }

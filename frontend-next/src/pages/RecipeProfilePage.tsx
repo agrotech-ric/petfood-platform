@@ -16,71 +16,13 @@ import DeleteIcon from '../assets/icons/delete.svg?react'
 import EditIcon from '../assets/icons/edit.svg?react'
 import ShareIcon from '../assets/icons/share.svg?react'
 import DownloadIcon from '../assets/icons/download.svg?react'
+import { NutrientBalanceChart } from '../components/recipes/NutrientBalanceChart'
+import {
+  RecipeDonutChart,
+  RECIPE_CHART_COLORS,
+} from '../components/recipes/RecipeDonutChart'
 
-const CHART_COLORS = ['#4a90d9', '#5cb85c', '#f47f4b', '#e8c84a', '#8b6fc0', '#38a3a5']
-
-function DonutChart({ data }: { data: { value: number; color: string; label?: string }[] }) {
-  const r = 60
-  const circumference = 2 * Math.PI * r
-  const total = data.reduce((sum, item) => sum + Math.max(0, item.value), 0)
-  let offset = 0
-
-  if (total <= 0) return null
-
-  const slices = data.map(item => {
-    const dash = (Math.max(0, item.value) / total) * circumference
-    const slice = {
-      dash,
-      gap: circumference - dash,
-      offset,
-      color: item.color,
-      value: item.value,
-      label: item.label,
-    }
-    offset += dash
-    return slice
-  })
-
-  return (
-    <svg width="160" height="160" viewBox="0 0 160 160" aria-hidden="true">
-      {slices.map((slice, index) => (
-        <circle
-          key={index}
-          cx={80}
-          cy={80}
-          r={r}
-          fill="none"
-          stroke={slice.color}
-          strokeWidth="28"
-          strokeDasharray={`${slice.dash} ${slice.gap}`}
-          strokeDashoffset={-slice.offset + circumference * 0.25}
-          style={{ transform: 'rotate(-90deg)', transformOrigin: '80px 80px' }}
-        />
-      ))}
-      {slices.map((slice, index) => {
-        const previous = slices.slice(0, index).reduce((sum, item) => sum + item.value, 0)
-        const angle = -90 + ((previous + slice.value / 2) / total) * 360
-        const radians = (angle * Math.PI) / 180
-        const x = 80 + Math.cos(radians) * 75
-        const y = 80 + Math.sin(radians) * 75
-        return (
-          <text
-            key={`label-${index}`}
-            x={x}
-            y={y}
-            fontSize="7"
-            fontWeight="600"
-            fill={slice.color}
-            textAnchor={x < 76 ? 'end' : x > 84 ? 'start' : 'middle'}
-            dominantBaseline="middle"
-          >
-            {slice.label ?? `${slice.value}%`}
-          </text>
-        )
-      })}
-    </svg>
-  )
-}
+const CHART_COLORS = RECIPE_CHART_COLORS
 
 function LineChart({ data }: { data: { time: number; remaining: number }[] }) {
   const width = 300
@@ -220,6 +162,8 @@ function CalculationSections({
   const composition = result.composition ?? []
   const nutrition = result.nutrition ?? []
   const nutrients = result.nutrients ?? []
+  const minerals = result.minerals ?? []
+  const vitamins = result.vitamins ?? []
   const digestion = result.digestion
   const tabData = digestion ? {
     protein: {
@@ -265,7 +209,8 @@ function CalculationSections({
             <div className={`${styles.chartCard} ${styles.compositionChartCard}`}>
               <p className={styles.chartTitle}>Состав рациона</p>
               <div className={styles.donutWrapper}>
-                <DonutChart data={composition.map((item, index) => ({
+                <RecipeDonutChart data={composition.map((item, index) => ({
+                  name: item.label,
                   value: item.percent,
                   color: item.color ?? CHART_COLORS[index % CHART_COLORS.length],
                   label: `${item.percent}%`,
@@ -304,7 +249,8 @@ function CalculationSections({
             <div className={`${styles.chartCard} ${styles.nutritionChartCard}`}>
               <p className={styles.chartTitle}>Питательная ценность</p>
               <div className={styles.donutWrapper}>
-                <DonutChart data={nutrition.map((item, index) => ({
+                <RecipeDonutChart data={nutrition.map((item, index) => ({
+                  name: item.label,
                   value: item.value,
                   color: item.color ?? CHART_COLORS[index % CHART_COLORS.length],
                   label: `${item.value} ${item.unit}`,
@@ -335,17 +281,25 @@ function CalculationSections({
         </div>
       )}
 
-      {nutrients.length > 0 && (
+      {(nutrients.length > 0 || minerals.length > 0 || vitamins.length > 0) && (
         <div className={`${styles.card} ${styles.nutrientsCard}`}>
           <p className={styles.sectionTitle}>Содержание нутриентов</p>
-          <div className={styles.nutrientsGrid}>
-            {nutrients.map((item, index) => (
-              <div key={`${item.key ?? item.label}-${index}`} className={styles.nutrientRow}>
-                <span className={styles.nutrientName}>{item.label}</span>
-                <span className={styles.nutrientVal}>{item.value} {item.unit}</span>
-              </div>
-            ))}
-          </div>
+          {nutrients.length > 0 && (
+            <div className={styles.nutrientsGrid}>
+              {nutrients.map((item, index) => (
+                <div key={`${item.key ?? item.label}-${index}`} className={styles.nutrientRow}>
+                  <span className={styles.nutrientName}>{item.label}</span>
+                  <span className={styles.nutrientVal}>{item.value} {item.unit}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {(minerals.length > 0 || vitamins.length > 0) && (
+            <div className={styles.balanceCharts}>
+              {minerals.length > 0 && <NutrientBalanceChart title="Минералы" items={minerals} />}
+              {vitamins.length > 0 && <NutrientBalanceChart title="Витамины" items={vitamins} />}
+            </div>
+          )}
         </div>
       )}
 
