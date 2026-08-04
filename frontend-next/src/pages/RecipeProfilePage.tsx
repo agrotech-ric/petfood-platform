@@ -567,7 +567,9 @@ export function RecipeProfilePage() {
           </div>
         </div>
         <p className={styles.healthTitle}>Состояние здоровья</p>
-        <p className={styles.healthValue}>{recipe.targetHealthConditionName || 'Не указано'}</p>
+        <p className={styles.healthValue}>
+          {recipe.targetDisorder || recipe.targetHealthConditionName || 'Не указано'}
+        </p>
         <p className={styles.symptomsLabel}>Симптомы заболевания</p>
         <div className={styles.chipsRow}>
           {recipe.symptoms.length > 0

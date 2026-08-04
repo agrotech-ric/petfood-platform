@@ -90,9 +90,10 @@ export type RecipePayload = {
   targetActivityTypeId?: number | null
   targetReproductiveStatusId?: number | null
   targetHealthConditionId?: number | null
+  targetDisorder?: string | null
   symptomIds?: number[]
   targetEnergyKcal?: number | null
-  maximizeNutrient?: string | null
+  maximizeNutrients?: string[]
   ingredients?: RecipeIngredientInput[]
   nutrientConstraints?: RecipeNutrientConstraint[]
   calculationResult?: RecipeCalculationResult | null
@@ -127,9 +128,10 @@ export type Recipe = RecipeListItem & {
   targetReproductiveStatusName?: string | null
   targetHealthConditionId?: number | null
   targetHealthConditionName?: string | null
+  targetDisorder?: string | null
   symptoms: Array<{ id: number; name: string }>
   targetEnergyKcal?: number | null
-  maximizeNutrient?: string | null
+  maximizeNutrients: string[]
   ingredients: Array<RecipeIngredientInput & {
     name: string
     subtype?: string | null

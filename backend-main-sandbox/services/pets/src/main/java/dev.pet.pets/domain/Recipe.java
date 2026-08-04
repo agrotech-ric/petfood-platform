@@ -66,6 +66,9 @@ public class Recipe {
     @JoinColumn(name = "target_health_condition_id")
     private HealthCondition targetHealthCondition;
 
+    @Column(name = "target_disorder", length = 255)
+    private String targetDisorder;
+
     @ManyToMany
     @JoinTable(
         name = "recipe_symptoms",
@@ -79,8 +82,9 @@ public class Recipe {
     @Column(name = "target_energy_kcal")
     private Double targetEnergyKcal;
 
-    @Column(name = "maximize_nutrient", length = 64)
-    private String maximizeNutrient;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "maximize_nutrients", nullable = false, columnDefinition = "jsonb")
+    private List<String> maximizeNutrients = new ArrayList<>();
 
     @Column(nullable = false, length = 32)
     private String status;
@@ -138,12 +142,14 @@ public class Recipe {
     public void setTargetReproductiveStatus(ReproductiveStatus targetReproductiveStatus) { this.targetReproductiveStatus = targetReproductiveStatus; }
     public HealthCondition getTargetHealthCondition() { return targetHealthCondition; }
     public void setTargetHealthCondition(HealthCondition targetHealthCondition) { this.targetHealthCondition = targetHealthCondition; }
+    public String getTargetDisorder() { return targetDisorder; }
+    public void setTargetDisorder(String targetDisorder) { this.targetDisorder = targetDisorder; }
     public Set<Symptom> getTargetSymptoms() { return targetSymptoms; }
     public void setTargetSymptoms(Set<Symptom> targetSymptoms) { this.targetSymptoms = targetSymptoms; }
     public Double getTargetEnergyKcal() { return targetEnergyKcal; }
     public void setTargetEnergyKcal(Double targetEnergyKcal) { this.targetEnergyKcal = targetEnergyKcal; }
-    public String getMaximizeNutrient() { return maximizeNutrient; }
-    public void setMaximizeNutrient(String maximizeNutrient) { this.maximizeNutrient = maximizeNutrient; }
+    public List<String> getMaximizeNutrients() { return maximizeNutrients; }
+    public void setMaximizeNutrients(List<String> maximizeNutrients) { this.maximizeNutrients = maximizeNutrients; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public JsonNode getCalculationResult() { return calculationResult; }

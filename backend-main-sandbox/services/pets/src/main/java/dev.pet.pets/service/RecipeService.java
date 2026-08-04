@@ -176,9 +176,17 @@ public class RecipeService {
         recipe.setTargetHealthCondition(resolveOptional(
             request.targetHealthConditionId(), healthConditionRepository::findById, "Health condition"
         ));
+        recipe.setTargetDisorder(blankToNull(request.targetDisorder()));
         recipe.setTargetSymptoms(resolveSymptoms(request.symptomIds()));
         recipe.setTargetEnergyKcal(request.targetEnergyKcal());
-        recipe.setMaximizeNutrient(blankToNull(request.maximizeNutrient()));
+        recipe.setMaximizeNutrients(request.maximizeNutrients() == null
+            ? new ArrayList<>()
+            : request.maximizeNutrients().stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .distinct()
+                .toList());
 
         boolean calculated = request.calculationResult() != null && !request.calculationResult().isNull();
         recipe.setCalculationResult(calculated ? request.calculationResult() : null);
@@ -357,11 +365,12 @@ public class RecipeService {
             reproductiveStatus == null ? null : reproductiveStatus.getName(),
             healthCondition == null ? null : healthCondition.getId(),
             healthCondition == null ? null : healthCondition.getNameRu(),
+            recipe.getTargetDisorder(),
             recipe.getTargetSymptoms().stream()
                 .map(symptom -> new RecipeResponse.ReferenceItem(symptom.getId(), symptom.getName()))
                 .toList(),
             recipe.getTargetEnergyKcal(),
-            recipe.getMaximizeNutrient(),
+            recipe.getMaximizeNutrients(),
             recipe.getStatus(),
             recipe.getIngredients().stream()
                 .map(item -> new RecipeResponse.IngredientItem(

@@ -42,6 +42,7 @@ import DeleteIcon from '../../assets/icons/delete.svg?react'
 import { CalorieFormula } from './CalorieFormula'
 import { NutrientBalanceChart } from './NutrientBalanceChart'
 import { RecipeDonutChart, RECIPE_CHART_COLORS } from './RecipeDonutChart'
+import { DualRangeSlider } from './DualRangeSlider'
 import styles from '../../styles/CreateRecipe.module.css'
 
 type Range = { min: number; max: number }
@@ -60,12 +61,13 @@ type FormState = {
   activityId: string
   reproductiveStatusId: string
   healthConditionId: string
+  targetDisorder: string
   symptomIds: number[]
   energy: string
   ingredientIds: number[]
   ingredientRanges: Record<number, Range>
   nutrientRanges: Record<string, Range>
-  maximizeNutrient: string
+  maximizeNutrients: string[]
 }
 
 type References = {
@@ -101,6 +103,7 @@ function createInitialState(): FormState {
     activityId: '',
     reproductiveStatusId: '',
     healthConditionId: '',
+    targetDisorder: '',
     symptomIds: [],
     energy: '',
     ingredientIds: [],
@@ -111,7 +114,7 @@ function createInitialState(): FormState {
         { min: item.defaultMin, max: item.defaultMax },
       ]),
     ),
-    maximizeNutrient: '',
+    maximizeNutrients: [],
   }
 }
 
@@ -154,6 +157,7 @@ function stateFromRecipe(recipe: Recipe): FormState {
       recipe.targetReproductiveStatusId == null ? '' : String(recipe.targetReproductiveStatusId),
     healthConditionId:
       recipe.targetHealthConditionId == null ? '' : String(recipe.targetHealthConditionId),
+    targetDisorder: recipe.targetDisorder ?? recipe.targetHealthConditionName ?? '',
     symptomIds: recipe.symptoms.map(item => item.id),
     energy: recipe.targetEnergyKcal == null ? '' : String(recipe.targetEnergyKcal),
     ingredientIds: recipe.ingredients.map(item => item.ingredientId),
@@ -172,7 +176,7 @@ function stateFromRecipe(recipe: Recipe): FormState {
         ]),
       ),
     },
-    maximizeNutrient: recipe.maximizeNutrient ?? '',
+    maximizeNutrients: recipe.maximizeNutrients ?? [],
   }
 }
 
@@ -202,6 +206,7 @@ function prefillFromPet(
         : String(pet.reproductiveStatusId),
     healthConditionId:
       healthCondition == null ? current.healthConditionId : String(healthCondition.id),
+    targetDisorder: record?.conditionName ?? current.targetDisorder,
     symptomIds: references.symptoms
       .filter(item => symptomNames.has(displayName(item).toLowerCase()))
       .map(item => item.id),
@@ -434,9 +439,10 @@ function toPayload(
     targetActivityTypeId: toOptionalNumber(state.activityId),
     targetReproductiveStatusId: toOptionalNumber(state.reproductiveStatusId),
     targetHealthConditionId: toOptionalNumber(state.healthConditionId),
+    targetDisorder: state.targetDisorder.trim() || null,
     symptomIds: state.symptomIds,
     targetEnergyKcal: toOptionalNumber(state.energy),
-    maximizeNutrient: state.maximizeNutrient || null,
+    maximizeNutrients: state.maximizeNutrients,
     ingredients: state.ingredientIds.map(ingredientId => {
       const resultItem = calculationResult?.composition?.find(
         item => item.ingredientId === ingredientId,
@@ -457,12 +463,6 @@ function toPayload(
     calculationResult,
     calculationVersion,
   }
-}
-
-function formatRangeBackground(min: number, max: number, lower: number, upper: number) {
-  const start = ((min - lower) / (upper - lower)) * 100
-  const end = ((max - lower) / (upper - lower)) * 100
-  return `linear-gradient(90deg, var(--color-border) 0%, var(--color-border) ${start}%, var(--color-accent-alt) ${start}%, var(--color-accent-alt) ${end}%, var(--color-border) ${end}%, var(--color-border) 100%)`
 }
 
 const RESULT_COLORS = RECIPE_CHART_COLORS
@@ -602,6 +602,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [nutrientNorms, setNutrientNorms] = useState<Record<string, number>>({})
   const [recommendedEnergy, setRecommendedEnergy] = useState<number | null>(null)
   const [calorieCalculation, setCalorieCalculation] = useState<CalorieCalculation | null>(null)
+  const [availableDisorders, setAvailableDisorders] = useState<string[]>([])
+  const [loadingDisorders, setLoadingDisorders] = useState(false)
 
   const isEdit = recipeId != null
 
@@ -713,6 +715,30 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     return status.gender.toLowerCase() === form.gender
   })
 
+  useEffect(() => {
+    const breed = references.breeds.find(item => String(item.id) === form.breedId)
+    if (!breed) {
+      setAvailableDisorders([])
+      return
+    }
+
+    let cancelled = false
+    const modelBreed = (breed.nameEn ?? breed.name ?? displayName(breed)).toLowerCase().trim()
+    setLoadingDisorders(true)
+    recommenderService.getBreedDetails(modelBreed)
+      .then(result => {
+        if (!cancelled) setAvailableDisorders(result.breed_info.diseases)
+      })
+      .catch(() => {
+        if (!cancelled) setAvailableDisorders([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDisorders(false)
+      })
+
+    return () => { cancelled = true }
+  }, [form.breedId, references.breeds])
+
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm(current => ({ ...current, [key]: value }))
   }
@@ -780,7 +806,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     })
   }
 
-  const handleUpdateRecommendations = async () => {
+  const handleUpdateRecommendations = async (disorderOverride?: string) => {
     if (updatingRecommendations || calculating) return
     setUpdatingRecommendations(true)
     setError('')
@@ -796,16 +822,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
       let recommendedIngredients: Ingredient[] = []
       let recommendationWarning = ''
-      const condition = references.healthConditions.find(
-        item => String(item.id) === form.healthConditionId,
-      )
-      const healthyCondition = condition?.code === 'healthy'
-        || normalizeLabel(displayName(condition ?? { id: 0 })) === normalizeLabel('Здоровый')
-      if (condition && !healthyCondition) {
+      const disorder = disorderOverride ?? form.targetDisorder
+      const healthyCondition = normalizeLabel(disorder) === normalizeLabel('Здоровый')
+      if (disorder && !healthyCondition) {
         try {
           const recommendation = await recommenderService.recommendForDisorder({
             breed: dog.breed,
-            disorder: displayName(condition),
+            disorder,
             age: dog.age,
             age_metric: dog.age_metric,
           })
@@ -838,8 +861,10 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           if (recommendedIngredients.length === 0) {
             recommendationWarning = 'Калорийность рассчитана. Подходящие рекомендованные ингредиенты не найдены в каталоге, поэтому текущий состав не изменён.'
           }
-        } catch {
-          recommendationWarning = 'Калорийность рассчитана. Для выбранного состояния нет персональных рекомендаций, поэтому используются базовые параметры.'
+        } catch (recommendationError) {
+          recommendationWarning = recommendationError instanceof Error
+            ? `Калорийность рассчитана. ${recommendationError.message}`
+            : 'Калорийность рассчитана. Для выбранного состояния нет персональных рекомендаций.'
         }
       }
 
@@ -932,9 +957,9 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           min_value: range.min,
           max_value: range.max,
         })),
-        maximize_nutrients: form.maximizeNutrient && RECOMMENDER_NUTRIENT_NAMES[form.maximizeNutrient]
-          ? [RECOMMENDER_NUTRIENT_NAMES[form.maximizeNutrient]]
-          : [],
+        maximize_nutrients: form.maximizeNutrients
+          .map(key => RECOMMENDER_NUTRIENT_NAMES[key])
+          .filter((value): value is string => Boolean(value)),
         target_kcal: targetKcal,
         ingredient_profiles: selectedIngredients
           .filter(ingredient => !ingredient.system)
@@ -1204,12 +1229,29 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   <label className={styles.fieldLabel}>Наличие заболевания</label>
                   <select
                     className={styles.fieldSelect}
-                    value={form.healthConditionId}
-                    onChange={event => setField('healthConditionId', event.target.value)}
+                    value={form.targetDisorder}
+                    disabled={loadingDisorders || !form.breedId}
+                    onChange={event => {
+                      const disorder = event.target.value
+                      const matchingCondition = references.healthConditions.find(
+                        item => normalizeLabel(displayName(item)) === normalizeLabel(disorder),
+                      )
+                      setForm(current => ({
+                        ...current,
+                        targetDisorder: disorder,
+                        healthConditionId: matchingCondition == null ? '' : String(matchingCondition.id),
+                      }))
+                      if (disorder) void handleUpdateRecommendations(disorder)
+                    }}
                   >
-                    <option value="">Не указано</option>
-                    {references.healthConditions.map(item => (
-                      <option key={item.id} value={item.id}>{displayName(item)}</option>
+                    <option value="">
+                      {loadingDisorders ? 'Загрузка заболеваний...' : 'Не указано'}
+                    </option>
+                    {form.targetDisorder && !availableDisorders.includes(form.targetDisorder) && (
+                      <option value={form.targetDisorder}>{form.targetDisorder}</option>
+                    )}
+                    {availableDisorders.map(disorder => (
+                      <option key={disorder} value={disorder}>{disorder}</option>
                     ))}
                   </select>
                 </div>
@@ -1356,38 +1398,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 const ingredient = references.ingredients.find(item => item.id === ingredientId)
                 const range = form.ingredientRanges[ingredientId] ?? { min: 0, max: 100 }
                 return (
-                  <div key={ingredientId} className={styles.sliderRow}>
-                    <span className={styles.sliderLabel}>{ingredient?.name ?? `ID ${ingredientId}`}:</span>
-                    <span className={styles.sliderMinVal}>{range.min}</span>
-                    <div
-                      className={styles.dualRangeTrack}
-                      style={{ background: formatRangeBackground(range.min, range.max, 0, 100) }}
-                    >
-                      <input
-                        type="range"
-                        className={`${styles.dualRangeInput} ${styles.dualRangeMin}`}
-                        min={0}
-                        max={100}
-                        value={range.min}
-                        onChange={event => updateIngredientRange(ingredientId, {
-                          min: Math.min(Number(event.target.value), range.max),
-                          max: range.max,
-                        })}
-                      />
-                      <input
-                        type="range"
-                        className={`${styles.dualRangeInput} ${styles.dualRangeMax}`}
-                        min={0}
-                        max={100}
-                        value={range.max}
-                        onChange={event => updateIngredientRange(ingredientId, {
-                          min: range.min,
-                          max: Math.max(Number(event.target.value), range.min),
-                        })}
-                      />
-                    </div>
-                    <span className={styles.sliderMaxVal}>{range.max}</span>
-                  </div>
+                  <DualRangeSlider
+                    key={ingredientId}
+                    label={`${ingredient?.name ?? `ID ${ingredientId}`}:`}
+                    minValue={range.min}
+                    maxValue={range.max}
+                    onChange={value => updateIngredientRange(ingredientId, value)}
+                  />
                 )
               })}
             </>
@@ -1397,55 +1414,37 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           {RECIPE_NUTRIENT_LIMITS.map(item => {
             const range = form.nutrientRanges[item.key]
             return (
-              <div key={item.key} className={styles.sliderRow}>
-                <span className={styles.sliderLabel}>{item.label}:</span>
-                <span className={styles.sliderMinVal}>{range.min}</span>
-                <div
-                  className={styles.dualRangeTrack}
-                  style={{ background: formatRangeBackground(range.min, range.max, item.min, item.max) }}
-                >
-                  <input
-                    type="range"
-                    className={`${styles.dualRangeInput} ${styles.dualRangeMin}`}
-                    min={item.min}
-                    max={item.max}
-                    step={0.01}
-                    value={range.min}
-                    onChange={event => updateNutrientRange(item.key, {
-                      min: Math.min(Number(event.target.value), range.max),
-                      max: range.max,
-                    })}
-                  />
-                  <input
-                    type="range"
-                    className={`${styles.dualRangeInput} ${styles.dualRangeMax}`}
-                    min={item.min}
-                    max={item.max}
-                    step={0.01}
-                    value={range.max}
-                    onChange={event => updateNutrientRange(item.key, {
-                      min: range.min,
-                      max: Math.max(Number(event.target.value), range.min),
-                    })}
-                  />
-                </div>
-                <span className={styles.sliderMaxVal}>{range.max}</span>
-              </div>
+              <DualRangeSlider
+                key={item.key}
+                label={`${item.label}:`}
+                minValue={range.min}
+                maxValue={range.max}
+                lowerBound={item.min}
+                upperBound={item.max}
+                onChange={value => updateNutrientRange(item.key, value)}
+              />
             )
           })}
 
           <p className={styles.sectionTitle} style={{ marginTop: 20 }}>Максимизация</p>
-          <p className={styles.fieldHint}>Выберите нутриент для максимизации:</p>
-          <select
-            className={styles.fieldSelect}
-            value={form.maximizeNutrient}
-            onChange={event => setField('maximizeNutrient', event.target.value)}
-          >
-            <option value="">Не выбрано</option>
+          <p className={styles.fieldHint}>Выберите нутриенты для максимизации:</p>
+          <div className={styles.maximizeOptions}>
             {RECIPE_MAXIMIZE_OPTIONS.map(item => (
-              <option key={item.key} value={item.key}>{item.label}</option>
+              <label key={item.key} className={styles.maximizeOption}>
+                <input
+                  type="checkbox"
+                  checked={form.maximizeNutrients.includes(item.key)}
+                  onChange={() => setField(
+                    'maximizeNutrients',
+                    form.maximizeNutrients.includes(item.key)
+                      ? form.maximizeNutrients.filter(key => key !== item.key)
+                      : [...form.maximizeNutrients, item.key],
+                  )}
+                />
+                <span>{item.label}</span>
+              </label>
             ))}
-          </select>
+          </div>
 
           <button
             className={styles.primaryBtn}

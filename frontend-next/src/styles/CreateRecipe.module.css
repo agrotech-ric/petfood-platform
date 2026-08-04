@@ -552,6 +552,43 @@
   font-size: 14px;
 }
 
+.maximizeOptions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 18px;
+  max-height: 220px;
+  padding: 12px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-surface);
+}
+
+.maximizeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.maximizeOption input {
+  flex: 0 0 auto;
+  accent-color: var(--color-accent);
+}
+
+.maximizeOption span {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .maximizeOptions {
+    grid-template-columns: 1fr;
+  }
+}
+
 .fieldHint {
   margin: 0 0 8px;
   color: var(--color-text-muted);
