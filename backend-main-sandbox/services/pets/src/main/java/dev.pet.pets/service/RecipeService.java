@@ -32,6 +32,9 @@ public class RecipeService {
         "vitaminB3", "vitaminB5", "vitaminB6", "vitaminB9", "vitaminB12", "vitaminC", "vitaminK",
         "alphaCarotene", "betaCarotene", "betaCryptoxanthin", "luteinZeaxanthin", "lycopene", "retinol"
     );
+    private static final Set<String> MAXIMIZABLE_NUTRIENT_KEYS = Set.of(
+        "moisture", "protein", "carbs", "fat"
+    );
 
     private final RecipeRepository recipeRepository;
     private final PetRepository petRepository;
@@ -179,14 +182,18 @@ public class RecipeService {
         recipe.setTargetDisorder(blankToNull(request.targetDisorder()));
         recipe.setTargetSymptoms(resolveSymptoms(request.symptomIds()));
         recipe.setTargetEnergyKcal(request.targetEnergyKcal());
-        recipe.setMaximizeNutrients(request.maximizeNutrients() == null
+        List<String> maximizeNutrients = request.maximizeNutrients() == null
             ? new ArrayList<>()
             : request.maximizeNutrients().stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
                 .distinct()
-                .toList());
+                .toList();
+        if (!MAXIMIZABLE_NUTRIENT_KEYS.containsAll(maximizeNutrients)) {
+            throw new BadRequestException("Unsupported nutrient selected for maximization");
+        }
+        recipe.setMaximizeNutrients(maximizeNutrients);
 
         boolean calculated = request.calculationResult() != null && !request.calculationResult().isNull();
         recipe.setCalculationResult(calculated ? request.calculationResult() : null);

@@ -43,6 +43,7 @@ import { CalorieFormula } from './CalorieFormula'
 import { NutrientBalanceChart } from './NutrientBalanceChart'
 import { RecipeDonutChart, RECIPE_CHART_COLORS } from './RecipeDonutChart'
 import { DualRangeSlider } from './DualRangeSlider'
+import { SearchableNutrientSelect } from './SearchableNutrientSelect'
 import styles from '../../styles/CreateRecipe.module.css'
 
 type Range = { min: number; max: number }
@@ -1428,23 +1429,11 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
           <p className={styles.sectionTitle} style={{ marginTop: 20 }}>Максимизация</p>
           <p className={styles.fieldHint}>Выберите нутриенты для максимизации:</p>
-          <div className={styles.maximizeOptions}>
-            {RECIPE_MAXIMIZE_OPTIONS.map(item => (
-              <label key={item.key} className={styles.maximizeOption}>
-                <input
-                  type="checkbox"
-                  checked={form.maximizeNutrients.includes(item.key)}
-                  onChange={() => setField(
-                    'maximizeNutrients',
-                    form.maximizeNutrients.includes(item.key)
-                      ? form.maximizeNutrients.filter(key => key !== item.key)
-                      : [...form.maximizeNutrients, item.key],
-                  )}
-                />
-                <span>{item.label}</span>
-              </label>
-            ))}
-          </div>
+          <SearchableNutrientSelect
+            options={RECIPE_MAXIMIZE_OPTIONS}
+            value={form.maximizeNutrients}
+            onChange={value => setField('maximizeNutrients', value)}
+          />
 
           <button
             className={styles.primaryBtn}
