@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
@@ -27,11 +28,13 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
 
     private final AuthExchangeClient authClient;
     private final List<String> publicPaths;
+    private final List<String> allowedOrigins;
     private final AntPathMatcher matcher = new AntPathMatcher();
 
     public SidToJwtGlobalFilter(AuthExchangeClient authClient, AuthProps props) {
         this.authClient = authClient;
         this.publicPaths = props.getSecurity().getPublicPaths();
+        this.allowedOrigins = props.getSecurity().getAllowedOrigins();
     }
 
     @Override
@@ -44,10 +47,6 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
         }
 
         if (path.startsWith("/api/v1/auth/")) {
-            return chain.filter(exchange);
-        }
-
-        if (req.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
             return chain.filter(exchange);
         }
 
@@ -64,65 +63,53 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
         HttpCookie sidCookie = req.getCookies().getFirst("sid");
         if (sidCookie == null || sidCookie.getValue() == null || sidCookie.getValue().isBlank()) {
             log.debug("[SidToJwt] No SID cookie on {}", path);
-            if (!exchange.getResponse().isCommitted()) {
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            }
-            return writeJson(
+            return rejectAuthentication(
                 exchange,
+                path,
                 "{\"error\":\"unauthorized\",\"reason\":\"missing_sid_cookie\",\"message\":\"SID cookie is required\"}"
             );
         }
 
         String sid = sidCookie.getValue();
-        log.debug("[SidToJwt] SID detected on {}: {}", path, sid);
+        log.debug("[SidToJwt] Session cookie detected on {}", path);
 
         return authClient.exchangeSid(sid)
-            .map(SidExchangeResponse::getToken)
-            .flatMap(token -> {
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty())
+            .flatMap(result -> {
+                if (result.isEmpty()) {
+                    log.warn("[SidToJwt] Auth did not return token for SID on {}", path);
+                    return rejectAuthentication(
+                        exchange,
+                        path,
+                        "{\"error\":\"unauthorized\",\"reason\":\"sid_exchange_empty\",\"message\":\"Could not obtain token for this SID\"}"
+                    );
+                }
+
+                String token = result.get().getToken();
                 if (token == null || token.isBlank()) {
                     log.warn("[SidToJwt] Empty token from auth for {}", path);
-                    if (!exchange.getResponse().isCommitted()) {
-                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                    }
-                    return writeJson(
+                    return rejectAuthentication(
                         exchange,
+                        path,
                         "{\"error\":\"unauthorized\",\"reason\":\"empty_token_from_auth\",\"message\":\"Auth service returned empty token\"}"
                     );
                 }
 
-                log.debug("[SidToJwt] JWT attached (len={}) for {}", token.length(), path);
+                log.debug("[SidToJwt] Session credential attached for {}", path);
                 return chain.filter(
                     exchange.mutate()
                         .request(r -> r.headers(h -> h.setBearerAuth(token)))
                         .build()
                 );
             })
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("[SidToJwt] Auth did not return token for SID on {}", path);
-                if (!exchange.getResponse().isCommitted()) {
-                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                }
-                return writeJson(
-                    exchange,
-                    "{\"error\":\"unauthorized\",\"reason\":\"sid_exchange_empty\",\"message\":\"Could not obtain token for this SID\"}"
-                );
-            }))
             .onErrorResume(ex -> {
                 log.warn("[SidToJwt] Auth exchange failed for {}: {}", path, ex.toString());
-                if (!exchange.getResponse().isCommitted()) {
-                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                }
-
-                String safeMessage = ex.getMessage() == null
-                    ? "auth_exchange_failed"
-                    : ex.getMessage().replace("\"", "'");
-
-                String json = String.format(
-                    "{\"error\":\"unauthorized\",\"reason\":\"auth_exchange_error\",\"message\":\"%s\"}",
-                    safeMessage
+                return rejectAuthentication(
+                    exchange,
+                    path,
+                    "{\"error\":\"unauthorized\",\"reason\":\"auth_exchange_error\"}"
                 );
-
-                return writeJson(exchange, json);
             });
     }
 
@@ -134,8 +121,9 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
 
     private boolean isPublic(String path) {
         if (publicPaths == null || publicPaths.isEmpty()) return false;
+        String candidate = path.startsWith("/petfood/") ? path.substring("/petfood".length()) : path;
         for (String p : publicPaths) {
-            if (matcher.match(p, path)) return true;
+            if (matcher.match(p, candidate)) return true;
         }
         return false;
     }
@@ -147,7 +135,7 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
         }
 
         String origin = ex.getRequest().getHeaders().getOrigin();
-        if (origin != null) {
+        if (origin != null && propsAllowedOrigins().contains(origin)) {
             resp.getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
             resp.getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
         }
@@ -157,9 +145,22 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
             .bufferFactory()
             .wrap(json.getBytes(StandardCharsets.UTF_8));
 
-        resp.getHeaders().set("Access-Control-Allow-Origin", origin);
-        resp.getHeaders().set("Access-Control-Allow-Credentials", "true");
-
         return resp.writeWith(Mono.just(buf));
+    }
+
+    private List<String> propsAllowedOrigins() {
+        return allowedOrigins;
+    }
+
+    private Mono<Void> rejectAuthentication(ServerWebExchange exchange, String path, String unauthorizedJson) {
+        boolean photoPath = matcher.match("/api/v1/pets/photos/**", normalizedPath(path));
+        if (!exchange.getResponse().isCommitted()) {
+            exchange.getResponse().setStatusCode(photoPath ? HttpStatus.NOT_FOUND : HttpStatus.UNAUTHORIZED);
+        }
+        return writeJson(exchange, photoPath ? "{\"error\":\"not_found\"}" : unauthorizedJson);
+    }
+
+    private String normalizedPath(String path) {
+        return path.startsWith("/petfood/") ? path.substring("/petfood".length()) : path;
     }
 }

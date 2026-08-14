@@ -1,0 +1,46 @@
+schema: spec-driven
+
+context: |
+  PetFood Platform beta is a brownfield pet health and nutrition application.
+  Active code: React 19 + TypeScript + Vite in frontend-next; Java 21 + Spring
+  Boot services in backend-main-sandbox; Python + FastAPI in
+  nutrient-recommender-main; isolated runtime in docker-compose.sandbox.yml.
+  Do not change frontend-main, backend-main, or main compose files for beta work.
+  Follow AGENTS.md and docs/architecture/overview.md. Preserve unrelated local
+  changes and never include secrets. User-facing frontend text must support ru,
+  en, and kz; UI colors use theme variables. Backend schema changes use new
+  Flyway migrations. Authorization and resource ownership are enforced on the
+  backend. The user owns Git commits unless explicitly delegated.
+  Write all OpenSpec artifacts in English. Keep requirement keywords and
+  scenario markers unambiguous and testable. Conversation with the user may be
+  in another language, but repository artifacts, code, comments, documentation,
+  and commit messages remain in English.
+
+rules:
+  proposal:
+    - State the user or operational problem, scope, non-goals, and affected components.
+    - Identify security, data migration, compatibility, and rollback risks when relevant.
+    - Keep the proposal concise; do not prescribe implementation details that belong in design.
+  specs:
+    - Describe observable behavior, inputs, outputs, authorization, and failure scenarios.
+    - Use concrete WHEN/THEN scenarios that can become acceptance or integration tests.
+    - Do not describe current implementation mechanics as product requirements.
+  design:
+    - Name affected frontend services, backend services, API contracts, and data ownership boundaries.
+    - Cover migrations, authorization, compatibility, rollout, rollback, and verification when relevant.
+    - Prefer existing project patterns and explain any new dependency or abstraction.
+  tasks:
+    - Order tasks so contracts and migrations precede dependent implementation.
+    - Include focused tests, runtime verification, documentation updates, and final diff review.
+    - Keep tasks independently checkable and avoid unrelated cleanup.
+
+operations:
+  apply:
+    guidance:
+      - Read AGENTS.md and inspect the working tree before editing.
+      - Do not overwrite unrelated user changes or create a Git commit without an explicit request.
+      - Run the relevant checks from docs/development/verification.md and report anything not run.
+  archive:
+    guidance:
+      - Archive only after implementation and acceptance checks are complete.
+      - Ensure durable specs and project documentation match the implemented behavior.

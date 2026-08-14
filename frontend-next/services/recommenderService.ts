@@ -43,6 +43,16 @@ export type DisorderRecommendation = {
   nutrients_ranges: Record<string, { min: number; max: number }>
 }
 
+export type BreedDetails = {
+  breed_info: {
+    breed: string
+    min_weight: number
+    max_weight: number
+    avg_weight: number
+    diseases: string[]
+  }
+}
+
 export type RecipeOptimizationRequest = {
   weight: number
   age: number
@@ -112,6 +122,8 @@ export const RECOMMENDER_NUTRIENT_NAMES: Record<string, string> = {
   linoleic: 'Линолевая кислота, г',
   alphaLinolenic: 'Альфа-линоленовая кислота, г',
   arachidonic: 'Арахидоновая кислота, г',
+  epa: 'Эйкозапентаеновая кислота (ЭПК), г',
+  dha: 'Докозагексаеновая кислота (ДГК), г',
   choline: 'Холин, мг',
   selenium: 'Селен, мкг',
   iodine: 'Йод, мкг',
@@ -125,6 +137,8 @@ export const RECOMMENDER_NUTRIENT_NAMES: Record<string, string> = {
   vitaminB6: 'Витамин В6, мг',
   vitaminB9: 'Фолиевая кислота, мкг',
   vitaminB12: 'Витамин В12, мкг',
+  vitaminC: 'Витамин C, мг',
+  vitaminK: 'Витамин K, мкг',
 }
 
 const MODEL_NUTRIENT_LABELS: Record<string, string> = {
@@ -218,6 +232,12 @@ export const recommenderService = {
     message: string
     version: string
   }>('/recommender/'),
+
+  getBreedDetails: (breed: string) =>
+    apiClient.get<BreedDetails>(
+      `/recommender/breeds/${encodeURIComponent(breed)}`,
+      STANDARD_TIMEOUT_MS,
+    ),
 
   calculateCalories: (request: RecommenderDogInfo) =>
     apiClient.post<CalorieCalculation>(

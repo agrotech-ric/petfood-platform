@@ -40,3 +40,14 @@ spring:
 logging:
   level:
     org.flywaydb: INFO
+
+app:
+  security:
+    cookie-secure: ${SESSION_COOKIE_SECURE:true}
+    cookie-path: ${SESSION_COOKIE_PATH:/petfood}
+    cookie-same-site: Lax
+    session-ttl: ${SESSION_TTL:7d}
+    otp-ttl: ${OTP_TTL:10m}
+    otp-cooldown: ${OTP_COOLDOWN:1m}
+    otp-max-attempts: ${OTP_MAX_ATTEMPTS:5}
+    rate-limit-pepper: ${RATE_LIMIT_PEPPER}

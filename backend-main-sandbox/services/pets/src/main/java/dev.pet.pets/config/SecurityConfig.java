@@ -40,8 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/pets/me", "/api/v1/pets/me/**").hasRole("USER")
                 .requestMatchers("/api/v1/pets/{id}").authenticated()
                 .requestMatchers("/api/v1/pets/digestion/**").permitAll()
-                .requestMatchers("/api/v1/pets/photos/upload").permitAll()
-                .requestMatchers("/api/v1/pets/photos/download").permitAll()
+                .requestMatchers("/api/v1/pets/photos/**").authenticated()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth ->

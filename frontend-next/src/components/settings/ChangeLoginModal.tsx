@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { MdCheckCircle, MdCancel } from 'react-icons/md';
 import { useAuth } from '../../../context/AuthContext';
+import { apiBaseUrl } from '../../utils/apiClient';
 import styles from '../../styles/SettingsModals.module.css';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 type Step = 'input' | 'code' | 'success' | 'error';
 

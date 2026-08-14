@@ -103,6 +103,7 @@ export const petService = {
   uploadPhotoToStorage: async (url: string, file: File, contentType: string) => {
     const res = await fetch(url, {
       method: 'PUT',
+      credentials: 'include',
       headers: { 'Content-Type': contentType },
       body: file,
     })

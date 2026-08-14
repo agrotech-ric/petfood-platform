@@ -32,6 +32,9 @@ public class RecipeService {
         "vitaminB3", "vitaminB5", "vitaminB6", "vitaminB9", "vitaminB12", "vitaminC", "vitaminK",
         "alphaCarotene", "betaCarotene", "betaCryptoxanthin", "luteinZeaxanthin", "lycopene", "retinol"
     );
+    private static final Set<String> MAXIMIZABLE_NUTRIENT_KEYS = Set.of(
+        "moisture", "protein", "carbs", "fat"
+    );
 
     private final RecipeRepository recipeRepository;
     private final PetRepository petRepository;
@@ -176,9 +179,21 @@ public class RecipeService {
         recipe.setTargetHealthCondition(resolveOptional(
             request.targetHealthConditionId(), healthConditionRepository::findById, "Health condition"
         ));
+        recipe.setTargetDisorder(blankToNull(request.targetDisorder()));
         recipe.setTargetSymptoms(resolveSymptoms(request.symptomIds()));
         recipe.setTargetEnergyKcal(request.targetEnergyKcal());
-        recipe.setMaximizeNutrient(blankToNull(request.maximizeNutrient()));
+        List<String> maximizeNutrients = request.maximizeNutrients() == null
+            ? new ArrayList<>()
+            : request.maximizeNutrients().stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .distinct()
+                .toList();
+        if (!MAXIMIZABLE_NUTRIENT_KEYS.containsAll(maximizeNutrients)) {
+            throw new BadRequestException("Unsupported nutrient selected for maximization");
+        }
+        recipe.setMaximizeNutrients(maximizeNutrients);
 
         boolean calculated = request.calculationResult() != null && !request.calculationResult().isNull();
         recipe.setCalculationResult(calculated ? request.calculationResult() : null);
@@ -357,11 +372,12 @@ public class RecipeService {
             reproductiveStatus == null ? null : reproductiveStatus.getName(),
             healthCondition == null ? null : healthCondition.getId(),
             healthCondition == null ? null : healthCondition.getNameRu(),
+            recipe.getTargetDisorder(),
             recipe.getTargetSymptoms().stream()
                 .map(symptom -> new RecipeResponse.ReferenceItem(symptom.getId(), symptom.getName()))
                 .toList(),
             recipe.getTargetEnergyKcal(),
-            recipe.getMaximizeNutrient(),
+            recipe.getMaximizeNutrients(),
             recipe.getStatus(),
             recipe.getIngredients().stream()
                 .map(item -> new RecipeResponse.IngredientItem(

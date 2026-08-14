@@ -119,9 +119,6 @@ public class PetService {
     public PetResponse create(Jwt jwt, CreatePetRequest req) {
         if (jwt == null) {
             logger.error("JWT is null");
-        } else {
-            logger.debug("JWT Token = {}", jwt.getTokenValue());
-            logger.debug("JWT Claims = {}", jwt.getClaims());
         }
 
         ensureRoleIsOwner(jwt);
@@ -170,8 +167,6 @@ public class PetService {
     @Transactional(readOnly = true)
     public PetResponse getOne(Jwt jwt, UUID id) {
         Pet pet = pets.findById(id).orElseThrow(() -> new NotFoundException("pet not found"));
-        logger.debug("JWT Token = {}", jwt.getTokenValue());
-        logger.debug("JWT Claims = {}", jwt.getClaims());
         if (isAdminOrVet(jwt)) {
             return PetMapper.toDto(pet);
         }
@@ -222,8 +217,6 @@ public class PetService {
 
     @Transactional
     public void delete(Jwt jwt, UUID id) {
-        logger.debug("JWT Token = {}", jwt.getTokenValue());
-        logger.debug("JWT Claims = {}", jwt.getClaims());
         Pet pet = pets.findById(id).orElseThrow(() -> new NotFoundException("pet not found"));
 
         ensureOwner(jwt, pet.getOwnerId());
@@ -744,7 +737,8 @@ public class PetService {
         ensureRoleIsOwner(jwt);
 
         UUID ownerId = getSubject(jwt);
-        String objectKey = photoStorage.buildObjectKey(ownerId, req.getFileName());
+        validatePhotoContentType(req.getContentType());
+        String objectKey = photoStorage.buildObjectKey(ownerId, req.getContentType());
         String url = photoStorage.generateUploadUrl(objectKey, req.getContentType());
 
         return new PresignedUrlResponse(url, objectKey);
@@ -754,10 +748,24 @@ public class PetService {
         Jwt jwt,
         String objectKey
     ) {
-        //        ensureRoleIsOwner(jwt);
-
+        requireOwnedPhotoKey(jwt, objectKey);
         String url = photoStorage.generateDownloadUrl(objectKey);
         return new PresignedUrlResponse(url, objectKey);
+    }
+
+    private void validatePhotoContentType(String contentType) {
+        if (!"image/jpeg".equalsIgnoreCase(contentType) && !"image/png".equalsIgnoreCase(contentType)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST, "Only JPEG and PNG photos are supported"
+            );
+        }
+    }
+
+    private void requireOwnedPhotoKey(Jwt jwt, String objectKey) {
+        String ownerPrefix = "pets/" + getSubject(jwt) + "/";
+        if (objectKey == null || !objectKey.startsWith(ownerPrefix)) {
+            throw new NotFoundException("photo not found");
+        }
     }
 
 

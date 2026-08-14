@@ -63,10 +63,8 @@ export const RECIPE_NUTRIENT_LIMITS = [
 ] as const
 
 export const RECIPE_MAXIMIZE_OPTIONS = [
+  { key: 'moisture', label: 'Влага' },
   { key: 'protein', label: 'Белки' },
-  { key: 'fat', label: 'Жиры' },
   { key: 'carbs', label: 'Углеводы' },
-  { key: 'vitaminA', label: 'Витамин А' },
-  { key: 'calcium', label: 'Кальций' },
-  { key: 'phosphorus', label: 'Фосфор' },
+  { key: 'fat', label: 'Жиры' },
 ] as const

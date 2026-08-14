@@ -1,0 +1,83 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      password:
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: DedupeResponseHeader
+          args:
+            name: Access-Control-Allow-Origin, Access-Control-Allow-Credentials
+            strategy: RETAIN_FIRST
+
+      routes:
+        - id: account-auth-public-prefixed
+          uri: ${ACCOUNT_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/petfood/api/v1/account/register,/petfood/api/v1/account/register/confirm,/petfood/api/v1/account/login/**,/petfood/api/v1/account/password/reset/**
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@clientIpKeyResolver}"
+                redis-rate-limiter.replenishRate: ${AUTH_RATE_REPLENISH_RATE:2}
+                redis-rate-limiter.burstCapacity: ${AUTH_RATE_BURST_CAPACITY:10}
+                redis-rate-limiter.requestedTokens: ${AUTH_RATE_REQUESTED_TOKENS:1}
+
+        - id: account-auth-public
+          uri: ${ACCOUNT_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/account/register,/api/v1/account/register/confirm,/api/v1/account/login/**,/api/v1/account/password/reset/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@clientIpKeyResolver}"
+                redis-rate-limiter.replenishRate: ${AUTH_RATE_REPLENISH_RATE:2}
+                redis-rate-limiter.burstCapacity: ${AUTH_RATE_BURST_CAPACITY:10}
+                redis-rate-limiter.requestedTokens: ${AUTH_RATE_REQUESTED_TOKENS:1}
+
+        - id: account-prefixed
+          uri: ${ACCOUNT_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/petfood/api/v1/account/**
+          filters:
+            - StripPrefix=1
+
+        - id: pets-prefixed
+          uri: ${PETS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/petfood/api/v1/pets/**,/petfood/api/v1/ingredients/**,/petfood/api/v1/recipes/**
+          filters:
+            - StripPrefix=1
+
+        - id: recommender-prefixed
+          uri: ${RECOMMENDER_SERVICE_URL:http://localhost:8000}
+          predicates:
+            - Path=/petfood/recommender/**
+          filters:
+            - StripPrefix=2
+
+        - id: recommender
+          uri: ${RECOMMENDER_SERVICE_URL:http://localhost:8000}
+          predicates:
+            - Path=/recommender/**
+          filters:
+            - StripPrefix=1
+
+        - id: account
+          uri: ${ACCOUNT_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/account/**
+
+        - id: pets
+          uri: ${PETS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/pets/**,/api/v1/ingredients/**,/api/v1/recipes/**
+
+        - id: auth-jwks
+          uri: ${AUTH_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/.well-known/jwks.json

@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdChevronLeft } from 'react-icons/md';
 import { useTranslation } from '../../context/LanguageContext';
+import { apiBaseUrl } from '../utils/apiClient';
 import styles from '../styles/Help.module.css';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 export const Help = () => {
   const navigate = useNavigate();

@@ -3,6 +3,7 @@ package dev.pet.account.api;
 import dev.pet.account.domain.AdminAction;
 import dev.pet.account.dto.*;
 import dev.pet.account.service.AccountService;
+import dev.pet.account.config.SessionCookieFactory;
 import jakarta.servlet.http.HttpServletResponse;
 import dev.pet.account.dto.BioOwnerResponse;
 import jakarta.validation.Valid;
@@ -33,10 +34,12 @@ public class AccountController {
 
     private final AccountService accounts;
     private final AdminAuditService audit;
+    private final SessionCookieFactory sessionCookies;
 
-    public AccountController(AccountService accounts, AdminAuditService audit) {
+    public AccountController(AccountService accounts, AdminAuditService audit, SessionCookieFactory sessionCookies) {
         this.accounts = accounts;
         this.audit = audit;
+        this.sessionCookies = sessionCookies;
     }
 
     @PostMapping("/register")
@@ -52,13 +55,7 @@ public class AccountController {
     ) {
         String sid = accounts.confirmRegistrationByEmail(req.email(), req.code());
 
-        ResponseCookie cookie = ResponseCookie.from("sid", sid)
-            .httpOnly(true)
-            .secure(false)
-            .sameSite("Lax")
-            .path("/")
-            .maxAge(Duration.ofDays(7))
-            .build();
+        ResponseCookie cookie = sessionCookies.create(sid);
 
         response.addHeader("Set-Cookie", cookie.toString());
         return ResponseEntity.ok(Map.of("status", "verified"));
@@ -85,20 +82,11 @@ public class AccountController {
 
         String sid = result.getSid();
 
-        ResponseCookie cookie = ResponseCookie.from("sid", sid)
-            .httpOnly(true)
-            .secure(false)
-            .sameSite("Lax")
-            .path("/")
-            .maxAge(Duration.ofDays(7))
-            .build();
+        ResponseCookie cookie = sessionCookies.create(sid);
 
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return ResponseEntity.ok(Map.of(
-            "status", "logged_in",
-            "sid", sid
-        ));
+        return ResponseEntity.ok(Map.of("status", "logged_in"));
     }
 
 
@@ -113,13 +101,7 @@ public class AccountController {
 
         String sid = accounts.loginConfirm2fa(req, ip, ua);
 
-        ResponseCookie cookie = ResponseCookie.from("sid", sid)
-            .httpOnly(true)
-            .secure(false)
-            .sameSite("Lax")
-            .path("/")
-            .maxAge(Duration.ofDays(7))
-            .build();
+        ResponseCookie cookie = sessionCookies.create(sid);
 
         response.addHeader("Set-Cookie", cookie.toString());
 
@@ -137,13 +119,7 @@ public class AccountController {
             accounts.logout(sid);
         }
 
-        ResponseCookie cookie = ResponseCookie.from("sid", "")
-            .httpOnly(true)
-            .secure(false)
-            .sameSite("Lax")
-            .path("/")
-            .maxAge(Duration.ZERO)
-            .build();
+        ResponseCookie cookie = sessionCookies.clear();
 
         response.addHeader("Set-Cookie", cookie.toString());
 
@@ -215,13 +191,7 @@ public class AccountController {
             var accountId = UUID.fromString(jwt.getSubject());
             accounts.selfDeleteAccount(accountId, sid);
     
-            ResponseCookie cookie = ResponseCookie.from("sid", "")
-                .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(Duration.ZERO)
-                .build();
+            ResponseCookie cookie = sessionCookies.clear();
     
             response.addHeader("Set-Cookie", cookie.toString());
     

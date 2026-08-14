@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InputField from './InputField';
+import { apiBaseUrl } from '../utils/apiClient';
 import styles from '../styles/ForgotPasswordModal.module.css';
 
 type ForgotPasswordModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
   const navigate = useNavigate();
@@ -116,4 +115,3 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
 };
 
 export default ForgotPasswordModal;
-

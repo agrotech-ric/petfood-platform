@@ -27,13 +27,8 @@ public class MinioPetPhotoStorageService implements PetPhotoStorage {
     }
 
     @Override
-    public String buildObjectKey(UUID ownerId, String originalFilename) {
-        String filename = originalFilename == null ? "" : originalFilename.trim();
-        String extension = "";
-        int dotIndex = filename.lastIndexOf('.');
-        if (dotIndex >= 0 && dotIndex < filename.length() - 1) {
-            extension = filename.substring(dotIndex);
-        }
+    public String buildObjectKey(UUID ownerId, String contentType) {
+        String extension = "image/png".equalsIgnoreCase(contentType) ? ".png" : ".jpg";
         return "pets/" + ownerId + "/" + UUID.randomUUID() + extension;
     }
 

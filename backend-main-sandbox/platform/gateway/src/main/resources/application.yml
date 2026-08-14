@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: classpath:application-routes.yml
   profiles:
     default: dev
 
@@ -19,6 +21,10 @@ app:
     read-timeout-ms: 2000
 
   security:
+    public-prefix: ${PUBLIC_PATH_PREFIX:/petfood}
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGIN:https://agrotech.astanait.edu.kz}
+    trusted-proxies: ${TRUSTED_PROXY_ADDRESSES:}
     public-paths:
       - /ping
       - /.well-known/jwks.json
@@ -31,3 +37,8 @@ app:
       - /api/v1/account/login/phone/confirm
 
       - /api/v1/account/password/reset/**
+
+  rate-limit:
+    replenish-rate: ${AUTH_RATE_REPLENISH_RATE:2}
+    burst-capacity: ${AUTH_RATE_BURST_CAPACITY:10}
+    requested-tokens: ${AUTH_RATE_REQUESTED_TOKENS:1}

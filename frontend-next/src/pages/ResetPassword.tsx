@@ -3,11 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useResetPasswordForm } from '../hooks/useResetPasswordForm';
 import { RESET_PASSWORD_TEXT, RESET_PASSWORD_CONFIG } from '../const/resetPassword';
 import { RESET_PASSWORD_ERRORS } from '../utils/resetPasswordValidator';
+import { apiBaseUrl } from '../utils/apiClient';
 import InputField from '../components/InputField';
 import PasswordInputField from '../components/PasswordInputField';
 import styles from '../styles/ResetPassword.module.css';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -150,4 +149,3 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
-
