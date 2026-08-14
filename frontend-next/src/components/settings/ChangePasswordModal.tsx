@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { MdCheckCircle, MdCancel } from 'react-icons/md';
 import { Eye, EyeOff } from 'lucide-react';
+import { apiBaseUrl } from '../../utils/apiClient';
 import { validatePassword } from '../../utils/userFormValidator';
 import styles from '../../styles/SettingsModals.module.css';
 import inputStyles from '../../styles/InputField.module.css';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 type Step = 'input' | 'code' | 'success' | 'error';
 

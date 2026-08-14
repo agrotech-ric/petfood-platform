@@ -38,6 +38,10 @@ For UI changes also check:
 - loading, empty, error, and disabled states relevant to the flow;
 - navigation and authenticated route behavior.
 
+For deployment-path changes, build once with `VITE_PUBLIC_BASE=/petfood/` and
+verify asset URLs plus a refreshed nested route. Local development must continue
+to work with `VITE_PUBLIC_BASE=/`.
+
 ## Backend
 
 Run all sandbox tests:
@@ -59,6 +63,21 @@ bash ./gradlew :platform:gateway:test
 
 After rebuilding a changed service, check its startup logs for Flyway,
 authorization, and dependency errors.
+
+For security-boundary changes also verify:
+
+- seeded OTP, SID, JWT, Cookie, and Authorization values are absent from logs;
+- untrusted origins receive no permissive CORS headers;
+- auth limits return HTTP 429 without forwarding excess requests;
+- owner and non-owner photo access produce the specified results;
+- internal service ports are absent from `docker compose ... ps` host bindings.
+
+With the sandbox running, execute the repeatable boundary smoke test. It creates
+and removes a temporary account and photo:
+
+```bash
+bash scripts/security-boundary-smoke.sh
+```
 
 ## Recommender
 

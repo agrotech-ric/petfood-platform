@@ -51,10 +51,11 @@ public class AccountService {
     private final EmailProducer emailProducer;
     private final AuditLogService auditLogService;
     private final SupportRequestRepository supportRequests;
+    private final OtpGuard otpGuard;
 
 
 
-    public AccountService(UserRepository users, PasswordEncoder encoder, StringRedisTemplate redis, LoginEventRepository loginEvents, EmailProducer emailProducer, AuditLogService auditLogService, SupportRequestRepository supportRequests) {
+    public AccountService(UserRepository users, PasswordEncoder encoder, StringRedisTemplate redis, LoginEventRepository loginEvents, EmailProducer emailProducer, AuditLogService auditLogService, SupportRequestRepository supportRequests, OtpGuard otpGuard) {
         this.users = users;
         this.encoder = encoder;
         this.redis = redis;
@@ -62,6 +63,7 @@ public class AccountService {
         this.emailProducer = emailProducer;
         this.auditLogService = auditLogService;
         this.supportRequests = supportRequests;
+        this.otpGuard = otpGuard;
     }
 
     private void logLogin(UUID userId, String ip, String ua, boolean success) {
@@ -129,16 +131,13 @@ public class AccountService {
 
 
     private void sendRegistrationCode(String email) {
+        otpGuard.acquireIssuePermit("registration", email);
         String code = CodeGenerator.numeric6();
 
         String key = RedisKeys.confirmCode(email);
         redis.opsForValue().set(key, code, Duration.ofMinutes(10));
 
-        String cooldownKey = RedisKeys.confirmCodeCooldown(email);
-        redis.opsForValue().set(cooldownKey, "1", Duration.ofMinutes(1));
-
         emailProducer.sendConfirmCode(email, code);
-        System.out.println("[DEV] REG CONFIRM for " + email + " code=" + code);
     }
 
 
@@ -168,10 +167,7 @@ public class AccountService {
         }
 
         if (!stored.equals(code)) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Invalid verification code"
-            );
+            otpGuard.recordFailedAttempt("registration", email, key);
         }
 
         User user = users.findByEmail(email)
@@ -184,7 +180,7 @@ public class AccountService {
         }
 
         redis.delete(key);
-        redis.delete(RedisKeys.confirmCodeCooldown(email));
+        otpGuard.clear("registration", email);
 
         String sid = UUID.randomUUID().toString();
         String sessionKey = "session:" + sid;
@@ -346,7 +342,7 @@ public class AccountService {
     }
     @Transactional
     public String loginConfirm2fa(TwoFaRequest req, String ip, String ua) {
-        String email = req.getEmail();
+        String email = req.getEmail().trim().toLowerCase();
         String code = req.getCode();
 
         String key = RedisKeys.twoFaCode(email);
@@ -354,13 +350,14 @@ public class AccountService {
 
         if (stored == null || !stored.equals(code)) {
             users.findByEmail(email).ifPresent(u -> logLogin(u.getId(), ip, ua, false));
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired code");
+            otpGuard.recordFailedAttempt("twofa", email, key);
         }
 
         User user = users.findByEmail(email)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         redis.delete(key);
+        otpGuard.clear("twofa", email);
 
         String sid = UUID.randomUUID().toString();
         String sessionKey = "session:" + sid;
@@ -376,7 +373,7 @@ public class AccountService {
 
     @Transactional
     public LoginResult loginOrStart2fa(LoginRequest req, String ip, String ua) {
-        String email = req.getEmail();
+        String email = req.getEmail().trim().toLowerCase();
         String password = req.getPassword();
 
         User user = users.findByEmail(email)
@@ -392,6 +389,7 @@ public class AccountService {
         }
 
         if (user.isEnable2fa()) {
+            otpGuard.acquireIssuePermit("twofa", email);
             String code = CodeGenerator.numeric6();
             redis.opsForValue().set(
                 RedisKeys.twoFaCode(email),
@@ -400,8 +398,6 @@ public class AccountService {
             );
 
             emailProducer.sendTwofaCode(email, code);
-
-            System.out.println("[DEV] 2FA code for " + email + " = " + code);
 
             logLogin(user.getId(), ip, ua, true);
 
@@ -703,10 +699,15 @@ public class AccountService {
         }
 
         String email = req.email().trim().toLowerCase();
+        otpGuard.acquireIssuePermit("password-reset", email);
+
+        Optional<User> candidate = users.findByEmail(email);
+        if (candidate.isEmpty()) {
+            return;
+        }
 
         if (req.newPassword() != null && !req.newPassword().isBlank()) {
-            User user = users.findByEmail(email).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            User user = candidate.get();
             validateNewPasswordCandidate(user, req.newPassword());
         }
 
@@ -718,7 +719,6 @@ public class AccountService {
         );
 
         emailProducer.sendPasswordResetCode(email, code);
-        System.out.println("[DEV] password reset code (email) for " + email + " = " + code);
     }
 
     @Transactional
@@ -735,9 +735,7 @@ public class AccountService {
         String stored = redis.opsForValue().get(key);
 
         if (stored == null || !stored.equals(req.code())) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "Invalid or expired code"
-            );
+            otpGuard.recordFailedAttempt("password-reset", email, key);
         }
 
         User u = users.findByEmail(email).orElseThrow(() ->
@@ -751,6 +749,7 @@ public class AccountService {
         u.setPasswordHash(encoder.encode(req.newPassword()));
         users.save(u);
         redis.delete(key);
+        otpGuard.clear("password-reset", email);
 
         if (u.getEmail() != null && !u.getEmail().isBlank()) {
             emailProducer.sendPasswordChanged(u.getEmail());

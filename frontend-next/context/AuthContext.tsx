@@ -1,5 +1,6 @@
 import { useContext, createContext, useState, ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiBaseUrl } from "../src/utils/apiClient";
 
 export type UserRole = 'USER' | 'ADMIN' | 'VET';
 
@@ -29,8 +30,6 @@ type AuthContextType = {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -239,4 +238,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

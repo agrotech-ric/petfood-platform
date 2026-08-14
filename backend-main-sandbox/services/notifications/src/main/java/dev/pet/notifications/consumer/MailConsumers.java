@@ -21,8 +21,7 @@ public class MailConsumers {
     public void onConfirm(String json) throws Exception {
         var msg = om.readValue(json, EmailMessage.class);
 
-        System.out.printf("[MAILER] CONFIRM → To:%s | Subject:%s | Code:%s%n",
-            msg.to(), msg.subject(), msg.vars() == null ? null : msg.vars().get("code"));
+        System.out.println("[MAILER] Processing confirmation email");
 
         String code = codeFrom(msg);
         String lead = msg.subject() != null && msg.subject().contains("новый")
@@ -37,8 +36,7 @@ public class MailConsumers {
     public void onTwofa(String json) throws Exception {
         var msg = om.readValue(json, EmailMessage.class);
 
-        System.out.printf("[MAILER] 2FA    → To:%s | Subject:%s | Code:%s%n",
-            msg.to(), msg.subject(), msg.vars() == null ? null : msg.vars().get("code"));
+        System.out.println("[MAILER] Processing two-factor email");
 
         String code = codeFrom(msg);
         String lead = "Вы входите с включённой двухфакторной аутентификацией. Введите код ниже в форме входа.";
@@ -51,8 +49,7 @@ public class MailConsumers {
     public void onPasswordReset(String json) throws Exception {
         var msg = om.readValue(json, EmailMessage.class);
 
-        System.out.printf("[MAILER] RESET  → To:%s | Subject:%s | Code:%s%n",
-            msg.to(), msg.subject(), msg.vars() == null ? null : msg.vars().get("code"));
+        System.out.println("[MAILER] Processing password reset email");
 
         String code = codeFrom(msg);
         String lead = "Вы запросили восстановление пароля. Введите код на странице сброса пароля.";
@@ -65,8 +62,7 @@ public class MailConsumers {
     public void onPasswordChanged(String json) throws Exception {
         var msg = om.readValue(json, EmailMessage.class);
 
-        System.out.printf("[MAILER] PWDCH  → To:%s | Subject:%s%n",
-            msg.to(), msg.subject());
+        System.out.println("[MAILER] Processing password changed email");
 
         String body = "Пароль вашей учётной записи был успешно изменён.\n\n"
             + "Если это были не вы, срочно свяжитесь с поддержкой и восстановите доступ.";
@@ -79,8 +75,7 @@ public class MailConsumers {
     public void onRecommendation(String json) throws Exception {
         var msg = om.readValue(json, EmailMessage.class);
 
-        System.out.printf("[MAILER] RECOMM → To:%s | Subject:%s%n",
-            msg.to(), msg.subject());
+        System.out.println("[MAILER] Processing recommendation email");
 
         mailer.sendHtml(
             msg.to(),

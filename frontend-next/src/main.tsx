@@ -9,13 +9,16 @@ import './styles.css'
 initTheme()
 initLocale()
 
+const routerBase = import.meta.env.BASE_URL === '/'
+  ? '/'
+  : import.meta.env.BASE_URL.replace(/\/$/, '')
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={routerBase}>
       <ThemeProvider>
         <App />
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )
-

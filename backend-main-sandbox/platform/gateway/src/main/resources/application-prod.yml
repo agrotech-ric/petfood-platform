@@ -1,0 +1,6 @@
+app:
+  security:
+    public-prefix: /petfood
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGIN:https://agrotech.astanait.edu.kz}
+    trusted-proxies: ${TRUSTED_PROXY_ADDRESSES:}

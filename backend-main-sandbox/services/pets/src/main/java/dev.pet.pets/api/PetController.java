@@ -47,8 +47,6 @@ public class PetController {
     @PostMapping
     public PetResponse create(@AuthenticationPrincipal Jwt jwt,
                               @Valid @RequestBody CreatePetRequest req) {
-        System.out.println("JWT Token = " + jwt.getTokenValue());
-        System.out.println("JWT Claims = " + jwt.getClaims());
         return service.create(jwt, req);
     }
 

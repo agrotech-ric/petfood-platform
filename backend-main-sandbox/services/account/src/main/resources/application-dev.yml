@@ -12,6 +12,10 @@ logging:
     com.rabbitmq: DEBUG
 
 app:
+  security:
+    cookie-secure: false
+    cookie-path: /
+    rate-limit-pepper: ${RATE_LIMIT_PEPPER:local-development-only}
   mail:
     exchange: mail.x
     rk:

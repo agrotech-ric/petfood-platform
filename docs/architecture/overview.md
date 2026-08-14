@@ -3,8 +3,9 @@
 ## System context
 
 The active beta system is a modular application deployed as separate
-containers. The React frontend talks to the Spring gateway for application APIs
-and to the FastAPI service for calculation endpoints.
+containers. The React frontend sends all backend and calculation traffic
+through the Spring gateway. Internal services are reachable only on the
+application network and must not publish host ports.
 
 ```text
                        +--------------------+
@@ -17,8 +18,8 @@ Browser -- /api ------>| Gateway            |
    |                    +----+----+       |   MinIO
    |                         |            |
    |                       Redis      PostgreSQL
-   |
-   +-- /recommender --> FastAPI recommender
+                          |
+                          +------> FastAPI recommender
 
 Account / Pets --> RabbitMQ --> Notifications --> SMTP
 ```
@@ -48,10 +49,17 @@ of adding page-local `fetch` calls.
 
 The browser holds an opaque `sid` cookie. The gateway exchanges it with the auth
 service and forwards a short-lived JWT to protected downstream services.
+Browser-supplied bearer credentials are replaced by the session-derived JWT.
+Public authentication routes are rate-limited at the gateway, while the account
+service applies identity-scoped OTP cooldown and attempt controls.
 
 Public paths are configured in the gateway. A route must only be public when its
 controller and service do not require authenticated JWT data. Pets and account
 services also enforce authorization independently.
+
+Production is served below `/petfood/`: application APIs use `/petfood/api` and
+recommender calls use `/petfood/recommender`. The gateway removes the deployment
+prefix before routing. Local development remains root-based.
 
 ### Account service
 
@@ -66,6 +74,8 @@ Owns pet profiles and reference data, health records, contraindications, foods,
 favorites, photo keys, ingredients, and recipes.
 
 - Pet resources are checked against the JWT subject and role.
+- Pet photos are private owner resources. Filesystem keys are generated beneath
+  the authenticated owner's prefix and photo responses are not publicly cached.
 - System ingredients are global and read-only.
 - User ingredients belong to their creator and are not exposed to other users.
 - Recipes belong to their creator and may reference only accessible
@@ -78,7 +88,7 @@ new migration with the next available version.
 
 ### Recommender
 
-`nutrient-recommender-main/` is a FastAPI service responsible for breed lookup,
+`nutrient-recommender-main/` is a private FastAPI service responsible for breed lookup,
 calorie and nutrient calculations, disorder recommendations, and recipe
 optimization. The frontend integration is in
 `frontend-next/services/recommenderService.ts`.
@@ -111,6 +121,7 @@ not by reading another service's tables directly.
 ## Durable design rules
 
 - Keep beta and main runtime state isolated.
+- Keep the gateway as the only host-published backend service.
 - Treat controller/DTO/service/frontend types as one API contract.
 - Enforce ownership on the backend even when the UI filters resources.
 - Put persistent schema evolution in Flyway migrations.

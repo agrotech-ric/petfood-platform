@@ -1,4 +1,7 @@
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL
+export const apiBaseUrl = configuredApiBase?.trim()
+  ? configuredApiBase.trim().replace(/\/$/, '')
+  : (import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, ''))
 
 const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 15000): Promise<Response> => {
   const controller = new AbortController()

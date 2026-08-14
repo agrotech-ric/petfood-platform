@@ -13,9 +13,9 @@ cp frontend-next/.env.example frontend-next/.env
 ./run-beta.sh status
 ```
 
-Set the frontend proxy targets in `frontend-next/.env` to the sandbox gateway
-and recommender reachable from the machine running the browser. See
-`README_SANDBOX_BACKEND.md` for the currently assigned endpoints.
+Set the frontend proxy target in `frontend-next/.env` to the sandbox gateway
+reachable from the machine running the browser. Recommender requests also pass
+through this gateway; do not configure browsers to call its container directly.
 
 The frontend container mounts the repository, so source changes are normally
 picked up by Vite HMR. Dependency changes require a container restart so that
@@ -62,8 +62,9 @@ docker logs pets_sandbox_notifications_service --tail 100
 ```
 
 When registration mail is unavailable, inspect account and notification logs.
-Development registration codes are printed by account-service; do not add this
-behavior to production documentation or expose codes outside development.
+OTP values are never written to application logs. When email delivery is
+unavailable, inspect sanitized delivery outcomes and RabbitMQ connectivity,
+then use a controlled test mail sink rather than recovering codes from logs.
 
 For database or migration failures, inspect the affected service logs before
 changing Flyway files. Never edit a migration that may already have run.
@@ -74,6 +75,24 @@ changing Flyway files. Never edit a migration that may already have run.
 - `frontend-next/.env`: frontend base URL and proxy targets.
 - `.env.example` files: safe placeholders and documented keys only.
 - Never commit real passwords, SMTP keys, cookies, or tokens.
+- Local HTTP uses a root-scoped non-Secure session cookie. Production must set
+  the `prod` profile and uses a Secure cookie scoped to `/petfood`.
+- Credentialed CORS is exact-match only. Local defaults include the LAN frontend
+  origin, localhost, and loopback; production allows only the official origin.
+
+## Private-service diagnostics
+
+Backend services other than the gateway do not publish host ports. Diagnose
+them through container health, logs, or an in-network request:
+
+```bash
+docker compose -f docker-compose.sandbox.yml exec gateway-service-sandbox \
+  wget -qO- http://pets-service-sandbox:8083/actuator/health
+```
+
+Do not temporarily expose an internal service on all interfaces. If direct
+debugging is unavoidable, use a local override bound to `127.0.0.1` and remove
+it after the session.
 
 ## Resetting sandbox data
 

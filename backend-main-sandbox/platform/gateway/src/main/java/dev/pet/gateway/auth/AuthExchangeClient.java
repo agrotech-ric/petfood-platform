@@ -25,16 +25,16 @@ public class AuthExchangeClient {
     }
 
     public Mono<SidExchangeResponse> exchangeSid(String sid) {
-        log.debug("Exchanging SID with Auth: {}", sid);
+        log.debug("Exchanging browser session with auth service");
         return webClient.post()
             .uri(props.getAuth().getExchangePath())
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(new SidExchangeRequest(sid))
             .retrieve()
             .bodyToMono(SidExchangeResponse.class)
-            .doOnNext(resp -> log.debug("Got JWT from Auth, len={}", resp.getToken() == null ? 0 : resp.getToken().length()))
+            .doOnNext(resp -> log.debug("Auth exchange completed: tokenPresent={}", resp.getToken() != null))
             .onErrorResume(WebClientResponseException.class, ex -> {
-                log.warn("Auth responded {}: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+                log.warn("Auth exchange rejected with status {}", ex.getStatusCode());
                 return Mono.empty();
             })
             .onErrorResume(ex -> {

@@ -63,7 +63,7 @@ Browser (React/Vite)
   |                       |-- Auth service
   |                       `-- Pets service ----> PostgreSQL / MinIO
   |
-  `-- /recommender --> FastAPI recommender
+                          `-- FastAPI recommender
 
 Account/Pets services --> RabbitMQ --> Notifications service --> SMTP
 Sessions and signing data --> Redis
