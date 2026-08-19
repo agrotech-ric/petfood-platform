@@ -170,6 +170,8 @@ export const vetService = {
     disorder: string;
     age: number;
     age_metric: 'years' | 'months';
+    weight: number;
+    target_kcal?: number;
   }): Promise<DisorderRecommendation> {
     try {
       const normalizedRequest = {
