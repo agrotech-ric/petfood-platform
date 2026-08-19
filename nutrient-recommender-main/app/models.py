@@ -134,8 +134,9 @@ class DisorderRecommendationsResponse(BaseModel):
     disorder: str = Field(..., description="Disorder name")
     disorder_type: str = Field(..., description="Disorder category")
     breed_size: str = Field(..., description="Breed size category")
-    recommended_ingredients: List[str] = Field(..., description="Top recommended ingredients")
+    ingr_ranges: Dict[str, Dict[str, float]] = Field(..., description="Recommended ingredient ranges")
     nutrients_ranges: Dict[str, NutrientRangeSimple] = Field(..., description="Recommend optimal nutrient levels")
+    maxim_main_nutr: List[str] = Field(..., description="Main nutrients to maximize")
 
 
 class RecipeIngredient(BaseModel):

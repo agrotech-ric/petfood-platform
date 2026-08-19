@@ -14,7 +14,7 @@ from app.utils import (
     load_data, build_unsup_ml_model, get_disorder_keywords,
     
     ingr_nutr_food_find, ingredients_category_nutrient_analysis, define_ingredients, 
-    transl_ingredient,transl_nutr
+    transl_ingredient,transl_nutr,select_missing_ingredients
 )
 
 from app.kcal_calculate import (
@@ -156,40 +156,6 @@ async def calculate_calories(request: DogInfoRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/calculate/protein", response_model=ProteinRequirementResponse, tags=["Calculations"])
-async def calculate_protein(request: DogInfoRequest, target_kcal: float):
-    """Calculate daily protein requirements"""
-    try:
-        _, disease_df, _, _, _   = load_data()
-
-        breed_data = disease_df[disease_df["Breed"] == request.breed]
-        if breed_data.empty:
-            raise HTTPException(status_code=404, detail=f"Breed '{request.breed}' not found")
-
-        min_weight = breed_data["min_weight"].values[0]
-        max_weight = breed_data["max_weight"].values[0]
-        avg_weight = (min_weight + max_weight) / 2
-
-        size_categ = size_category(avg_weight)
-        age_type_categ = age_type_category(size_categ, request.age, request.age_metric.value)
-
-        reproductive_status = request.reproductive_status.value if request.reproductive_status else None
-
-        protein_grams = protein_need_calc(
-            kkal=target_kcal,
-            age_type_categ=age_type_categ,
-            w=request.weight,
-            reproductive_status=reproductive_status,
-            age=request.age,
-            age_mesuare_type=request.age_metric.value
-        )
-
-        return ProteinRequirementResponse(daily_protein_grams=protein_grams)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.post("/calculate/nutrients", response_model=NutrientNormsResponse, tags=["Calculations"])
 async def calculate_nutrient_norms(request: DogInfoRequest, target_kcal: float):
@@ -224,6 +190,164 @@ async def calculate_nutrient_norms(request: DogInfoRequest, target_kcal: float):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def additional_lp_calc(reproductive_status, kkal, age_type_categ, weight, ingr_ranges, nutrient_ranges, maximize_nutrients):
+    """Optimize recipe using linear programming with nutrient constraint maximization."""
+    _, disease_df, merge_tab_df, ingredients_df, nutrients_transl = load_data()
+
+    norms = get_other_nutrient_norms(
+        kkal=kkal,
+        age_type_categ=age_type_categ,
+        w=weight,
+        reproductive_status=reproductive_status
+    )
+
+    # Prepare nutrient columns
+    main_nutrs = ['moisture_per', 'protein_per', 'carbohydrate_per', 'fats_per']
+    other_nutrients_1 = ['ash_g', 'fiber_g', 'cholesterol_mg', 'total_sugar_g']
+    other_nutrients_2 = ['choline_mg', 'selenium_mcg', 'iodine_mcg', 'linoleic_acid_g', 'alpha_linolenic_acid_g', 'arachidonic_acid_g', 'epa_g', 'dha_g']
+    other_nutrients = other_nutrients_1 + other_nutrients_2
+    major_minerals = ['calcium_mg', 'phosphorus_mg', 'magnesium_mg', 'sodium_mg', 'potassium_mg', 'iron_mg', 'copper_mg', 'zinc_mg', 'manganese_mg']
+    vitamins = ['vitamin_a_mcg', 'vitamin_e_mg', 'vitamin_d_mcg', 'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b5_mg', 
+                'vitamin_b6_mg', 'vitamin_b9_mcg', 'vitamin_b12_mcg', 'vitamin_c_mg', 'vitamin_k_mcg']
+
+    all_nutrs = main_nutrs + major_minerals + vitamins + other_nutrients
+
+    get_en_name = {
+        'Влага': 'moisture_per', 
+        'Белки': 'protein_per', 
+        'Углеводы': 'carbohydrate_per',
+        'Жиры': 'fats_per'
+    }
+    
+    # Create food dict
+    food = ingredients_df.set_index("full_name_ingredient")[all_nutrs].to_dict(orient='index') 
+    food_keys = set(food.keys())
+
+    if len(ingr_ranges) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Выберите хотя бы один ингредиент.",
+        )
+
+    ingredient_names = [transl_ingredient(ing.ingredient, "en") for ing in ingr_ranges]
+    nutr_ranges = {get_en_name.get(nr.nutrient, nr.nutrient): (nr.min_value, nr.max_value) for nr in nutrient_ranges}
+    maximize_nutrients = [get_en_name.get(nr, nr) for nr in maximize_nutrients] if maximize_nutrients else ["moisture_per", "protein_per"]
+
+    ingr_ranges_data = [(ing.min_percent, ing.max_percent) for ing in ingr_ranges]
+    lowest = sum([low for (low, high) in ingr_ranges_data])
+    highest = sum([high for (low, high) in ingr_ranges_data])
+   
+    if lowest > 100:
+        factor = 99 / lowest
+        ingr_ranges_data = [(low * factor, high) for (low, high) in ingr_ranges_data]
+    elif highest < 100:
+        factor = 101 / highest
+        ingr_ranges_data = [(low, high * factor) for (low, high) in ingr_ranges_data]
+        
+    # Build LP problem
+    A = [
+        [food[ing][nutr]/100 if val > 0 else -food[ing][nutr]/100
+         for ing in ingredient_names]
+        for nutr in nutr_ranges
+        for val in (-nutr_ranges[nutr][0], nutr_ranges[nutr][1])
+    ]
+    b = [
+        val/100 for nutr in nutr_ranges
+        for val in (-nutr_ranges[nutr][0], nutr_ranges[nutr][1])
+    ]
+
+    A_eq = [[1 for _ in ingredient_names]]
+    b_eq = [1.0]
+    bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges_data]
+
+    # Objective function: maximize selected nutrients
+    f = [-sum(food[i][nutr] for nutr in maximize_nutrients if nutr in food[i])
+         for i in ingredient_names]
+
+    # Try linear programming
+    res = linprog(f, A_ub=A, b_ub=b, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
+
+    if res.success:
+        # Success - format response
+        result = {name: round(val * 100, 2) for name, val in zip(ingredient_names, res.x)}
+
+        nutrients_100g = {
+            nutr: round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)), 2)
+            for nutr in main_nutrs
+        }
+
+        energy_100g = (3.5 * nutrients_100g["protein_per"] +
+                       8.5 * nutrients_100g["fats_per"] +
+                       3.5 * nutrients_100g["carbohydrate_per"])
+
+        needed_feed_g = (kkal * 100) / energy_100g
+
+        ingredients_required = {
+            name: round((weight * needed_feed_g / 100), 2)
+            for name, weight in result.items()
+        }
+
+        count_nutr_cont_all = {
+            nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()), 2)
+            for nutr in all_nutrs
+        }
+
+        needed = {norm_nut: norms[norm_nut] - count_nutr_cont_all.get(norm_nut, 0) 
+                  for norm_nut in norms.keys() if count_nutr_cont_all.get(norm_nut, 100000) < norms[norm_nut]}
+
+        deficit_info = {
+            nutr: {
+                "deficit": deficit,
+                "deficit_percent": deficit / norms[nutr] * 100,
+                "deficit_per_100g": deficit * 100 / needed_feed_g
+            }
+            for nutr, deficit in needed.items()
+        }
+
+        return deficit_info
+
+    else:
+        fallback_method = "combinatory search"
+        best_recipe = calc_recipe(ingr_ranges_data, nutr_ranges, ingredient_names, food)
+
+        if best_recipe is None:
+            raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
+
+        values, totals = best_recipe
+        nutrients_100g = totals
+
+        energy_100g = (3.5 * nutrients_100g["protein_per"] +
+                       8.5 * nutrients_100g["fats_per"] +
+                       3.5 * nutrients_100g["carbohydrate_per"])
+
+        needed_feed_g = (kkal * 100) / energy_100g
+
+        ingredients_required = {
+            name: round((weight * needed_feed_g / 100), 2)
+            for name, weight in values.items()
+        }
+
+        all_nutrients = main_nutrs + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
+        count_nutr_cont_all = {
+            nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()), 2)
+            for nutr in all_nutrients
+        }
+
+        needed = {norm_nut: norms[norm_nut] - count_nutr_cont_all.get(norm_nut, 0) 
+                  for norm_nut in norms.keys() if count_nutr_cont_all.get(norm_nut, 100000) < norms[norm_nut]}
+        
+        deficit_info = {
+            nutr: {
+                "deficit": deficit,
+                "deficit_percent": deficit / norms[nutr] * 100,
+                "deficit_per_100g": deficit * 100 / needed_feed_g
+            }
+            for nutr, deficit in needed.items()
+        }
+
+        return deficit_info
+
+
 @app.post("/recommendations/disorder", response_model=DisorderRecommendationsResponse, tags=["Recommendations"])
 async def get_disorder_recommendations(request: DisorderRequest):
     """Get ingredient and nutrient recommendations based on breed disorder"""
@@ -232,6 +356,8 @@ async def get_disorder_recommendations(request: DisorderRequest):
         model_encoding, corpus_embeddings, dog_food_df = build_unsup_ml_model()
 
         disorder_keywords = get_disorder_keywords()
+        reproductive_status = request.reproductive_status.value if request.reproductive_status else None
+        kkal = request.target_kcal
 
         # Get breed and disorder info
         breed_data = disease_df[disease_df["Breed"] == request.breed]
@@ -273,13 +399,47 @@ async def get_disorder_recommendations(request: DisorderRequest):
         
         carb_max = 100 - nutr_ranges['protein_per']["min"] - nutr_ranges['fats_per']["min"] - nutr_ranges['moisture_per']["min"]
         nutr_ranges['carbohydrate_per'] = {"min": 5, "max": int(carb_max)}
+
+        proteins = ingredients_df[ingredients_df["category_ru"].isin(["Яйца и молочные продукты", "Мясо"])]["ingredient_format_cat"].tolist()
+        oils = ingredients_df[ingredients_df["category_ru"].isin(["Масло и жир"])]["ingredient_format_cat"].tolist()
+        carbonates_cer = ingredients_df[ingredients_df["category_ru"].isin(["Крупы"])]["ingredient_format_cat"].tolist()
+        carbonates_veg = ingredients_df[ingredients_df["category_ru"].isin(["Овощи и фрукты"])]["ingredient_format_cat"].tolist()
+        carbonates_grace = ingredients_df[ingredients_df["category_ru"].isin(["Зелень и специи"])]["ingredient_format_cat"].tolist()
+        other = ingredients_df[ingredients_df["category_ru"].isin(["Вода, соль и сахар"])]["ingredient_format_cat"].tolist()
         
+        ingr_ranges = {}
+        for ingr in finish_ingr_list_norm_name:
+            if ingr in proteins:
+                ingr_ranges[ingr] = {"min": 50, "max": 90}
+            elif ingr in oils:
+                ingr_ranges[ingr] = {"min": 1, "max": 10}
+            elif ingr in carbonates_cer:
+                ingr_ranges[ingr] = {"min": 5, "max": 35}
+            elif ingr in carbonates_veg:
+                ingr_ranges[ingr] = {"min": 5, "max": 25}
+            elif "WATER" in ingr:
+                ingr_ranges[ingr] = {"min": 0, "max": 30}
+            else:
+                ingr_ranges[ingr] = {"min": 1, "max": 3}
+
+        maximize_nutrients = list(set(maxim_main_nutr))
+
+        deficit_info = additional_lp_calc(reproductive_status, kkal, age_type_categ, request.weight, ingr_ranges, nutr_ranges, maximize_nutrients) 
+        
+        additinal_ingredients = select_missing_ingredients(deficit_info, ingredients_df)
+
+        for ingr in additinal_ingredients:
+            ingredient_name = ingr["ingredient"]
+            amount = ingr["amount_g_per_100g"]
+            ingr_ranges[ingredient_name] = {"min": amount, "max": amount + 1}
+
         return DisorderRecommendationsResponse(
             disorder=request.disorder,
             disorder_type=disorder_type,
             breed_size=breed_size,
-            recommended_ingredients=finish_ingr_list_norm_name,
-            nutrients_ranges=nutr_ranges
+            ingr_ranges=ingr_ranges,
+            nutrients_ranges=nutr_ranges,
+            maxim_main_nutr=maxim_main_nutr
         )
     except HTTPException:
         raise
@@ -313,37 +473,36 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
         )
 
         # Prepare nutrient columns
-        main_nutrs=['moisture_per', 'protein_per', 'carbohydrate_per', 'fats_per']
-        other_nutrients_1=['ash_g', 'fiber_g', 'cholesterol_mg', 'total_sugar_g']
-        other_nutrients_2 = ['choline_mg', 'selenium_mcg', 'iodine_mcg', 'linoleic_acid_g','alpha_linolenic_acid_g', 'arachidonic_acid_g', 'epa_g', 'dha_g']
-        other_nutrients=other_nutrients_1+other_nutrients_2
-        major_minerals=['calcium_mg', 'phosphorus_mg', 'magnesium_mg', 'sodium_mg', 'potassium_mg', 'iron_mg', 'copper_mg', 'zinc_mg', 'manganese_mg']
-        vitamins=['vitamin_a_mcg', 'vitamin_e_mg', 'vitamin_d_mcg', 'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b5_mg', 
-                'vitamin_b6_mg', 'vitamin_b9_mcg', 'vitamin_b12_mcg', 'vitamin_c_mg', 'vitamin_k_mcg']
+        main_nutrs = ['moisture_per', 'protein_per', 'carbohydrate_per', 'fats_per']
+        other_nutrients_1 = ['ash_g', 'fiber_g', 'cholesterol_mg', 'total_sugar_g']
+        other_nutrients_2 = ['choline_mg', 'selenium_mcg', 'iodine_mcg', 'linoleic_acid_g', 'alpha_linolenic_acid_g', 'arachidonic_acid_g', 'epa_g', 'dha_g']
+        other_nutrients = other_nutrients_1 + other_nutrients_2
+        major_minerals = ['calcium_mg', 'phosphorus_mg', 'magnesium_mg', 'sodium_mg', 'potassium_mg', 'iron_mg', 'copper_mg', 'zinc_mg', 'manganese_mg']
+        vitamins = ['vitamin_a_mcg', 'vitamin_e_mg', 'vitamin_d_mcg', 'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b5_mg', 
+                    'vitamin_b6_mg', 'vitamin_b9_mcg', 'vitamin_b12_mcg', 'vitamin_c_mg', 'vitamin_k_mcg']
 
+        all_nutrs = main_nutrs + major_minerals + vitamins + other_nutrients
 
-        all_nutrs = main_nutrs+major_minerals+vitamins+other_nutrients
-
-        get_en_name={
-            'Влага':'moisture_per', 
+        get_en_name = {
+            'Влага': 'moisture_per', 
             'Белки': 'protein_per', 
-            'Углеводы':'carbohydrate_per',
-             'Жиры': 'fats_per'
+            'Углеводы': 'carbohydrate_per',
+            'Жиры': 'fats_per'
         }
+        
         # Create food dict
         food = ingredients_df.set_index("full_name_ingredient")[all_nutrs].to_dict(orient='index') 
-  
         food_keys = set(food.keys())
         ingr_ranges = request.ingredient_ranges
 
-        if len(ingr_ranges)==0:
+        if len(ingr_ranges) == 0:
             raise HTTPException(
                 status_code=400,
                 detail="Выберите хотя бы один ингредиент.",
             )
 
-        ingredient_names = [transl_ingredient(ing.ingredient,"en") for ing in ingr_ranges]
-        nutr_ranges = {get_en_name.get(nr.nutrient,nr.nutrient): (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
+        ingredient_names = [transl_ingredient(ing.ingredient, "en") for ing in ingr_ranges]
+        nutr_ranges = {get_en_name.get(nr.nutrient, nr.nutrient): (nr.min_value, nr.max_value) for nr in request.nutrient_ranges}
         maximize_nutrients = [get_en_name.get(nr, nr) for nr in request.maximize_nutrients] if request.maximize_nutrients else ["moisture_per", "protein_per"]
 
         ingr_ranges_data = [(ing.min_percent, ing.max_percent) for ing in ingr_ranges]
@@ -356,16 +515,16 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
         elif highest < 100:
             factor = 101 / highest
             ingr_ranges_data = [(low, high * factor) for (low, high) in ingr_ranges_data]
-				
+        
         # Build LP problem
         A = [
             [food[ing][nutr]/100 if val > 0 else -food[ing][nutr]/100
              for ing in ingredient_names]
             for nutr in nutr_ranges
-            for val in (-nutr_ranges[nutr][0] , nutr_ranges[nutr][1] )
+            for val in (-nutr_ranges[nutr][0], nutr_ranges[nutr][1])
         ]
         b = [
-            val/100  for nutr in nutr_ranges
+            val/100 for nutr in nutr_ranges
             for val in (-nutr_ranges[nutr][0], nutr_ranges[nutr][1])
         ]
 
@@ -373,10 +532,9 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
         b_eq = [1.0]
         bounds = [(low / 100, high / 100) for (low, high) in ingr_ranges_data]
 
-        # Objective function
+        # Objective function: maximize selected nutrients
         f = [-sum(food[i][nutr] for nutr in maximize_nutrients if nutr in food[i])
              for i in ingredient_names]
-
 
         # Try linear programming
         res = linprog(f, A_ub=A, b_ub=b, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
@@ -386,8 +544,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
             result = {name: round(val * 100, 2) for name, val in zip(ingredient_names, res.x)}
 
             nutrients_100g = {
-                 nutr: 
-                round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)), 2)
+                nutr: round(sum(res.x[i] * food[name][nutr] for i, name in enumerate(ingredient_names)), 2)
                 for nutr in main_nutrs
             }
 
@@ -402,39 +559,38 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 for name, weight in result.items()
             }
 
-
             count_nutr_cont_all = {
-                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()),
-                            2)
+                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()), 2)
                 for nutr in all_nutrs
             }
 
             nutrient_deficiencies = {}
             for nutrient_name, required_amount in count_nutr_cont_all.items():
-                nutrient_name=transl_nutr(nutrient_name,"ru")
+                nutrient_name = transl_nutr(nutrient_name, "ru")
                 fixed_nutrient_name = nutrient_name.split(",")[0]
                 measure = nutrient_name.split(",")[1] if nutrient_name.split(",").__len__() > 1 else ""
                 actual_amount = norms.get(fixed_nutrient_name, 0)
                 deficit = required_amount - actual_amount
                 nutrient_deficiencies[fixed_nutrient_name] = f"{round(abs(deficit), 2)}{measure}"
-            composition = [RecipeComposition(ingredient=transl_ingredient(k,"ru"), grams_per_100g=v) for k, v in result.items()]
+            
+            composition = [RecipeComposition(ingredient=transl_ingredient(k, "ru"), grams_per_100g=v) for k, v in result.items()]
 
             nutritional_100g = [
-                NutritionalValue(nutrient=transl_nutr(k,"ru").split(",")[0], value_per_100g=v, unit="г")
+                NutritionalValue(nutrient=transl_nutr(k, "ru").split(",")[0], value_per_100g=v, unit="г")
                 for k, v in nutrients_100g.items()
             ]
 
             nutritional_total = [
                 NutritionalValue(
-                    nutrient=transl_nutr(k,"ru").split(",")[0],
+                    nutrient=transl_nutr(k, "ru").split(",")[0],
                     value_per_100g=v,
-                    unit=transl_nutr(k,"ru").split(",")[-1].strip() if "," in transl_nutr(k,"ru") else "г"
+                    unit=transl_nutr(k, "ru").split(",")[-1].strip() if "," in transl_nutr(k, "ru") else "г"
                 )
                 for k, v in count_nutr_cont_all.items()
             ]
 
             ingredients_required_ru = {
-                transl_ingredient(name,"ru"): round((weight * needed_feed_g / 100), 2)
+                transl_ingredient(name, "ru"): round((weight * needed_feed_g / 100), 2)
                 for name, weight in result.items()
             }
 
@@ -457,7 +613,7 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 raise HTTPException(status_code=400, detail="Could not find valid recipe composition")
 
             values, totals = best_recipe
-            nutrients_100g=totals
+            nutrients_100g = totals
 
             energy_100g = (3.5 * nutrients_100g["protein_per"] +
                            8.5 * nutrients_100g["fats_per"] +
@@ -472,38 +628,39 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
 
             all_nutrients = main_nutrs + other_nutrients_1 + other_nutrients_2 + major_minerals + vitamins
             count_nutr_cont_all = {
-                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()),
-                            2)
+                nutr: round(sum(amount * food[ingredient][nutr] for ingredient, amount in ingredients_required.items()), 2)
                 for nutr in all_nutrients
             }
 
             nutrient_deficiencies = {}
             for nutrient_name, required_amount in count_nutr_cont_all.items():
-                nutrient_name=transl_nutr(nutrient_name,"ru")
+                nutrient_name = transl_nutr(nutrient_name, "ru")
                 fixed_nutrient_name = nutrient_name.split(",")[0]
                 measure = nutrient_name.split(",")[1] if nutrient_name.split(",").__len__() > 1 else ""
                 actual_amount = norms.get(fixed_nutrient_name, 0)
                 deficit = required_amount - actual_amount
                 nutrient_deficiencies[fixed_nutrient_name] = f"{round(abs(deficit), 2)}{measure}"
 
-            composition = [RecipeComposition(ingredient=transl_ingredient(k,"ru"), grams_per_100g=v) for k, v in values.items()]
+            composition = [RecipeComposition(ingredient=transl_ingredient(k, "ru"), grams_per_100g=v) for k, v in values.items()]
 
             nutritional_100g = [
-                NutritionalValue(nutrient=transl_nutr(k,"ru").split(",")[0], value_per_100g=round(v, 2), unit="г")
+                NutritionalValue(nutrient=transl_nutr(k, "ru").split(",")[0], value_per_100g=round(v, 2), unit="г")
                 for k, v in totals.items()
             ]
 
             nutritional_total = [
                 NutritionalValue(
-                    nutrient=transl_nutr(k,"ru").split(",")[0],
+                    nutrient=transl_nutr(k, "ru").split(",")[0],
                     value_per_100g=v,
-                    unit=transl_nutr(k,"ru").split(",")[-1].strip() if "," in transl_nutr(k,"ru") else "г"
+                    unit=transl_nutr(k, "ru").split(",")[-1].strip() if "," in transl_nutr(k, "ru") else "г"
                 )
                 for k, v in count_nutr_cont_all.items()
             ]
 
-            ingredients_required_ru = { transl_ingredient(name,"ru"): round((weight * needed_feed_g / 100), 2)
-                for name, weight in result.items()}
+            ingredients_required_ru = {
+                transl_ingredient(name, "ru"): round((weight * needed_feed_g / 100), 2)
+                for name, weight in values.items()
+            }
 
             return OptimizedRecipeResponse(
                 success=True,

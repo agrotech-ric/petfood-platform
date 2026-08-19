@@ -10,17 +10,19 @@ type Category = {
 type IngredientSelectorProps = {
   categories: Category[];
   selectedIngredients: string[];
-  recommendedIngredients: string[];
+  ingrRanges: IngredientRangesType;
   ingredientRanges: IngredientRangesType;
   onToggleIngredient: (ingredient: string) => void;
   onUpdateRange: (ingredient: string, type: 'min' | 'max', value: number) => void;
   onClearAll: () => void;
 };
 
+
+
 export const IngredientSelector = ({
   categories,
   selectedIngredients,
-  recommendedIngredients,
+  ingrRanges,
   ingredientRanges,
   onToggleIngredient,
   onUpdateRange,
@@ -39,7 +41,7 @@ export const IngredientSelector = ({
               </summary>
               <div className={styles.categoryItems}>
                 {category.items.map(item => {
-                  const isRecommended = recommendedIngredients.includes(item);
+                  const isRecommended = item in ingrRanges;
                   const isSelected = selectedIngredients.includes(item);
                   return (
                     <button
