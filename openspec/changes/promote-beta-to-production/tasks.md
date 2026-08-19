@@ -36,7 +36,7 @@
 - [x] 5.2 Create the promotion branch from the frozen beta candidate and add only the reviewed OpenSpec, production runtime, workflow, and documentation changes required by this change.
 - [x] 5.3 Merge the archived final legacy `main` as a history-only parent, then verify the resulting source tree against the approved beta-derived candidate with tree hashes, a full diff, and an explicit check that legacy runtime files were not reintroduced.
 - [x] 5.4 Run secret scanning and confirm that environment files, active credentials, database dumps, media archives, and generated build outputs are absent from the promotion diff and every accepted legacy-history increment.
-- [ ] 5.5 Open and review the promotion pull request without merging it; confirm archive references, branch rules, workflow event filters, release gates, and rollback evidence are all visible to the approver.
+- [x] 5.5 Open and review the promotion pull request without merging it; confirm archive references, branch rules, workflow event filters, release gates, and rollback evidence are all visible to the approver.
 
 ## 6. Verify and Rehearse Before Downtime
 
