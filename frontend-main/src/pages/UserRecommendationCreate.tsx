@@ -272,7 +272,8 @@ export const UserRecommendationCreate = () => {
         age: Math.floor(petAge.age),
         age_metric: petAge.age_metric,
         weight: request.weightKg,
-        target_kcal: dailyKcal || undefined
+        target_kcal: dailyKcal || undefined,
+        reproductive_status: getReproductiveStatus(pet?.reproductiveStatusName)
       });
 
 

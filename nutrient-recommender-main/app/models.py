@@ -77,6 +77,7 @@ class DisorderRequest(BaseModel):
     age_metric: AgeMetricType = Field(..., description="Age measurement unit")
     weight: float = Field(..., gt=0, description="Dog weight in kg")
     target_kcal: Optional[float] = Field(None, description="Target daily kcal (optional, will be calculated if not provided)")
+    reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
 
 
 class IngredientRange(BaseModel):

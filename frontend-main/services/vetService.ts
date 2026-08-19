@@ -172,6 +172,7 @@ export const vetService = {
     age_metric: 'years' | 'months';
     weight: number;
     target_kcal?: number;
+    reproductive_status?: 'none' | 'pregnancy' | 'lactation';
   }): Promise<DisorderRecommendation> {
     try {
       const normalizedRequest = {
