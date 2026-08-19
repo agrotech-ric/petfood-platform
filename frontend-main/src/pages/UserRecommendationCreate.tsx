@@ -273,10 +273,17 @@ export const UserRecommendationCreate = () => {
       });
 
       setDisorderRecommendation(recommendation);
-      setIngrRanges(recommendation.ingr_ranges);
-      setSelectedIngredients(Object.keys(recommendation.ingr_ranges));
+      const ingrRangesData = recommendation?.ingr_ranges || {};
+      setIngrRanges(ingrRangesData);
+      setSelectedIngredients(Object.keys(ingrRangesData));
 
-      setNutrientRangesFromPredicted(recommendation.nutrients_ranges);
+      const nutrientRangesData = recommendation?.nutrients_ranges || {
+        moisture_per: { min: 65, max: 90 },
+        protein_per: { min: 10, max: 65 },
+        carbohydrate_per: { min: 10, max: 20 },
+        fats_per: { min: 5, max: 10 }
+      };
+      setNutrientRangesFromPredicted(nutrientRangesData);
       setShowIngredientForm(true);
     } catch (err) {
       showActionError(
@@ -288,12 +295,16 @@ export const UserRecommendationCreate = () => {
   };
 
 
-  const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['nutrients_ranges']) => {
+  const setNutrientRangesFromPredicted = (predicted: any) => {
+    if (!predicted) {
+      setNutrientRanges(DEFAULT_NUTRIENT_RANGES);
+      return;
+    }
     setNutrientRanges({
-      moisture_per: predicted.moisture_per,
-      protein_per: predicted.protein_per,
-      carbohydrate_per: predicted.carbohydrate_per,
-      fats_per: predicted.fats_per
+      moisture_per: predicted?.moisture_per || DEFAULT_NUTRIENT_RANGES.moisture_per,
+      protein_per: predicted?.protein_per || DEFAULT_NUTRIENT_RANGES.protein_per,
+      carbohydrate_per: predicted?.carbohydrate_per || DEFAULT_NUTRIENT_RANGES.carbohydrate_per,
+      fats_per: predicted?.fats_per || DEFAULT_NUTRIENT_RANGES.fats_per
     });
   };
 
@@ -481,6 +492,7 @@ export const UserRecommendationCreate = () => {
               categories={INGREDIENT_CATEGORIES}
               selectedIngredients={selectedIngredients}
               ingrRanges={ingrRanges}
+              ingredientRanges={ingrRanges}
               onToggleIngredient={toggleIngredient}
               onUpdateRange={updateIngredientRange}
               onClearAll={() => setSelectedIngredients([])}
