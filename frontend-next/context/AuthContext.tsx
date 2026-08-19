@@ -41,7 +41,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkAuth = async () => {
     try {
       await fetchUserProfile();
-    } catch (err) {
+    } catch {
       setIsAuthenticated(false);
       setUser(null);
     } finally {

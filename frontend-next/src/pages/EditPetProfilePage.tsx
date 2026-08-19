@@ -48,10 +48,6 @@ function genderLabel(value: string) {
   return value === 'female' ? 'Самка' : 'Самец'
 }
 
-function normalizeText(value?: string) {
-  return (value || '').trim()
-}
-
 function sameNumber(a?: number, b?: number) {
   if (a == null || b == null) return a == b
   return Math.abs(a - b) < 0.001

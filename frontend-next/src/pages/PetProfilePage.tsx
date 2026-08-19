@@ -229,16 +229,6 @@ function mapWeightHistory(records: HealthRecord[], pet?: PetProfileData): Weight
   return entries
 }
 
-function estimateActivityHours(activityName?: string) {
-  const value = activityName?.toLowerCase() || ''
-  if (value.includes('extreme') || value.includes('экстрем') || value.includes('очень')) return 5
-  if (value.includes('active') || value.includes('актив') || value.includes('высок')) return 4
-  if (value.includes('moderate') || value.includes('сред')) return 3
-  if (value.includes('low') || value.includes('низ')) return 2
-  if (value.includes('passive') || value.includes('пассив')) return 1
-  return 1
-}
-
 function mapActivityHistory(records: HealthRecord[]): ActivityEntry[] {
   return sortRecordsAsc(records).filter((record) => record.activityHours != null).map((record) => ({
     id: record.id,

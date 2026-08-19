@@ -15,7 +15,7 @@ const EmailConfirmationModal = ({ isOpen, onClose, email }: EmailConfirmationMod
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
-  const { confirmRegistration, registerAction } = useAuth();
+  const { confirmRegistration } = useAuth();
 
   useEffect(() => {
     if (countdown > 0) {
@@ -65,7 +65,7 @@ const EmailConfirmationModal = ({ isOpen, onClose, email }: EmailConfirmationMod
       try {
         setCountdown(60);
         alert('Код отправлен повторно на ' + email);
-      } catch (err: any) {
+      } catch {
         setError('*Ошибка при отправке кода');
       } finally {
         setLoading(false);
@@ -121,4 +121,3 @@ const EmailConfirmationModal = ({ isOpen, onClose, email }: EmailConfirmationMod
 };
 
 export default EmailConfirmationModal;
-

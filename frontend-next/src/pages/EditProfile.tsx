@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { MdChevronLeft, MdPerson} from 'react-icons/md';
 import DeleteIcon from '../assets/icons/delete.svg?react';
 import EditIcon from '../assets/icons/edit1.svg?react';
-import DateIcon from '../assets/icons/date.svg?react';
 import { useAuth } from '../../context/AuthContext';
 import { profileService } from '../../services/profileService';
 import styles from '../styles/EditProfile.module.css';
@@ -95,7 +94,8 @@ export const EditProfile = () => {
     setAvatarPreview(URL.createObjectURL(file));
     setAvatarRemoved(false);
     setErrors((prev) => {
-      const { avatar, ...rest } = prev;
+      const rest = { ...prev };
+      delete rest.avatar;
       return rest;
     });
   };

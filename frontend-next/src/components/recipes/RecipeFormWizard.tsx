@@ -1340,7 +1340,11 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                     onClick={() => {
                       setOpenCategories(current => {
                         const next = new Set(current)
-                        next.has(group.category) ? next.delete(group.category) : next.add(group.category)
+                        if (next.has(group.category)) {
+                          next.delete(group.category)
+                        } else {
+                          next.add(group.category)
+                        }
                         return next
                       })
                     }}
