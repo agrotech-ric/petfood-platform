@@ -8,7 +8,7 @@ Prepared: 2026-08-19 (Asia/Almaty)
   `478b93c363d811458e3739689fcec17bcf6b1890`
 - First-parent tree before the merge:
   `b5f6d9d8af733bd2ce883a276cadf736636988f9`
-- Second parent, protected final legacy archive:
+- Second parent, protected frozen legacy archive:
   `162dba90af60764b9a9a3161a3758b5552da828b`
 - Frozen beta candidate:
   `e07f5fc3c7ea9ed9e82f744bc26d3f4c0600a95e`
@@ -46,3 +46,30 @@ The result retains the previous `main` as reachable ancestry while keeping the
 active source tree beta-derived. No remote promotion branch, pull request,
 `main` update, deployment, data operation, or domain change is part of this
 merge.
+
+## Final legacy drift reconciliation
+
+Before publication of the promotion branch, remote `main` advanced through
+pull requests 82, 83, and 84. The gate stopped publication, and the accepted
+final legacy commit was preserved separately as
+`archive/legacy-main-final`/`legacy-main-final-v2-2026-08-19` at
+`09eb6f1f3ee9c423f5ed73ff04f9085355ce1025`.
+
+A second history-only merge was then created:
+
+- Merge commit: `10b6778e3202b188f72a26ce09fa32b5261b62c4`
+- First parent: `d44f42988e04314bddaac460e739fad39dae7eb8`
+- Second parent: `09eb6f1f3ee9c423f5ed73ff04f9085355ce1025`
+- First-parent tree: `92b6ae4304706ff236708dc71c1db04cca5755e6`
+- Merge tree: `92b6ae4304706ff236708dc71c1db04cca5755e6`
+
+The second merge used `--strategy=ours --no-ff`. Its tree exactly equals its
+first-parent tree and `git diff HEAD^1 HEAD` is empty, so none of the final
+legacy frontend or recommender changes entered the promoted content.
+
+The complete frozen-beta-to-merge comparison contains 51 reviewed promotion
+paths, 2,592 insertions, and 126 deletions. The explicit allowlist passed, and
+focused rejection of `frontend-main/`, `backend-main/`, legacy root
+`docker-compose.yml`, and legacy root `nginx.conf` found no reintroduced path.
+The current remote `main` is now reachable from the promotion history without
+changing the beta-derived source tree.
