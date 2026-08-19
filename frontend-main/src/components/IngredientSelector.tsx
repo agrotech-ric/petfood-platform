@@ -28,6 +28,9 @@ export const IngredientSelector = ({
   onUpdateRange,
   onClearAll
 }: IngredientSelectorProps) => {
+  const safeIngrRanges = ingrRanges || {};
+  const safeIngredientRanges = ingredientRanges || {};
+
   return (
     <>
       <h2 className={styles.sectionTitle}>Выбор ингредиентов</h2>
@@ -41,7 +44,7 @@ export const IngredientSelector = ({
               </summary>
               <div className={styles.categoryItems}>
                 {category.items.map(item => {
-                  const isRecommended = item in ingrRanges;
+                  const isRecommended = item in safeIngrRanges;
                   const isSelected = selectedIngredients.includes(item);
                   return (
                     <button
@@ -94,8 +97,8 @@ export const IngredientSelector = ({
               <DualRangeSlider
                 key={ingredient}
                 label={`${ingredient}:`}
-                min={ingredientRanges[ingredient]?.min || 0}
-                max={ingredientRanges[ingredient]?.max || 100}
+                min={safeIngredientRanges[ingredient]?.min || 0}
+                max={safeIngredientRanges[ingredient]?.max || 100}
                 onMinChange={(val) => onUpdateRange(ingredient, 'min', val)}
                 onMaxChange={(val) => onUpdateRange(ingredient, 'max', val)}
               />
