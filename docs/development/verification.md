@@ -64,6 +64,20 @@ For a production-style smoke test, verify `/petfood/`, a refreshed nested SPA
 route, an unauthenticated protected request, and recommender routing through the
 edge. Do not expose internal ports for this test.
 
+For an isolated production rehearsal, use the loopback-only canary after the
+exact release images and restored beta stores are running. The script refuses a
+non-loopback target and removes its temporary accounts, Redis keys, and photo:
+
+```bash
+REHEARSAL_ENV_FILE=/path/to/petfood-rehearsal.env \
+  bash scripts/production-rehearsal-smoke.sh
+```
+
+Override `REHEARSAL_BASE_URL`, `REHEARSAL_ORIGIN`, or
+`REHEARSAL_COMPOSE_PROJECT` only when the isolated rehearsal uses different
+reviewed values. Its notification check expects an isolated MailHog container;
+it must never point at production SMTP or production users.
+
 ## Backend
 
 Run all sandbox tests:
