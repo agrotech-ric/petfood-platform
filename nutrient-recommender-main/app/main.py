@@ -446,6 +446,7 @@ async def get_disorder_recommendations(request: DisorderRequest):
 
         maximize_nutrients = list(set(maxim_main_nutr))
 
+        reproductive_status = request.reproductive_status.value if request.reproductive_status else None
         deficit_info = additional_lp_calc(reproductive_status, kkal, age_type_categ, request.weight, ingr_ranges, nutr_ranges, maximize_nutrients) 
         
         additinal_ingredients = select_missing_ingredients(deficit_info, ingredients_df)
