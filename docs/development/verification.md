@@ -78,6 +78,19 @@ Override `REHEARSAL_BASE_URL`, `REHEARSAL_ORIGIN`, or
 reviewed values. Its notification check expects an isolated MailHog container;
 it must never point at production SMTP or production users.
 
+For a legacy rollback drill, first restore the accepted legacy backup and start
+the matching archived generation behind a loopback-only edge. Then run:
+
+```bash
+bash scripts/legacy-rollback-smoke.sh
+```
+
+The script refuses non-loopback targets, uses only a temporary `example.test`
+identity, and removes its account, Redis state, and photo. Passing this
+generation-specific functional check does not waive current production
+security gates; separately verify the session, photo-ownership, CORS, and
+network-boundary requirements before returning public traffic.
+
 ## Backend
 
 Run all sandbox tests:
