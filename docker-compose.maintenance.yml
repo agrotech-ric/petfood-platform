@@ -1,0 +1,15 @@
+name: petfood_maintenance
+
+services:
+  maintenance-edge:
+    image: petfood/maintenance:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./ops/maintenance
+    ports:
+      - "127.0.0.1:${PETFOOD_MAINTENANCE_PORT:-18079}:80"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    restart: unless-stopped

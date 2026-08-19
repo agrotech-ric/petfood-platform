@@ -75,6 +75,20 @@ changing Flyway files. Never edit a migration that may already have run.
 - `frontend-next/.env`: frontend base URL and proxy targets.
 - `.env.example` files: safe placeholders and documented keys only.
 - Never commit real passwords, SMTP keys, cookies, or tokens.
+- Sandbox dependency values may be overridden with an untracked external file:
+
+  ```bash
+  docker compose --env-file /path/to/local-sandbox.env \
+    -f docker-compose.sandbox.yml up -d
+  ```
+
+  The supported keys include `POSTGRES_DB`, `POSTGRES_USER`,
+  `POSTGRES_PASSWORD`, `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD`,
+  `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `PETS_MINIO_ACCESS_KEY`,
+  `PETS_MINIO_SECRET_KEY`, `PETS_MINIO_BUCKET`, and `RATE_LIMIT_PEPPER`.
+  Sandbox fallbacks exist only for disposable local development. Do not copy a
+  protected production file into the checkout or use it for routine local
+  work.
 - Local HTTP uses a root-scoped non-Secure session cookie. Production must set
   the `prod` profile and uses a Secure cookie scoped to `/petfood`.
 - Credentialed CORS is exact-match only. Local defaults include the LAN frontend

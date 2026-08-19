@@ -27,6 +27,26 @@ Account / Pets --> RabbitMQ --> Notifications --> SMTP
 Exact container wiring belongs to `docker-compose.sandbox.yml`; do not copy
 host-specific addresses into additional documentation.
 
+## Runtime generations
+
+The sandbox and production definitions serve different purposes:
+
+- `docker-compose.sandbox.yml` runs mutable local development with Vite and
+  Spring `dev` profiles. Its named stores remain the beta data generation that
+  is selected for promotion.
+- `docker-compose.production.yml` builds immutable release-tagged images, runs
+  Spring `prod` profiles, has no application source bind mounts, and attaches
+  only explicitly named external beta-derived volumes.
+- the final legacy source and data stay archived as one recoverable generation;
+  they are never mounted into the promoted application or merged into beta
+  data.
+
+In production, only `frontend-production` publishes a loopback port. The
+application network is internal, notifications receives a separate outbound
+network for SMTP, and the host reverse proxy is the sole public boundary. The
+domain remains in maintenance mode until infrastructure, internal services,
+gateway, frontend, and representative authenticated flows are ready.
+
 ## Components
 
 ### Frontend
@@ -121,6 +141,11 @@ not by reading another service's tables directly.
 ## Durable design rules
 
 - Keep beta and main runtime state isolated.
+- Select production stores by explicit external volume name and verified
+  recovery manifest; never infer them from Compose creation order or a similar
+  legacy name.
+- Supply production credentials from a protected environment file outside Git.
+  Historical sandbox defaults are never valid production inputs.
 - Keep the gateway as the only host-published backend service.
 - Treat controller/DTO/service/frontend types as one API contract.
 - Enforce ownership on the backend even when the UI filters resources.

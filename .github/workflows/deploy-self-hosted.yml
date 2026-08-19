@@ -1,31 +1,165 @@
-name: Deploy to local production (self-hosted)
+name: Deploy approved main to production
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+    inputs:
+      release_commit:
+        description: Full approved commit SHA currently at origin/main
+        required: true
+        type: string
+      backup_set_id:
+        description: Verified backup-set directory used for this release
+        required: true
+        type: string
+      mode:
+        description: Validate/build only or deploy the prepared runtime
+        required: true
+        default: validate
+        type: choice
+        options:
+          - validate
+          - deploy
+      confirmation:
+        description: Select DEPLOY_APPROVED to allow deploy mode
+        required: true
+        default: NOT_APPROVED
+        type: choice
+        options:
+          - NOT_APPROVED
+          - DEPLOY_APPROVED
+
+permissions:
+  contents: read
 
 concurrency:
-  group: production-deploy
+  group: petfood-production-deploy
   cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: [self-hosted, linux, petfood-prod]
-    timeout-minutes: 60
+    environment: production
+    timeout-minutes: 120
+    env:
+      REQUESTED_COMMIT: ${{ inputs.release_commit }}
+      BACKUP_SET_ID: ${{ inputs.backup_set_id }}
+      DEPLOY_MODE: ${{ inputs.mode }}
+      DEPLOY_CONFIRMATION: ${{ inputs.confirmation }}
+      PRODUCTION_ENV_FILE: ${{ vars.PETFOOD_PRODUCTION_ENV_FILE }}
+      BACKUP_ROOT: ${{ vars.PETFOOD_BACKUP_ROOT }}
 
     steps:
-      - name: Deploy main on local server
+      - name: Check out the requested release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_commit }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify release and operator inputs
         shell: bash
         run: |
           set -euo pipefail
-          PROJECT_DIR="/home/iot/PetFood/petfood_platforma"
 
-          cd "$PROJECT_DIR"
-          git fetch origin main
-          git reset --hard origin/main
+          if [[ ! "$REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "release_commit must be a full lowercase Git SHA" >&2
+            exit 1
+          fi
 
-          docker compose down
-          docker compose up -d --build --remove-orphans
-          docker compose ps
+          checked_out_commit=$(git rev-parse HEAD)
+          test -n "${checked_out_commit:?}"
+          if [ "$checked_out_commit" != "$REQUESTED_COMMIT" ]; then
+            echo "Checked-out commit does not match release_commit" >&2
+            exit 1
+          fi
+
+          git fetch --no-tags origin main
+          remote_main=$(git rev-parse origin/main)
+          test -n "${remote_main:?}"
+          if [ "$remote_main" != "$REQUESTED_COMMIT" ]; then
+            echo "release_commit is not the current origin/main" >&2
+            exit 1
+          fi
+
+          if [[ ! "$BACKUP_SET_ID" =~ ^[a-z0-9][a-z0-9-]{7,127}$ ]]; then
+            echo "backup_set_id has an invalid format" >&2
+            exit 1
+          fi
+
+          if [ "$DEPLOY_MODE" = deploy ] && [ "$DEPLOY_CONFIRMATION" != DEPLOY_APPROVED ]; then
+            echo "Deploy mode requires DEPLOY_APPROVED confirmation" >&2
+            exit 1
+          fi
+
+      - name: Validate protected configuration and recovery set
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          case "$PRODUCTION_ENV_FILE" in
+            /home/iot/PetFood/production-config/*.env) ;;
+            *) echo "PETFOOD_PRODUCTION_ENV_FILE is missing or outside the approved directory" >&2; exit 1 ;;
+          esac
+          test -f "$PRODUCTION_ENV_FILE"
+          test ! -L "$PRODUCTION_ENV_FILE"
+
+          case "$BACKUP_ROOT" in
+            /home/iot/PetFood/petfood-backups) ;;
+            *) echo "PETFOOD_BACKUP_ROOT is not the approved backup root" >&2; exit 1 ;;
+          esac
+
+          backup_set_path="$BACKUP_ROOT/$BACKUP_SET_ID"
+          case "$backup_set_path" in
+            "$BACKUP_ROOT"/*) ;;
+            *) echo "Resolved backup set escaped the approved root" >&2; exit 1 ;;
+          esac
+          test -d "$backup_set_path"
+          test ! -L "$backup_set_path"
+          test -f "$backup_set_path/manifest.yaml"
+          grep -Eq '^manifest_state: (restore-tested|accepted)$' "$backup_set_path/manifest.yaml"
+
+          compose=(docker compose --env-file "$PRODUCTION_ENV_FILE" -f docker-compose.production.yml)
+          bash scripts/validate-production-config.sh "$PRODUCTION_ENV_FILE" "$REQUESTED_COMMIT" --require-volumes
+
+          mapfile -t durable_volumes < <(
+            PETFOOD_RELEASE_ID="$REQUESTED_COMMIT" "${compose[@]}" config --format json |
+              jq -r '.volumes[] | select(.external == true) | .name'
+          )
+          test "${#durable_volumes[@]}" -eq 5
+          for volume_name in "${durable_volumes[@]}"; do
+            test -n "${volume_name:?}"
+            docker volume inspect "$volume_name" >/dev/null
+            if [[ "$volume_name" == petfood_platforma_* ]]; then
+              echo "Legacy volume selected: $volume_name" >&2
+              exit 1
+            fi
+          done
+
+      - name: Build exact release artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          compose=(docker compose --env-file "$PRODUCTION_ENV_FILE" -f docker-compose.production.yml)
+          PETFOOD_RELEASE_ID="$REQUESTED_COMMIT" "${compose[@]}" build --pull
+
+          for service in auth account pets notifications gateway recommender frontend; do
+            image_ref="petfood/$service:$REQUESTED_COMMIT"
+            docker image inspect "$image_ref" --format '{{.Id}}' >/dev/null
+          done
+
+      - name: Stop after validation
+        if: ${{ inputs.mode == 'validate' }}
+        shell: bash
+        run: echo "Validation and exact-release build completed; running production was not changed."
+
+      - name: Deploy prepared production runtime
+        if: ${{ inputs.mode == 'deploy' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          compose=(docker compose --env-file "$PRODUCTION_ENV_FILE" -f docker-compose.production.yml)
+          PETFOOD_RELEASE_ID="$REQUESTED_COMMIT" "${compose[@]}" up -d --no-build --remove-orphans
+          PETFOOD_RELEASE_ID="$REQUESTED_COMMIT" "${compose[@]}" ps
+
+          deployed_commit=$(git rev-parse HEAD)
+          test "$deployed_commit" = "$REQUESTED_COMMIT"

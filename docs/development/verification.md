@@ -13,6 +13,24 @@ git diff --check
 Verify Markdown links and command names manually when no link checker is
 available. Confirm that examples contain no real credentials.
 
+For production-runtime or release-path changes, copy
+`.env.production.example` outside the repository, replace every placeholder,
+restrict it to the owner, and validate it without printing the rendered
+configuration:
+
+```bash
+chmod 600 /path/to/petfood-production.env
+bash scripts/validate-production-config.sh \
+  /path/to/petfood-production.env <full-approved-commit>
+docker compose --env-file /path/to/petfood-production.env \
+  -f docker-compose.production.yml config --quiet
+```
+
+Use `--require-volumes` only on the deployment host after the five reviewed
+beta-derived external volume names exist. Confirm that no legacy volume name is
+selected, only the frontend edge has a host binding, Java services use `prod`,
+and no source bind mount is rendered.
+
 For changes containing OpenSpec artifacts, run from the repository root:
 
 ```bash
@@ -41,6 +59,10 @@ For UI changes also check:
 For deployment-path changes, build once with `VITE_PUBLIC_BASE=/petfood/` and
 verify asset URLs plus a refreshed nested route. Local development must continue
 to work with `VITE_PUBLIC_BASE=/`.
+
+For a production-style smoke test, verify `/petfood/`, a refreshed nested SPA
+route, an unauthenticated protected request, and recommender routing through the
+edge. Do not expose internal ports for this test.
 
 ## Backend
 

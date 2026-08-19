@@ -106,6 +106,12 @@ Read these before changing code:
   workflow for significant changes;
 - [`docs/production-readiness.md`](docs/production-readiness.md) - current
   release blockers and production acceptance criteria;
+- [`docs/operations/production-promotion-recovery.md`](docs/operations/production-promotion-recovery.md)
+  - backup manifests, isolated restore checks, and coordinated rollback;
+- [`docs/operations/production-deployment.md`](docs/operations/production-deployment.md)
+  - guarded release inputs, dependency order, and deployment boundaries;
+- [`docs/operations/production-proxy-switch.md`](docs/operations/production-proxy-switch.md)
+  - reviewed maintenance and production route switching;
 - [`AGENTS.md`](AGENTS.md) - repository rules for AI coding agents.
 
 Native toolchains are optional when Docker is used. Direct local development

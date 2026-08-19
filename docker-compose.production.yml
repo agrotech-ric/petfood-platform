@@ -1,0 +1,329 @@
+name: petfood_production
+
+x-java-service: &java-service
+  restart: unless-stopped
+  read_only: true
+  tmpfs:
+    - /tmp
+  networks:
+    - application
+
+services:
+  postgres-production:
+    image: postgres:16.13-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - production_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    networks:
+      application:
+        aliases:
+          - postgres-production
+
+  redis-production:
+    image: redis:7.2-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - production_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      application:
+        aliases:
+          - redis-production
+
+  rabbitmq-production:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:?RABBITMQ_USERNAME is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+    volumes:
+      - production_rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+    networks:
+      application:
+        aliases:
+          - rabbitmq-production
+
+  minio-production:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+    volumes:
+      - production_minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 8
+    restart: unless-stopped
+    networks:
+      application:
+        aliases:
+          - minio-production
+
+  auth-production:
+    <<: *java-service
+    image: petfood/auth:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/auth/Dockerfile
+    depends_on:
+      postgres-production:
+        condition: service_healthy
+      redis-production:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres-production
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:?POSTGRES_DB is required}
+      DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER is required}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      REDIS_HOST: redis-production
+      REDIS_PORT: 6379
+      JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER is required}
+      JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-300}
+      JWT_KID_TTL_SECONDS: ${JWT_KID_TTL_SECONDS:-3600}
+    networks:
+      application:
+        aliases:
+          - auth-production
+
+  account-production:
+    <<: *java-service
+    image: petfood/account:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/account/Dockerfile
+    depends_on:
+      postgres-production:
+        condition: service_healthy
+      redis-production:
+        condition: service_healthy
+      rabbitmq-production:
+        condition: service_healthy
+      auth-production:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres-production
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:?POSTGRES_DB is required}
+      DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER is required}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      REDIS_HOST: redis-production
+      REDIS_PORT: 6379
+      JWK_SET_URI: http://auth-production:8082/.well-known/jwks.json
+      RABBITMQ_HOST: rabbitmq-production
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:?RABBITMQ_USERNAME is required}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+      SESSION_COOKIE_SECURE: "true"
+      SESSION_COOKIE_PATH: /petfood
+      RATE_LIMIT_PEPPER: ${RATE_LIMIT_PEPPER:?RATE_LIMIT_PEPPER is required}
+    networks:
+      application:
+        aliases:
+          - account-production
+
+  pets-production:
+    <<: *java-service
+    image: petfood/pets:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/pets/Dockerfile
+    depends_on:
+      postgres-production:
+        condition: service_healthy
+      rabbitmq-production:
+        condition: service_healthy
+      minio-production:
+        condition: service_healthy
+      auth-production:
+        condition: service_started
+      account-production:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres-production
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:?POSTGRES_DB is required}
+      DB_USERNAME: ${POSTGRES_USER:?POSTGRES_USER is required}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      JWK_SET_URI: http://auth-production:8082/.well-known/jwks.json
+      ACCOUNT_SERVICE_URL: http://account-production:8081
+      RABBITMQ_HOST: rabbitmq-production
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:?RABBITMQ_USERNAME is required}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+      PETS_MINIO_ENDPOINT: http://minio-production:9000
+      PETS_MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      PETS_MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      PETS_MINIO_BUCKET: ${PETS_MINIO_BUCKET:?PETS_MINIO_BUCKET is required}
+      PETS_MINIO_UPLOAD_TTL_SECONDS: ${PETS_MINIO_UPLOAD_TTL_SECONDS:-300}
+      PETS_MINIO_DOWNLOAD_TTL_SECONDS: ${PETS_MINIO_DOWNLOAD_TTL_SECONDS:-86400}
+      PETS_PHOTO_STORAGE_TYPE: fs
+      PETS_PHOTO_DIR: /data/pets-photos
+      PETS_PHOTO_STORAGE_BASE_URL: ${PETFOOD_PUBLIC_URL:?PETFOOD_PUBLIC_URL is required}
+    volumes:
+      - production_photos:/data/pets-photos
+    networks:
+      application:
+        aliases:
+          - pets-production
+
+  recommender-production:
+    image: petfood/recommender:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./nutrient-recommender-main
+    environment:
+      PYTHONUNBUFFERED: "1"
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      application:
+        aliases:
+          - recommender-production
+
+  notifications-production:
+    image: petfood/notifications:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: services/notifications/Dockerfile
+    depends_on:
+      rabbitmq-production:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      RABBITMQ_HOST: rabbitmq-production
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:?RABBITMQ_USERNAME is required}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
+      SMTP_HOST: ${SMTP_HOST:?SMTP_HOST is required}
+      SMTP_PORT: ${SMTP_PORT:?SMTP_PORT is required}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:?SMTP_STARTTLS is required}
+      SMTP_SSL: ${SMTP_SSL:?SMTP_SSL is required}
+      SMTP_GMAIL_USER: ${SMTP_GMAIL_USER:?SMTP_GMAIL_USER is required}
+      SMTP_GMAIL_PASS: ${SMTP_GMAIL_PASS:?SMTP_GMAIL_PASS is required}
+      SMTP_GMAIL_FROM: ${SMTP_GMAIL_FROM:?SMTP_GMAIL_FROM is required}
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    networks:
+      - application
+      - outbound
+
+  gateway-production:
+    <<: *java-service
+    image: petfood/gateway:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./backend-main-sandbox
+      dockerfile: platform/gateway/Dockerfile
+    depends_on:
+      auth-production:
+        condition: service_started
+      account-production:
+        condition: service_started
+      pets-production:
+        condition: service_started
+      recommender-production:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8090
+      AUTH_BASE_URL: http://auth-production:8082
+      AUTH_EXCHANGE_PATH: /api/v1/auth/sid/exchange
+      ACCOUNT_SERVICE_URL: http://account-production:8081
+      PETS_SERVICE_URL: http://pets-production:8083
+      AUTH_SERVICE_URL: http://auth-production:8082
+      RECOMMENDER_SERVICE_URL: http://recommender-production:8000
+      REDIS_HOST: redis-production
+      REDIS_PORT: 6379
+      PUBLIC_PATH_PREFIX: /petfood
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:?CORS_ALLOWED_ORIGIN is required}
+      TRUSTED_PROXY_ADDRESSES: ${TRUSTED_PROXY_ADDRESSES:?TRUSTED_PROXY_ADDRESSES is required}
+      AUTH_RATE_REPLENISH_RATE: ${AUTH_RATE_REPLENISH_RATE:-2}
+      AUTH_RATE_BURST_CAPACITY: ${AUTH_RATE_BURST_CAPACITY:-10}
+      AUTH_RATE_REQUESTED_TOKENS: ${AUTH_RATE_REQUESTED_TOKENS:-1}
+    networks:
+      application:
+        aliases:
+          - gateway-production
+
+  frontend-production:
+    image: petfood/frontend:${PETFOOD_RELEASE_ID:?PETFOOD_RELEASE_ID is required}
+    build:
+      context: ./frontend-next
+      args:
+        VITE_PUBLIC_BASE: /petfood/
+        VITE_API_BASE_URL: /petfood
+    depends_on:
+      gateway-production:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${PETFOOD_EDGE_PORT:?PETFOOD_EDGE_PORT is required}:80"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    restart: unless-stopped
+    networks:
+      - application
+      - edge
+
+networks:
+  application:
+    internal: true
+  outbound:
+  edge:
+
+volumes:
+  production_postgres:
+    external: true
+    name: ${PRODUCTION_POSTGRES_VOLUME:?PRODUCTION_POSTGRES_VOLUME is required}
+  production_redis:
+    external: true
+    name: ${PRODUCTION_REDIS_VOLUME:?PRODUCTION_REDIS_VOLUME is required}
+  production_rabbitmq:
+    external: true
+    name: ${PRODUCTION_RABBITMQ_VOLUME:?PRODUCTION_RABBITMQ_VOLUME is required}
+  production_minio:
+    external: true
+    name: ${PRODUCTION_MINIO_VOLUME:?PRODUCTION_MINIO_VOLUME is required}
+  production_photos:
+    external: true
+    name: ${PRODUCTION_PHOTOS_VOLUME:?PRODUCTION_PHOTOS_VOLUME is required}

@@ -1,0 +1,99 @@
+schema_version: 1
+manifest_state: prepared
+generation:
+  name: "<vendor-original|legacy-main-final|beta-promotion-candidate|rollback-checkpoint>"
+  created_at: "<ISO-8601 UTC timestamp>"
+  source:
+    repository: "<repository identity>"
+    commit: "<full commit hash>"
+    tree: "<full tree hash>"
+    annotated_tag: "<tag name>"
+    archive_branch: "<archive branch>"
+  runtime:
+    compose_project: "<non-secret project identity>"
+    definitions:
+      - path: "<tracked runtime definition path>"
+        sha256: "<sha256>"
+    images:
+      - service: "<service name>"
+        digest: "<immutable image digest>"
+
+storage_identity:
+  database:
+    container: "<container identity>"
+    database: "<database name>"
+    schemas: ["<schema name>"]
+    volume: "<exact source volume>"
+  media:
+    backend: "<filesystem|minio>"
+    volume: "<exact source volume or null>"
+    bucket: "<bucket or null>"
+    object_prefix: "<prefix or null>"
+  rabbitmq:
+    container: "<container identity>"
+    vhost: "<vhost>"
+    volume: "<exact source volume>"
+  redis:
+    durable_restore: false
+    note: "Sessions are not restored; users authenticate again."
+
+quiescence:
+  started_at: "<ISO-8601 UTC timestamp>"
+  completed_at: "<ISO-8601 UTC timestamp>"
+  public_writes_disabled: false
+  database_writers_stopped: false
+  media_writers_stopped: false
+  message_producers_stopped: false
+  queue_depths: {}
+
+backup_set:
+  id: "<unique non-secret identifier>"
+  storage_alias: "<approved destination alias, not a private URL>"
+  encryption:
+    method: "<approved method>"
+    key_reference: "<secret-manager reference, never the key>"
+  artifacts:
+    - role: database
+      object_id: "<opaque storage object identifier>"
+      format: "<pg_dump format>"
+      tool_version: "<pg_dump version>"
+      size_bytes: 0
+      sha256: "<sha256 of stored encrypted object>"
+    - role: media
+      object_id: "<opaque storage object identifier>"
+      format: "<archive or object-export format>"
+      tool_version: "<tool version>"
+      size_bytes: 0
+      sha256: "<sha256 of stored encrypted object>"
+    - role: rabbitmq-definitions
+      object_id: "<opaque storage object identifier>"
+      format: json
+      tool_version: "<RabbitMQ version>"
+      size_bytes: 0
+      sha256: "<sha256 of stored encrypted object>"
+
+capture_fingerprints:
+  database_schema_table_counts: {}
+  media_item_count: 0
+  rabbitmq_pending_messages: 0
+
+verification:
+  checksum_verified_at: null
+  encryption_access_verified_at: null
+  restore_test:
+    environment_id: null
+    started_at: null
+    completed_at: null
+    isolated_from_live_networks: false
+    outbound_notifications_disabled: false
+    database_restore_passed: false
+    migration_history_passed: false
+    representative_reads_passed: false
+    media_reads_passed: false
+  result: pending
+  rejection_reason: null
+
+approval:
+  accepted_at: null
+  accepted_by_role: null
+  evidence_reference: null

@@ -6,13 +6,13 @@ services:
     image: postgres:16-alpine
     container_name: pets_sandbox_postgres
     environment:
-      POSTGRES_DB: pets_db_sandbox
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: ${POSTGRES_DB:-pets_db_sandbox}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
     volumes:
       - postgres_data_sandbox:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d pets_db_sandbox"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -39,8 +39,8 @@ services:
     image: rabbitmq:3.13-management
     container_name: pets_sandbox_rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
     command: >
       sh -c "echo 'loopback_users.guest = false' > /etc/rabbitmq/rabbitmq.conf &&
              rabbitmq-server"
@@ -60,8 +60,8 @@ services:
     container_name: pets_sandbox_minio
     command: server --console-address ":9001" /data
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
     volumes:
       - minio_data_sandbox:/data
     ports:
@@ -91,9 +91,9 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres-sandbox
       DB_PORT: 5432
-      DB_NAME: pets_db_sandbox
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres123
+      DB_NAME: ${POSTGRES_DB:-pets_db_sandbox}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
       REDIS_HOST: redis-sandbox
       REDIS_PORT: 6379
       JWT_ISSUER: http://auth-service-sandbox:8082
@@ -121,16 +121,16 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres-sandbox
       DB_PORT: 5432
-      DB_NAME: pets_db_sandbox
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres123
+      DB_NAME: ${POSTGRES_DB:-pets_db_sandbox}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
       REDIS_HOST: redis-sandbox
       REDIS_PORT: 6379
       JWK_SET_URI: http://auth-service-sandbox:8082/.well-known/jwks.json
       RABBITMQ_HOST: rabbitmq-sandbox
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       SESSION_COOKIE_SECURE: "false"
       SESSION_COOKIE_PATH: "/"
       RATE_LIMIT_PEPPER: ${RATE_LIMIT_PEPPER:-local-development-only}
@@ -154,21 +154,21 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres-sandbox
       DB_PORT: 5432
-      DB_NAME: pets_db_sandbox
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres123
+      DB_NAME: ${POSTGRES_DB:-pets_db_sandbox}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
       PETS_MINIO_ENDPOINT: http://minio-sandbox:9000
-      PETS_MINIO_ACCESS_KEY: minioadmin
-      PETS_MINIO_SECRET_KEY: minioadmin
-      PETS_MINIO_BUCKET: pets-sandbox
+      PETS_MINIO_ACCESS_KEY: ${PETS_MINIO_ACCESS_KEY:-${MINIO_ACCESS_KEY:-minioadmin}}
+      PETS_MINIO_SECRET_KEY: ${PETS_MINIO_SECRET_KEY:-${MINIO_SECRET_KEY:-minioadmin}}
+      PETS_MINIO_BUCKET: ${PETS_MINIO_BUCKET:-pets-sandbox}
       PETS_MINIO_UPLOAD_TTL_SECONDS: 3600
       PETS_MINIO_DOWNLOAD_TTL_SECONDS: 3600
       ACCOUNT_SERVICE_URL: http://account-service-sandbox:8081
       JWK_SET_URI: http://auth-service-sandbox:8082/.well-known/jwks.json
       RABBITMQ_HOST: rabbitmq-sandbox
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       PETS_PHOTO_DIR: /data/pets-photos
     volumes:
       - pets_photos_sandbox:/data/pets-photos
@@ -208,8 +208,8 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       RABBITMQ_HOST: rabbitmq-sandbox
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       SMTP_HOST: ${SMTP_HOST:-smtp-relay.brevo.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
