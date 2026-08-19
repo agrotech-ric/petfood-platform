@@ -356,8 +356,30 @@ async def get_disorder_recommendations(request: DisorderRequest):
         model_encoding, corpus_embeddings, dog_food_df = build_unsup_ml_model()
 
         disorder_keywords = get_disorder_keywords()
-        reproductive_status = request.reproductive_status.value if request.reproductive_status else None
-        kkal = request.target_kcal
+        
+        # Calculate calories if not provided
+        if request.target_kcal is None:
+            min_weight = disease_df[disease_df["Breed"] == request.breed]["min_weight"].values[0]
+            max_weight = disease_df[disease_df["Breed"] == request.breed]["max_weight"].values[0]
+            avg_weight = (min_weight + max_weight) / 2
+            size_categ = size_category(avg_weight)
+            age_type_categ = age_type_category(size_categ, request.age, request.age_metric.value)
+            
+            kkal, _, _, _ = kcal_calculate(
+                reproductive_status=None,
+                berem_time=None,
+                num_pup=0,
+                L_time=None,
+                age_type=age_type_categ,
+                weight=request.weight,
+                expected=avg_weight,
+                activity_level="moderate",
+                user_breed=request.breed,
+                age=request.age
+            )
+            request.target_kcal = kkal
+        else:
+            kkal = request.target_kcal
 
         # Get breed and disorder info
         breed_data = disease_df[disease_df["Breed"] == request.breed]

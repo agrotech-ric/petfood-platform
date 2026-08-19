@@ -265,15 +265,20 @@ export const UserRecommendationCreate = () => {
         ? calculatePetAge(request.birthDate)
         : { age: 2, age_metric: 'years' as const };
 
+ 
       const recommendation = await vetService.getDisorderRecommendations({
         breed: englishBreedName,
         disorder: selectedDisease,
         age: Math.floor(petAge.age),
-        age_metric: petAge.age_metric
+        age_metric: petAge.age_metric,
+        weight: request.weightKg,
+        target_kcal: dailyKcal || undefined
       });
+
 
       setDisorderRecommendation(recommendation);
       const ingrRangesData = recommendation?.ingr_ranges || {};
+      
       setIngrRanges(ingrRangesData);
       setSelectedIngredients(Object.keys(ingrRangesData));
 
