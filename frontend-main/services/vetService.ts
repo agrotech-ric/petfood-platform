@@ -44,14 +44,15 @@ export type DisorderRecommendation = {
   disorder: string;
   disorder_type: string;
   breed_size: string;
-  recommended_ingredients: string[];
-
+  ingr_ranges: Record<string, { min: number; max: number }>;
   nutrients_ranges: {
     moisture_per: NutrientRange;
     protein_per: NutrientRange;
     fats_per: NutrientRange;
     carbohydrate_per: NutrientRange;
   };
+  maxim_main_nutr: string[];
+  recommended_ingredients?: string[];
 };
 
 export type CaloriesCalculation = {
@@ -94,11 +95,11 @@ export type CaloriesRequest = {
   age_metric: 'years' | 'months';
   gender: string;
   breed: string;
-  activity_level: 'passive' |'low' |'moderate' | 'active'| 'extreme'| 'obesity_prone';
+  activity_level: 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone';
   reproductive_status?: 'none' | 'pregnancy' | 'lactation';
-  pregnancy_period?: 'none' |'early_4_weeks' | 'last_5_weeks';
-  lactation_week?: 'none' |'week_1' | 'week_2'| 'week_3'| 'week_4';
-  num_puppies?: number|0;
+  pregnancy_period?: 'none' | 'early_4_weeks' | 'last_5_weeks';
+  lactation_week?: 'none' | 'week_1' | 'week_2' | 'week_3' | 'week_4';
+  num_puppies?: number | 0;
 };
 
                        
@@ -126,8 +127,13 @@ const raiseUserError = (error: unknown, fallback: string): never => {
   throw new Error(toUserErrorMessage(error, fallback));
 };
 
-
-
+const enrichDisorderRecommendation = (data: any): DisorderRecommendation => {
+  // Auto-extract recommended_ingredients from ingr_ranges keys if not provided
+  if (!data.recommended_ingredients && data.ingr_ranges) {
+    data.recommended_ingredients = Object.keys(data.ingr_ranges);
+  }
+  return data;
+};
 
 export const vetService = {
   async fetchAllHealthRecords(): Promise<VetPetRequest[]> {
@@ -171,11 +177,13 @@ export const vetService = {
         breed: getEnglishBreedName(request.breed),
       };
 
-      return await apiClient.post<DisorderRecommendation>(
+      const data = await apiClient.post<DisorderRecommendation>(
         '/recommender/recommendations/disorder',
         normalizedRequest,
         RECOMMENDER_TIMEOUT_MS
       );
+
+      return enrichDisorderRecommendation(data);
     } catch (error) {
       raiseUserError(error, 'Не удалось получить рекомендации по заболеванию');
     }

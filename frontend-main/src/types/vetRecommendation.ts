@@ -1,4 +1,3 @@
-
 type NutrientRange = {
   min: number;
   max: number;
@@ -8,14 +7,15 @@ export type DisorderRecommendation = {
   disorder: string;
   disorder_type: string;
   breed_size: string;
-  recommended_ingredients: string[];
-
+  ingr_ranges: Record<string, { min: number; max: number }>;
   nutrients_ranges: {
     moisture_per: NutrientRange;
     protein_per: NutrientRange;
     fats_per: NutrientRange;
     carbohydrate_per: NutrientRange;
   };
+  maxim_main_nutr: string[];
+  recommended_ingredients?: string[];
 };
 
 export type RangeValue = {
@@ -55,5 +55,4 @@ export type VetRequest = {
   pregnancyPeriod?: string;
   lactationWeek?: string;
   puppyCount?: number;
-
 };

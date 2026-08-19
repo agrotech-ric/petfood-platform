@@ -31,7 +31,7 @@ const DEFAULT_NUTRIENT_RANGES: NutrientRangesType = {
 };
 
 
-export const VetRecommendation = () => {
+export const UserRecommendationCreate = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,10 +60,9 @@ export const VetRecommendation = () => {
   const [showIngredientForm, setShowIngredientForm] = useState(false);
 
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-  const [ingredientRanges, setIngredientRanges] = useState<IngredientRangesType>({});
+  const [ingrRanges, setIngrRanges] = useState<IngredientRangesType>({});
   const [nutrientRanges, setNutrientRanges] = useState<NutrientRangesType>(DEFAULT_NUTRIENT_RANGES);
   const [maximizeNutrients, setMaximizeNutrients] = useState<string[]>(["moisture_per","protein_per",]);
-
 
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
@@ -132,19 +131,17 @@ export const VetRecommendation = () => {
     loadDiseases();
   }, [englishBreedName]);
 
-  
   const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
-  const name = activityTypeName.toLowerCase();
+    const name = activityTypeName.toLowerCase();
+    if (name.includes('пассивный')) return 'passive';
+    if (name.includes('средний1')) return 'low';
+    if (name.includes('средний2')) return 'moderate';
+    if (name.includes('активный')) return 'active';
+    if (name.includes('экстремальных условиях')) return 'extreme';
+    if (name.includes('склонные к ожирению')) return 'obesity_prone';
+    return 'moderate';
+  };
 
-  if (name.includes('пассивный')) return 'passive';
-  if (name.includes('средний1')) return 'low';
-  if (name.includes('средний2')) return 'moderate';
-  if (name.includes('активный')) return 'active';
-  if (name.includes('экстремальных условиях')) return 'extreme';
-  if (name.includes('склонные к ожирению')) return 'obesity_prone';
-
-  return 'moderate';
-};
   const pet = pets.find(p => p.id === request?.petId);
   const getReproductiveStatus = (status?: string| 'none' ): 'none' | 'pregnancy' | 'lactation' => { 
     const value = status?.toLowerCase() ?? '';
@@ -169,7 +166,6 @@ export const VetRecommendation = () => {
     return 'none';
   };
 
-
   useEffect(() => {
     if (!englishBreedName || !request) {
       return;
@@ -191,12 +187,10 @@ export const VetRecommendation = () => {
           gender: request.gender || 'male',
           breed: englishBreedName,
           activity_level: activityLevel,
-
           reproductive_status: reproductiveStatus,
           pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
           lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
           num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
-
         });
 
         const calculatedKcal = Math.round(result.daily_kcal);
@@ -216,8 +210,6 @@ export const VetRecommendation = () => {
 
     calculateDailyKcal();
   }, [englishBreedName, request]);
-
-
 
   const handleRecalculateNutrients = async () => {
     if (!request || !targetKcal || !englishBreedName) return;
@@ -248,7 +240,7 @@ export const VetRecommendation = () => {
       setKcalError(err instanceof Error ? err.message : 'Не удалось пересчитать нутриенты');
     }
   };
-  
+
   const handleDiseaseSelect = (disease: string) => {
     setSelectedDisease(disease);
     setCalculationError(null);
@@ -276,7 +268,9 @@ export const VetRecommendation = () => {
       });
 
       setDisorderRecommendation(recommendation);
-      populateRecommendedIngredients(recommendation);
+      setIngrRanges(recommendation.ingr_ranges);
+      setSelectedIngredients(Object.keys(recommendation.ingr_ranges));
+
       setNutrientRangesFromPredicted(recommendation.nutrients_ranges);
       setShowIngredientForm(true);
     } catch (err) {
@@ -288,7 +282,6 @@ export const VetRecommendation = () => {
     }
   };
 
-  const populateRecommendedIngredients = (recommendation: DisorderRecommendation) => { const newIngredients = recommendation.recommended_ingredients; setSelectedIngredients(newIngredients); const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => { acc[cat.category.toLowerCase()] = cat.items; return acc; }, {} as Record<string, string[]>); const newRanges: IngredientRangesType = {}; newIngredients.forEach(ingredient => { newRanges[ingredient] = getDefaultRangeForIngredient(ingredient, categoryMap); }); setIngredientRanges(newRanges); };
 
   const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['nutrients_ranges']) => {
     setNutrientRanges({
@@ -302,22 +295,26 @@ export const VetRecommendation = () => {
   const toggleIngredient = (ingredient: string) => {
     if (selectedIngredients.includes(ingredient)) {
       setSelectedIngredients(prev => prev.filter(i => i !== ingredient));
-      setIngredientRanges(prev => {
+      setIngrRanges(prev => {
         const newRanges = { ...prev };
         delete newRanges[ingredient];
         return newRanges;
       });
     } else {
       setSelectedIngredients(prev => [...prev, ingredient]);
-      setIngredientRanges(prev => ({
+      const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => {
+        acc[cat.category.toLowerCase()] = cat.items;
+        return acc;
+      }, {} as Record<string, string[]>);
+      setIngrRanges(prev => ({
         ...prev,
-        [ingredient]: getDefaultRangeForIngredient(ingredient, INGREDIENT_CATEGORIES.reduce((acc, cat) => { acc[cat.category.toLowerCase()] = cat.items; return acc; }, {} as Record<string, string[]>))
+        [ingredient]: getDefaultRangeForIngredient(ingredient, categoryMap)
       }));
     }
   };
 
   const updateIngredientRange = (ingredient: string, type: 'min' | 'max', value: number) => {
-    setIngredientRanges(prev => ({
+    setIngrRanges(prev => ({
       ...prev,
       [ingredient]: {
         ...prev[ingredient],
@@ -344,7 +341,6 @@ export const VetRecommendation = () => {
     );
   };
 
-
   const handleCalculate = async () => {
     if (!request || selectedIngredients.length === 0 || !englishBreedName) {
       showActionError('Выберите хотя бы один ингредиент');
@@ -357,7 +353,7 @@ export const VetRecommendation = () => {
     try {
       const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
 
-      const ingredient_ranges = Object.entries(ingredientRanges).map(([ingredient, range]) => ({
+      const ingredient_ranges = Object.entries(ingrRanges).map(([ingredient, range]) => ({
         ingredient,
         min_percent: range.min,
         max_percent: range.max
@@ -392,8 +388,7 @@ export const VetRecommendation = () => {
       };
 
       await addRecommendationToRequest(request.id, recommendation);
-
-      navigate(`/vet/recommendation/${request.id}/view`, {
+      navigate(`/recommendationcreate/${request.id}/view`, {
         state: {
           request,
           recommendation,
@@ -416,7 +411,7 @@ export const VetRecommendation = () => {
           <div className={styles.errorContainer}>
             {error || 'Запрос не найден'}
             <button
-              onClick={() => navigate('/vet/dashboard')}
+              onClick={() => navigate('/records')}
               className={styles.backToListBtn}
             >
               Назад к списку
@@ -431,7 +426,7 @@ export const VetRecommendation = () => {
     <div className={styles.container}>
       <main className={styles.main}>
         <div className={styles.headerCard}>
-          <button className={styles.backBtn} onClick={() => navigate('/vet/dashboard')}>
+          <button className={styles.backBtn} onClick={() => navigate('/records')}>
             <MdKeyboardArrowLeft className={styles.backIcon} />
             Назад
           </button>
@@ -480,8 +475,7 @@ export const VetRecommendation = () => {
             <IngredientSelector
               categories={INGREDIENT_CATEGORIES}
               selectedIngredients={selectedIngredients}
-              recommendedIngredients={disorderRecommendation.recommended_ingredients}
-              ingredientRanges={ingredientRanges}
+              ingrRanges={ingrRanges}
               onToggleIngredient={toggleIngredient}
               onUpdateRange={updateIngredientRange}
               onClearAll={() => setSelectedIngredients([])}

@@ -60,7 +60,7 @@ export const UserRecommendationCreate = () => {
   const [showIngredientForm, setShowIngredientForm] = useState(false);
 
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-  const [ingredientRanges, setIngredientRanges] = useState<IngredientRangesType>({});
+  const [ingrRanges, setIngrRanges] = useState<IngredientRangesType>({});
   const [nutrientRanges, setNutrientRanges] = useState<NutrientRangesType>(DEFAULT_NUTRIENT_RANGES);
   const [maximizeNutrients, setMaximizeNutrients] = useState<string[]>(["moisture_per","protein_per",]);
 
@@ -268,7 +268,9 @@ export const UserRecommendationCreate = () => {
       });
 
       setDisorderRecommendation(recommendation);
-      populateRecommendedIngredients(recommendation);
+      setIngrRanges(recommendation.ingr_ranges);
+      setSelectedIngredients(Object.keys(recommendation.ingr_ranges));
+
       setNutrientRangesFromPredicted(recommendation.nutrients_ranges);
       setShowIngredientForm(true);
     } catch (err) {
@@ -280,19 +282,6 @@ export const UserRecommendationCreate = () => {
     }
   };
 
-  const populateRecommendedIngredients = (recommendation: DisorderRecommendation) => {
-    const newIngredients = recommendation.recommended_ingredients;
-    setSelectedIngredients(newIngredients);
-    const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => {
-      acc[cat.category.toLowerCase()] = cat.items;
-      return acc;
-    }, {} as Record<string, string[]>);
-    const newRanges: IngredientRangesType = {};
-    newIngredients.forEach(ingredient => {
-      newRanges[ingredient] = getDefaultRangeForIngredient(ingredient, categoryMap);
-    });
-    setIngredientRanges(newRanges);
-  };
 
   const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['nutrients_ranges']) => {
     setNutrientRanges({
@@ -302,10 +291,11 @@ export const UserRecommendationCreate = () => {
       fats_per: predicted.fats_per
     });
   };
+
   const toggleIngredient = (ingredient: string) => {
     if (selectedIngredients.includes(ingredient)) {
       setSelectedIngredients(prev => prev.filter(i => i !== ingredient));
-      setIngredientRanges(prev => {
+      setIngrRanges(prev => {
         const newRanges = { ...prev };
         delete newRanges[ingredient];
         return newRanges;
@@ -316,7 +306,7 @@ export const UserRecommendationCreate = () => {
         acc[cat.category.toLowerCase()] = cat.items;
         return acc;
       }, {} as Record<string, string[]>);
-      setIngredientRanges(prev => ({
+      setIngrRanges(prev => ({
         ...prev,
         [ingredient]: getDefaultRangeForIngredient(ingredient, categoryMap)
       }));
@@ -324,7 +314,7 @@ export const UserRecommendationCreate = () => {
   };
 
   const updateIngredientRange = (ingredient: string, type: 'min' | 'max', value: number) => {
-    setIngredientRanges(prev => ({
+    setIngrRanges(prev => ({
       ...prev,
       [ingredient]: {
         ...prev[ingredient],
@@ -363,7 +353,7 @@ export const UserRecommendationCreate = () => {
     try {
       const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
 
-      const ingredient_ranges = Object.entries(ingredientRanges).map(([ingredient, range]) => ({
+      const ingredient_ranges = Object.entries(ingrRanges).map(([ingredient, range]) => ({
         ingredient,
         min_percent: range.min,
         max_percent: range.max
@@ -485,8 +475,7 @@ export const UserRecommendationCreate = () => {
             <IngredientSelector
               categories={INGREDIENT_CATEGORIES}
               selectedIngredients={selectedIngredients}
-              recommendedIngredients={disorderRecommendation.recommended_ingredients}
-              ingredientRanges={ingredientRanges}
+              ingrRanges={ingrRanges}
               onToggleIngredient={toggleIngredient}
               onUpdateRange={updateIngredientRange}
               onClearAll={() => setSelectedIngredients([])}
