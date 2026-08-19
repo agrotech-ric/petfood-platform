@@ -446,8 +446,16 @@ async def get_disorder_recommendations(request: DisorderRequest):
 
         maximize_nutrients = list(set(maxim_main_nutr))
 
+        # Convert ingr_ranges dict to list of IngredientRange objects
+        ingr_ranges_list = [IngredientRange(ingredient=ing_name, min_percent=ranges['min'], max_percent=ranges['max']) 
+                            for ing_name, ranges in ingr_ranges.items()]
+        
+        # Convert nutr_ranges dict to list of NutrientRange objects
+        nutr_ranges_list = [NutrientRange(nutrient=nutr_name, min_value=ranges['min'], max_value=ranges['max'])
+                            for nutr_name, ranges in nutr_ranges.items()]
+        
         reproductive_status = request.reproductive_status.value if request.reproductive_status else None
-        deficit_info = additional_lp_calc(reproductive_status, kkal, age_type_categ, request.weight, ingr_ranges, nutr_ranges, maximize_nutrients) 
+        deficit_info = additional_lp_calc(reproductive_status, kkal, age_type_categ, request.weight, ingr_ranges_list, nutr_ranges_list, maximize_nutrients) 
         
         additinal_ingredients = select_missing_ingredients(deficit_info, ingredients_df)
 
