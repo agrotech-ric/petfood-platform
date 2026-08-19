@@ -246,6 +246,11 @@ export const UserRecommendationCreate = () => {
     setCalculationError(null);
     if (!disease) {
       setShowIngredientForm(false);
+      setDisorderRecommendation(null);
+      setIngrRanges({});
+      setSelectedIngredients([]);
+      setNutrientRanges(DEFAULT_NUTRIENT_RANGES);
+      setMaximizeNutrients(["moisture_per","protein_per",]);
     }
   };
 
