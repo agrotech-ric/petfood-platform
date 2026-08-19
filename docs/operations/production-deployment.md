@@ -21,6 +21,15 @@ mode `0600`, and never print or commit it. The validator rejects placeholders,
 in-repository files, secret fallbacks, insecure cookie/path settings, invalid
 CORS and public URL shapes, legacy volume names, and unexpected public ports.
 
+RabbitMQ storage is hostname-sensitive. The production runtime uses the stable
+node identity `rabbit@petfood-rabbitmq`; do not attach a raw beta broker volume
+whose Mnesia directory belongs to a random historical container hostname.
+Create the reviewed external RabbitMQ volume with the stable production node
+identity and import the checksum-verified beta definitions after producers and
+consumers are quiesced. Pending messages must be drained or explicitly handled
+before the final export. The imported definitions volume is the beta-derived
+production broker generation recorded in the release manifest.
+
 ## Guarded workflow
 
 `.github/workflows/deploy-self-hosted.yml` is manual, serialized under the

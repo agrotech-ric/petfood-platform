@@ -128,6 +128,10 @@ Confirm that:
    backup access. Verify stored-object checksums before decryption.
 4. Restore PostgreSQL logically into the new database and restore media into the
    new volume or bucket.
+   Restore RabbitMQ definitions into a new broker volume created with the same
+   stable node identity as the target runtime. Never attach a raw Mnesia volume
+   to a broker with a different hostname: RabbitMQ may create a new empty node
+   directory instead of using the expected state.
 5. Check Flyway history, schema/table counts, representative non-sensitive row
    counts, media counts, and storage-key readability.
 6. Start the matching archived application code with isolated configuration,
