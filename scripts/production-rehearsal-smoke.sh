@@ -139,6 +139,7 @@ object_key=$(jq -r .objectKey "$work_dir/upload-url.json")
 [[ "$object_key" == pets/*/*.png ]]
 upload_path=$(jq -r '.url | sub("^https?://[^/]+"; "")' "$work_dir/upload-url.json")
 printf '\x89PNG\r\n\x1a\nREHEARSAL-CANARY' > "$work_dir/photo.png"
+dd if=/dev/zero bs=1048576 count=2 >> "$work_dir/photo.png" 2>/dev/null
 status=$(request_status /dev/null -b "$owner_cookies" -X PUT -H 'Content-Type: image/png' \
     --data-binary @"$work_dir/photo.png" "$base_url$upload_path")
 assert_status 200 "$status" 'owner photo upload'
