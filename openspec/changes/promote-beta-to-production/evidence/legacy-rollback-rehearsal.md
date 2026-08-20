@@ -70,7 +70,7 @@ rehearsal was restarted from its unchanged external volumes, all 11 services
 became healthy, its full production rehearsal smoke suite passed again, and its
 fingerprints returned to 4 accounts, 3 pets, 6 recipes, and five media files.
 
-## Security acceptance blocker
+## Accepted legacy rollback exception
 
 The matching legacy generation cannot pass the current production security
 boundary used for promotion:
@@ -83,7 +83,11 @@ boundary used for promotion:
 These are source-level behaviors of final legacy `09eb6f1f`, not rehearsal
 configuration errors. Rebuilding the archived source does not correct them,
 and mixing the secured beta backend with legacy data is explicitly forbidden.
-The mechanical generation rollback and functional reads are proven, but task
-6.4 cannot be accepted as a safe public rollback until the plan either provides
-a reviewed matching legacy security patch or explicitly keeps public traffic in
-maintenance while beta recovery is repaired. Public cutover remains blocked.
+
+On 2026-08-20 the owner explicitly accepted these documented limitations and
+directed that, during an emergency rollback, the exact old site may be reopened
+after its generation-specific functional checks pass. Maintenance mode remains
+active while the switch is in progress. The exception applies only to the
+coordinated legacy rollback generation and does not weaken the promoted beta
+security gates. With this recorded acceptance, the complete rollback rehearsal
+satisfies task 6.4.

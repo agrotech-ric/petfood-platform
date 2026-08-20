@@ -71,7 +71,7 @@ The promoted system SHALL continue to satisfy the accepted credential confidenti
 - **THEN** session cookies, CORS, rate limits, private service exposure, photo ownership, and `/petfood/` routing satisfy their existing specifications
 
 ### Requirement: Cutover has an atomic rollback path
-The release process SHALL define objective rollback triggers and SHALL restore code, runtime configuration, and persistent data as one matching generation. Before rollback, the current beta state MUST be preserved so writes accepted after cutover are not silently destroyed.
+The release process SHALL define objective rollback triggers and SHALL restore code, runtime configuration, and persistent data as one matching generation. Before rollback, the current beta state MUST be preserved so writes accepted after cutover are not silently destroyed. When the exact final legacy generation is selected, its documented historical session and photo-security limitations MAY be accepted for emergency reopening only with explicit owner approval recorded in the release evidence. This exception MUST NOT weaken the promoted beta generation's security gates or permit legacy and beta code or data to be mixed.
 
 #### Scenario: Acceptance checks fail before public reopening
 - **WHEN** a release-blocking check fails during maintenance
@@ -80,6 +80,10 @@ The release process SHALL define objective rollback triggers and SHALL restore c
 #### Scenario: Rollback is required after beta accepted writes
 - **WHEN** rollback is invoked after the promoted application has accepted production writes
 - **THEN** the post-cutover beta data is backed up and isolated before the legacy code and matching legacy data are restored
+
+#### Scenario: Owner accepts exact legacy security limitations
+- **WHEN** the matching final legacy generation passes its rehearsed functional, routing, integration, data, and isolation checks but retains its documented historical session and photo-security behavior
+- **THEN** the owner may explicitly authorize emergency reopening of that exact generation, the acceptance and limitations are recorded, maintenance remains active during the switch, and the promoted beta security baseline remains unchanged
 
 ### Requirement: Cutover completion is auditable
 The release SHALL record the approved source references, backup verification results, maintenance start and end, acceptance results, deployed generation, and rollback decision without recording secrets or personal data.

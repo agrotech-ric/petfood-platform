@@ -43,8 +43,8 @@
 - [x] 6.1 Run frontend lint and production builds for root and `/petfood/` bases, all sandbox backend tests, recommender tests, Compose validation, OpenSpec strict validation, `git diff --check`, and the documented security-boundary smoke checks.
 - [x] 6.2 Build the exact promotion artifacts and deploy them in an isolated rehearsal using a restored beta backup and non-production integrations.
 - [x] 6.3 Verify rehearsal flows for login and logout, OTP throttling, protected account and pet requests, owner and non-owner photos, ingredients and recipes, recommender routing, notification delivery canary, nested-route refresh, CORS, cookies, and direct internal-port isolation.
-- [ ] 6.4 Rehearse a complete rollback to the matching legacy code and restored legacy data, then repeat public-boundary acceptance checks without contacting production users or production external integrations.
-- [ ] 6.5 Define objective go/no-go and rollback thresholds, expected maintenance duration, operator responsibilities, communication steps, and the final approval checkpoint.
+- [x] 6.4 Rehearse a complete rollback to the matching legacy code and restored legacy data, then repeat public-boundary acceptance checks without contacting production users or production external integrations.
+- [x] 6.5 Define objective go/no-go and rollback thresholds, expected maintenance duration, operator responsibilities, communication steps, and the final approval checkpoint.
 
 ## 7. Execute the Maintenance-Window Cutover
 

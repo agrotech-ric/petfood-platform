@@ -12,7 +12,7 @@ The original vendor snapshot is confirmed as commit `938de22696138012cb6f2a54cd0
 - Make the final `main` tree equivalent to the approved beta tree without force-pushing away the legacy ancestry.
 - Preserve legacy durable data outside Git and prove it can be restored in isolation.
 - Reuse the identified beta data generation in production without merging legacy data.
-- Use a full maintenance window to obtain consistent backups, reconnect every dependency, verify the public boundary, and retain an atomic rollback path.
+- Use a full maintenance window to obtain consistent backups, reconnect every dependency, verify the public boundary, and retain an atomic rollback path, including the owner's explicit acceptance of the final legacy generation's documented historical security limitations if it must be reopened during an emergency.
 - Replace the conflicting deployment workflows with a guarded, reproducible production path for the active beta stack before `main` is promoted.
 
 **Non-Goals:**
@@ -76,7 +76,18 @@ The active beta security specifications remain release gates. Promotion does not
 
 Define release-blocking checks and an operator decision deadline before maintenance starts. If a blocker occurs before traffic reopens, restore the final legacy code, runtime, and legacy data together. If beta has already accepted writes, first stop writes and preserve a new beta backup; then restore the legacy generation, acknowledging that the two histories remain separate.
 
-Code-only rollback against beta data and data-only rollback under beta code were rejected because Flyway state, API expectations, media associations, and credentials may not match. After any rollback, the same public readiness and security checks run before traffic returns.
+Code-only rollback against beta data and data-only rollback under beta code were rejected because Flyway state, API expectations, media associations, and credentials may not match. The matching legacy generation runs its rehearsed generation-specific functional, routing, integration, data, and isolation checks before traffic returns.
+
+The rehearsal confirmed that exact legacy `09eb6f1f` retains historical
+security behavior: `Secure=false` root-scoped session cookies, SID disclosure in
+the email-login response, and public filesystem-photo operations without owner
+enforcement. Correcting these behaviors would create a different code
+generation. The owner explicitly accepts these known limitations for emergency
+legacy reopening and prefers availability of the old site over keeping
+maintenance active. This exception applies only to the coordinated legacy
+rollback generation and does not weaken the promoted beta acceptance gates.
+Maintenance mode remains active while either direction of the switch is in
+progress.
 
 ### 8. Separate production deployment from the existing development launcher
 
@@ -96,6 +107,7 @@ Directly reusing the beta dev launcher was rejected because mutable bind mounts,
 - [Maintenance lasts longer than expected] -> Prebuild artifacts, rehearse the storage mapping, define a rollback deadline, and keep a static maintenance response available.
 - [SMTP or another external integration causes side effects during rehearsal] -> Use isolated endpoints or disable delivery in rehearsal, then perform a controlled production canary after cutover.
 - [Rollback after production writes separates new beta activity from legacy state] -> Back up post-cutover beta data before rollback and never attempt an unplanned automatic merge.
+- [Emergency legacy reopening restores known historical session and photo-security limitations] -> Record the explicit owner acceptance, expose only the matching legacy edge, keep the generations isolated, and restore the secured beta generation as soon as the release incident is resolved.
 - [Historical branches contain development values used by live containers] -> Preserve exact history locally, rotate or invalidate every equivalent live credential through external secret configuration, prove old values no longer authenticate, and only then publish protected non-deployable archive refs.
 - [Merging to `main` triggers the legacy deployment before the cutover is ready] -> Replace and review the `main` workflow on the promotion branch, require a manual/environment gate, and verify its event filters before merging.
 
@@ -112,4 +124,4 @@ Directly reusing the beta dev launcher was rejected because mutable bind mounts,
 9. Take and verify final legacy and beta backups, then update `main` through the protected promotion path.
 10. Deploy the promoted runtime, attach only the approved beta data, reconnect production integrations, and run health, security, and end-to-end acceptance checks.
 11. Reopen the domain only after every release gate passes; record the active code/data generation and archive the release evidence.
-12. If a rollback trigger is met, preserve the current beta state, restore the matching legacy generation, repeat acceptance checks, and keep maintenance active until a safe generation is ready.
+12. If a rollback trigger is met, preserve the current beta state, restore the matching legacy generation, repeat its rehearsed generation-specific checks, and keep maintenance active until that generation is ready. The owner has explicitly accepted its recorded historical security limitations for emergency reopening.
