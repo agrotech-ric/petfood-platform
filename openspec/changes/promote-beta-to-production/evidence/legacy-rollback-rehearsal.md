@@ -2,9 +2,9 @@
 
 Date: 2026-08-19
 
-Final legacy source: `09eb6f1f3ee9c423f5ed73ff04f9085355ce1025`
+Final legacy source: `2cb8259dd01bbba8eff7f9f2c5169e58b072d8f7`
 
-Final legacy tree: `c677beb8a4fdff70a197f6864a65c8214488d335`
+Final legacy tree: `accadaf0c6de8dc2394dbb5b5602dce742f00224`
 
 Backup set: `legacy-main-final-preliminary-20260819T092516Z`
 
@@ -18,10 +18,10 @@ contained 17 files after canary cleanup, and RabbitMQ returned to seven queues
 with zero pending messages.
 
 No `backend-main/` file changed between the restore-tested `162dba90` source and
-final legacy `09eb6f1f`, so the previously verified auth, account, pets,
+final legacy `2cb8259d`, so the previously verified auth, account, pets,
 gateway, and notifications images remained matching application artifacts. The
 changed final frontend and recommender were rebuilt from a detached
-`09eb6f1f` worktree:
+`2cb8259d` worktree:
 
 | Service | Image ID |
 | --- | --- |
@@ -30,8 +30,8 @@ changed final frontend and recommender were rebuilt from a detached
 | pets | `sha256:30038088365f173ceff4af38ffdbe25dbcceb4d34ee072f1e1bf2d8d77e1e8dc` |
 | gateway | `sha256:285c8ff24e84d195119218a920982dcba4bc1d1fc36549049e299a589815671c` |
 | notifications | `sha256:2cb9526b40b77666c31fcacdea235278344f9e326a93f82b40bdf692f836d63f` |
-| recommender | `sha256:74f99291cb3d49a6fb1ff41d1a2f129ed983269150e235cd16f53a93de8f1e05` |
-| frontend | `sha256:615be73285e61dbe97b154b233c86126a11eec9252bdf5bbde1b258604768041` |
+| recommender | `sha256:c9938c9b3322f5d8430a9b5161b815d07fb4c9143930b1a5198261fffd024991` |
+| frontend | `sha256:a58209fb59e3d5527f32fce25113b0208bd8f48079e881b19a355f161081f90c` |
 
 The final recommender requires the public
 `sentence-transformers/all-MiniLM-L6-v2` model at startup. The isolated drill
@@ -70,6 +70,13 @@ rehearsal was restarted from its unchanged external volumes, all 11 services
 became healthy, its full production rehearsal smoke suite passed again, and its
 fingerprints returned to 4 accounts, 3 pets, 6 recipes, and five media files.
 
+After final legacy drift to `2cb8259d` was detected, the changed frontend and
+recommender were rebuilt from that exact commit and the same complete rollback
+suite passed again on loopback edge `127.0.0.1:18084`. Cleanup restored the
+legacy fingerprints to 15 accounts, 30 pets, 17 filesystem-media files, and
+seven RabbitMQ queues with zero pending messages. The v3 rollback containers
+were then stopped; the beta rehearsal remained healthy on its separate edge.
+
 ## Accepted legacy rollback exception
 
 The matching legacy generation cannot pass the current production security
@@ -80,7 +87,7 @@ boundary used for promotion:
 - filesystem photo upload and download are public and do not authenticate or
   enforce object ownership.
 
-These are source-level behaviors of final legacy `09eb6f1f`, not rehearsal
+These are source-level behaviors of final legacy `2cb8259d`, not rehearsal
 configuration errors. Rebuilding the archived source does not correct them,
 and mixing the secured beta backend with legacy data is explicitly forbidden.
 

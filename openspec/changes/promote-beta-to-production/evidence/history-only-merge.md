@@ -73,3 +73,20 @@ focused rejection of `frontend-main/`, `backend-main/`, legacy root
 `docker-compose.yml`, and legacy root `nginx.conf` found no reintroduced path.
 The current remote `main` is now reachable from the promotion history without
 changing the beta-derived source tree.
+
+## Final v3 legacy drift merge
+
+The final GO/NO-GO refresh found four more reviewed legacy pull requests on
+remote `main`. After the `2cb8259d` generation was scanned, archived, protected,
+and fresh-clone verified, a third history-only merge was created:
+
+- Merge commit: `2236167268f65aafa7265d1554c89544d96cbe57`
+- First parent: `7dbb2d17b64c620b6ac85841f782c84b40a02e12`
+- Second parent: `2cb8259dd01bbba8eff7f9f2c5169e58b072d8f7`
+- First-parent tree: `e396043f247e47b873960a73866acca7619f5c6f`
+- Merge tree: `e396043f247e47b873960a73866acca7619f5c6f`
+
+The merge used `--strategy=ours --no-ff`; `git diff HEAD^1 HEAD` was empty.
+None of the v3 legacy frontend or recommender changes entered the promoted
+content, while current remote `main` became reachable ancestry of the promotion
+branch.

@@ -33,7 +33,7 @@ index links the approver to:
 
 Rulesets `21038574` and `21038575` were re-read during PR review. Both are
 active, contain no bypass actors, and enforce deletion, non-fast-forward, and
-update rules on all eight exact archive refs.
+update rules on all ten exact archive refs.
 
 Both deployment workflows expose only `workflow_dispatch`, contain no `push`
 or `pull_request` event, and share the `petfood-production-deploy` concurrency
@@ -41,3 +41,15 @@ lock. Therefore opening and updating the PR cannot deploy beta, change the
 domain, or attach production storage. The PR has no automatic status checks by
 design; the required release checks are the recorded OpenSpec section 6 gates
 that must be completed before merge.
+
+## Final v3 base reconciliation
+
+The 2026-08-20 GO/NO-GO refresh found remote `main` at `2cb8259d` after pull
+requests 86 through 89. PR 85 correctly became conflicting because its history
+did not yet contain that new base. The new legacy generation was independently
+scanned, archived, protected, and restore-rehearsed before it was added to the
+promotion branch as the zero-content second parent of merge `22361672`.
+
+This reconciliation changes PR history only. Its beta-derived source tree does
+not contain the final-v3 legacy content, and the official domain and live
+services remained unchanged throughout the update.
