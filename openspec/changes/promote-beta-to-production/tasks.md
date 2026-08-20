@@ -50,11 +50,11 @@
 
 - [x] 7.1 Obtain explicit cutover approval, publish the maintenance notice, enable the maintenance response, and disable public writes before stopping legacy and beta writers.
 - [x] 7.2 Take final consistent legacy and beta database and media backups, capture required messaging state, verify all checksums and manifests, and stop if any recovery asset is incomplete.
-- [ ] 7.3 Reconfirm the remote vendor, legacy, and beta archive references from a fresh clone, then merge the approved promotion through the protected path so `main` resolves to the reviewed promotion commit.
-- [ ] 7.4 Deploy the exact promoted `main` artifacts and connect only the explicitly identified beta database and media generation; keep the domain in maintenance mode.
-- [ ] 7.5 Restore database, Redis, RabbitMQ, media storage, authentication, account, pets, recommender, notifications, gateway, frontend, reverse proxy, SMTP, and other required integrations in dependency order.
-- [ ] 7.6 Run health, log, security-boundary, data-generation, and end-to-end acceptance checks through the official domain; invoke the rehearsed rollback if any release-blocking threshold is met.
-- [ ] 7.7 Reopen public traffic only after all gates pass and record maintenance timing, deployed code and data identifiers, test evidence, and the explicit rollback decision without secrets or personal data.
+- [x] 7.3 Reconfirm the remote vendor, legacy, and beta archive references from a fresh clone, then merge the approved promotion through the protected path so `main` resolves to the reviewed promotion commit.
+- [x] 7.4 Deploy the exact promoted `main` artifacts and connect only the explicitly identified beta database and media generation; keep the domain in maintenance mode.
+- [x] 7.5 Restore database, Redis, RabbitMQ, media storage, authentication, account, pets, recommender, notifications, gateway, frontend, reverse proxy, SMTP, and other required integrations in dependency order.
+- [x] 7.6 Run health, log, security-boundary, data-generation, and end-to-end acceptance checks through the official domain; invoke the rehearsed rollback if any release-blocking threshold is met.
+- [x] 7.7 Reopen public traffic only after all gates pass and record maintenance timing, deployed code and data identifiers, test evidence, and the explicit rollback decision without secrets or personal data.
 
 ## 8. Stabilize and Close the Change
 

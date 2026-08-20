@@ -53,3 +53,58 @@ changed when maintenance and writer quiescence completed.
 
 All final recovery assets were complete and verified, so the cutover was not
 stopped at the recovery gate.
+
+## Protected promotion and deployment
+
+- A fresh clone independently resolved the vendor archive branch and tag to
+  `938de22696138012cb6f2a54cd0218fa88bc8009`, the final legacy v3 branch and
+  tag to `2cb8259dd01bbba8eff7f9f2c5169e58b072d8f7`, and the frozen beta branch
+  and tag to `e07f5fc3c7ea9ed9e82f744bc26d3f4c0600a95e`.
+- Promotion PR #85 was mergeable and clean immediately before protected merge.
+  GitHub merged it at `2026-08-20T05:54:12Z`; production `main` became
+  `50bef694b392d1bd218c36b9b77d475294421e2a`.
+- Application build contexts at promoted `main` were byte-identical to the
+  already verified release-image contexts. The exact reviewed image IDs were
+  tagged with the promoted `main` SHA before deployment.
+- Production attached the original beta PostgreSQL, MinIO, and filesystem
+  media volumes. It used the isolated Redis volume and the stable RabbitMQ
+  volume restored from the same beta candidate; no legacy volume was attached.
+- The production environment file is protected outside Git and passed exact
+  release, secret-fallback, topology, and external-volume validation.
+
+## Dependency restoration and acceptance
+
+- PostgreSQL, Redis, RabbitMQ, MinIO, authentication, account, pets,
+  recommender, notifications, gateway, and frontend started in dependency
+  order. Only the frontend publishes a host port, bound to loopback.
+- The first notification startup exposed a RabbitMQ credential mismatch: the
+  stable restored broker correctly retained its rehearsal credential rather
+  than the source runtime credential. Public traffic remained in maintenance.
+  The protected production configuration was aligned with that broker, the
+  three RabbitMQ clients were recreated, broker authentication passed, and all
+  client restart counts remained zero afterward.
+- The selected beta generation retained 4 users, 3 pets, 6 recipes, 128
+  ingredients, and 5 filesystem media files. Seven RabbitMQ queues contained
+  zero pending messages and five active consumers after startup.
+- All 11 production containers were running; every defined health check passed.
+  Recent logs contained no release-blocking startup, Flyway, memory, binding,
+  fatal, or panic pattern after remediation.
+- Through the official HTTPS domain, the SPA root, refreshed nested route, and
+  frontend asset returned HTTP 200. Unauthenticated account and recommender
+  routes returned HTTP 401. The official origin received credentialed CORS
+  headers and an untrusted origin received no allow-origin header.
+- SMTP configuration was restored from the approved beta runtime and the
+  notification consumers remained connected. No test message was sent through
+  the real production relay during cutover.
+
+## Traffic reopening
+
+- Host Nginx configuration was validated before reload. The PetFood upstream
+  alone changed from the maintenance loopback edge to production loopback port
+  `18080`.
+- Public traffic reopened at `2026-08-20T06:00:31Z`. Maintenance lasted 15
+  minutes from its recorded start. Official acceptance passed after reopening,
+  so rollback was not invoked.
+- The maintenance container was stopped after acceptance. The complete
+  pre-cutover Nginx configuration and both final encrypted backup generations
+  remain available for recovery.
