@@ -1,5 +1,47 @@
 import { apiClient } from '../src/utils/apiClient'
 
+const MAX_PUBLIC_PHOTO_UPLOAD_BYTES = 900 * 1024
+
+const canvasToBlob = (canvas: HTMLCanvasElement, contentType: string, quality: number) =>
+  new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => blob ? resolve(blob) : reject(new Error('Failed to upload photo')),
+      contentType,
+      quality,
+    )
+  })
+
+const preparePhotoForUpload = async (file: File, contentType: string): Promise<Blob> => {
+  if (file.size <= MAX_PUBLIC_PHOTO_UPLOAD_BYTES) return file
+
+  const image = await createImageBitmap(file)
+  try {
+    const longestSide = Math.max(image.width, image.height)
+    let scale = Math.min(1, 2048 / longestSide)
+    let quality = 0.88
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(image.width * scale))
+      canvas.height = Math.max(1, Math.round(image.height * scale))
+
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('Failed to upload photo')
+      context.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+      const blob = await canvasToBlob(canvas, contentType, quality)
+      if (blob.size <= MAX_PUBLIC_PHOTO_UPLOAD_BYTES) return blob
+
+      scale *= 0.78
+      quality = Math.max(0.55, quality - 0.06)
+    }
+  } finally {
+    image.close()
+  }
+
+  throw new Error('Failed to upload photo')
+}
+
 export type Pet = {
   id: string
   name: string
@@ -101,11 +143,12 @@ export const petService = {
     ),
 
   uploadPhotoToStorage: async (url: string, file: File, contentType: string) => {
+    const uploadBody = await preparePhotoForUpload(file, contentType)
     const res = await fetch(url, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': contentType },
-      body: file,
+      body: uploadBody,
     })
     if (!res.ok) throw new Error('Failed to upload photo')
   },
