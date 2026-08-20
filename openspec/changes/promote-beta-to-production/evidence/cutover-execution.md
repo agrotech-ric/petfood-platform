@@ -108,3 +108,27 @@ stopped at the recovery gate.
 - The maintenance container was stopped after acceptance. The complete
   pre-cutover Nginx configuration and both final encrypted backup generations
   remain available for recovery.
+
+## Stabilization and recovery isolation
+
+- Three post-open stabilization samples passed between `2026-08-20T06:04:12Z`
+  and `2026-08-20T06:06:53Z`. All 11 containers remained running with zero
+  restarts, every defined health check stayed healthy, official root and nested
+  routes returned HTTP 200, protected unauthenticated access returned HTTP 401,
+  PostgreSQL remained responsive, and RabbitMQ retained zero pending messages.
+- Post-remediation production logs contained no release-blocking startup,
+  Flyway, memory, binding, fatal, or panic pattern. Resource samples showed no
+  immediate CPU or memory saturation.
+- The immutable archive branch and tag rulesets remain active, prohibit update
+  and deletion, and have no bypass actor. Legacy application containers remain
+  stopped, legacy infrastructure is absent from every production network, and
+  no production container mounts a legacy volume.
+- Both deployment workflows remain manual-only. Production validates an exact
+  current `main` commit; beta is validate-only. Archive refs therefore cannot
+  trigger either workflow or attach a production store.
+- The production-readiness audit now records the accepted topology, closed
+  blockers, recovery ownership, and remaining non-blocking operational work.
+- Because rollback was not invoked, no post-write rollback backup was required.
+  The durable rollback rule remains: quiesce production and create a new
+  consistent beta backup before restoring another generation after accepted
+  writes.

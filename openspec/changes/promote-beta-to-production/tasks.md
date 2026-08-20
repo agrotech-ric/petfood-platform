@@ -58,7 +58,7 @@
 
 ## 8. Stabilize and Close the Change
 
-- [ ] 8.1 Monitor startup, authentication, authorization, database, storage, messaging, SMTP, gateway, and frontend behavior through the agreed stabilization window and preserve a new beta backup before any rollback after accepted writes.
-- [ ] 8.2 Verify that archived source references and legacy recovery assets remain accessible but cannot trigger deployment or attach to the active production network.
-- [ ] 8.3 Update the production-readiness audit and durable operations documentation with the verified final state, remaining blockers, backup ownership, and tested recovery procedure.
-- [ ] 8.4 Re-run all applicable checks, review `git status`, `git diff`, and `git diff --check`, confirm every OpenSpec scenario and task has evidence, and archive the change only after acceptance is complete.
+- [x] 8.1 Monitor startup, authentication, authorization, database, storage, messaging, SMTP, gateway, and frontend behavior through the agreed stabilization window and preserve a new beta backup before any rollback after accepted writes.
+- [x] 8.2 Verify that archived source references and legacy recovery assets remain accessible but cannot trigger deployment or attach to the active production network.
+- [x] 8.3 Update the production-readiness audit and durable operations documentation with the verified final state, remaining blockers, backup ownership, and tested recovery procedure.
+- [x] 8.4 Re-run all applicable checks, review `git status`, `git diff`, and `git diff --check`, confirm every OpenSpec scenario and task has evidence, and archive the change only after acceptance is complete.
