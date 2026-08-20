@@ -1,0 +1,263 @@
+.page {
+  width: 100%;
+  max-width: 1176px;
+  margin: 0 auto;
+  padding: 2rem 2.5rem;
+  box-sizing: border-box;
+}
+
+.header {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  margin-bottom: 1.5rem;
+  padding: 0 1.5rem;
+}
+
+.headerSpacer {
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  flex: 1;
+  text-align: center;
+  color: var(--color-accent);
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.editBtn:hover {
+  background: var(--color-accent-hover);
+}
+
+/* ---- Profile card ---- */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 2rem 2.5rem;
+  display: flex;
+  gap: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.avatarFrame {
+  flex-shrink: 0;
+  width: 180px;
+  height: 180px;
+  background: var(--color-bg-muted);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatarIcon {
+  color: var(--color-icon-muted);
+}
+
+.avatarPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.infoBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
+.fullName {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin: 0 0 8px;
+}
+
+.infoRow {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.infoLabel {
+  font-weight: 700;
+  color: var(--color-text);
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  color: var(--color-text-secondary);
+}
+
+/* ---- Activity card ---- */
+.activityCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 1.75rem 2.5rem;
+}
+
+.activityTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin: 0 0 4px;
+}
+
+.activityItem {
+  display: flex;
+  gap: 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--color-border-muted);
+}
+
+.activityDate {
+  flex-shrink: 0;
+  width: 90px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding-top: 2px;
+}
+
+.activityContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin: 0 0 4px;
+}
+
+.activityDesc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.showMoreBtn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--color-border-muted);
+  padding-top: 16px;
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.showMoreBtn:hover {
+  color: var(--color-accent);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 700px) {
+  .page {
+    padding: 1rem 0.75rem;
+  }
+
+  .header {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0.75rem 1rem;
+  }
+
+  .headerSpacer {
+    display: none;
+  }
+
+  .headerTitle {
+    order: 1;
+    flex: 1 1 100%;
+    text-align: left;
+  }
+
+  .editBtn {
+    order: 2;
+  }
+
+  .card {
+    flex-direction: column;
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+
+  .avatarFrame {
+    width: 100%;
+    max-width: 220px;
+    margin: 0 auto;
+  }
+
+  .fullName {
+    text-align: center;
+    font-size: 22px;
+  }
+
+  .infoRow {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .infoLabel {
+    width: auto;
+  }
+
+  .activityCard {
+    padding: 1.25rem;
+  }
+
+  .activityItem {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .activityDate {
+    width: auto;
+  }
+
+  .activityDesc {
+    white-space: normal;
+  }
+}

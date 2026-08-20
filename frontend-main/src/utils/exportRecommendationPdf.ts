@@ -2,11 +2,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import type { OptimizationResult } from '../../context/RequestContext';
-import type { RecommendationChartImages, RecommendationChartKey } from './generateRecommendationChartImages';
-import {
-  reportExportProgress,
-  type PdfExportProgressCallback,
-} from './pdfExportProgress';
+import type { RecommendationChartImages, RecommendationChartKey } from './captureRecommendationCharts';
 import {
   getTargetKcal,
   groupNutrientsByCategory,
@@ -153,10 +149,8 @@ const balanceSection = (
 export const exportRecommendationPdf = (
   optimizationResult: OptimizationResult,
   meta: RecommendationExportMeta,
-  charts?: RecommendationChartImages,
-  onProgress?: PdfExportProgressCallback,
-  progressContext?: { completedSteps: number; totalSteps: number }
-): Promise<void> => {
+  charts?: RecommendationChartImages
+): void => {
   const targetKcal = getTargetKcal(optimizationResult, meta.targetKcal);
   const groups = groupNutrientsByCategory(optimizationResult);
 
@@ -164,7 +158,7 @@ export const exportRecommendationPdf = (
     .filter((item) => item.grams_per_100g > 0)
     .map((item) => {
       const grams = parseFloat(
-        ( optimizationResult.total_feed_grams).toFixed(2)
+        ((item.grams_per_100g / 100) * optimizationResult.total_feed_grams).toFixed(2)
       );
       return [item.ingredient, `${item.grams_per_100g.toFixed(2)}%`, `${grams} г`];
     });
@@ -354,36 +348,5 @@ export const exportRecommendationPdf = (
   const safeDate = meta.formattedDate.replace(/\./g, '-');
   const fileName = `rekomendaciya_${safePet}_${safeDate}.pdf`;
 
-  let step = progressContext?.completedSteps ?? 0;
-  const totalSteps = progressContext?.totalSteps ?? step + 2;
-
-  reportExportProgress(onProgress, step, totalSteps);
-
-  return new Promise((resolve, reject) => {
-    try {
-      step += 1;
-      reportExportProgress(onProgress, step, totalSteps);
-
-      pdfMake.createPdf(docDefinition).getBlob((blob: Blob) => {
-        try {
-          step += 1;
-          reportExportProgress(onProgress, step, totalSteps);
-
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = fileName;
-          link.click();
-          URL.revokeObjectURL(url);
-
-          reportExportProgress(onProgress, totalSteps, totalSteps);
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      });
-    } catch (err) {
-      reject(err);
-    }
-  });
+  pdfMake.createPdf(docDefinition).download(fileName);
 };

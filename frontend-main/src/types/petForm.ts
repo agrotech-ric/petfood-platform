@@ -4,7 +4,6 @@ export type PetFormData = {
   breed: string;
   gender: string;
   reproductiveStatus?: string;
-  pregnancyPeriod?: string;
   lactationWeek?: string;
   puppyCount?: number;
   color: string;
@@ -19,7 +18,6 @@ export type FormErrors = {
   breed?: string;
   gender?: string;
   reproductiveStatus?: string;
-  pregnancyPeriod?: string;
   lactationWeek?: string;
   puppyCount?: string;
   color?: string;

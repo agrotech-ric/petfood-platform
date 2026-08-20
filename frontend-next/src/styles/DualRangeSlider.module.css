@@ -1,0 +1,104 @@
+.row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 64px minmax(220px, 3fr) 64px;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.label {
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.numberInput {
+  box-sizing: border-box;
+  width: 64px;
+  height: 32px;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+}
+
+.numberInput:focus {
+  border-color: var(--color-accent);
+}
+
+.track {
+  position: relative;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+.activeRange {
+  position: absolute;
+  inset-block: 0;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  margin: 0;
+  transform: translateY(-50%);
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+.thumb::-webkit-slider-runnable-track {
+  height: 5px;
+  background: transparent;
+}
+
+.thumb::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  appearance: none;
+  background: var(--color-accent);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-text) 24%, transparent);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.thumb::-moz-range-track {
+  height: 5px;
+  background: transparent;
+}
+
+.thumb::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--color-text) 24%, transparent);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+@media (max-width: 760px) {
+  .row {
+    grid-template-columns: 64px minmax(130px, 1fr) 64px;
+  }
+
+  .label {
+    grid-column: 1 / -1;
+  }
+}

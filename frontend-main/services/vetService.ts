@@ -1,5 +1,4 @@
 import { apiClient } from '../src/utils/apiClient';
-import { toUserErrorMessage } from '../src/utils/parseApiError';
 import { OptimizationResult } from '../context/RequestContext';
 
 export type VetPetRequest = {
@@ -34,32 +33,38 @@ export type BreedInfo = {
   };
 };
 
-
-type NutrientRange = {
-  min: number;
-  max: number;
-};
-
 export type DisorderRecommendation = {
   disorder: string;
   disorder_type: string;
   breed_size: string;
-  ingr_ranges: Record<string, { min: number; max: number }>;
-  nutrients_ranges: {
-    moisture_per: NutrientRange;
-    protein_per: NutrientRange;
-    fats_per: NutrientRange;
-    carbohydrate_per: NutrientRange;
+  recommended_ingredients: string[];
+  top_ingredients_with_scores: Array<{
+    ingredient: string;
+    score: number;
+    category: string;
+  }>;
+  predicted_nutrients: {
+    protein: number;
+    fat: number;
+    'carbohydrate (nfe)': number;
+    'crude fibre': number;
+    calcium: number;
+    phospohorus: number;
+    potassium: number;
+    sodium: number;
+    magnesium: number;
+    'vitamin e': number;
+    'vitamin c': number;
+    'omega-3-fatty acids': number;
+    'omega-6-fatty acids': number;
+    moisture?: number;
   };
-  maxim_main_nutr: string[];
-  recommended_ingredients?: string[];
 };
 
 export type CaloriesCalculation = {
   daily_kcal: number;
   formula: string;
   reference_page: string;
-  additional_text: string;
   size_category: string;
   age_category: string;
 };
@@ -95,14 +100,10 @@ export type CaloriesRequest = {
   age_metric: 'years' | 'months';
   gender: string;
   breed: string;
-  activity_level: 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone';
-  reproductive_status?: 'none' | 'pregnancy' | 'lactation';
-  pregnancy_period?: 'none' | 'early_4_weeks' | 'last_5_weeks';
-  lactation_week?: 'none' | 'week_1' | 'week_2' | 'week_3' | 'week_4';
-  num_puppies?: number | 0;
+  activity_level: 'passive' | 'moderate' | 'active';
+  reproductive_status?: 'none' | 'pregnant' | 'lactating';
 };
 
-                       
 export type NutrientsRequest = CaloriesRequest & {
   target_kcal: number;
 };
@@ -115,44 +116,33 @@ export type SavedRecommendation = {
   payload: OptimizationResult;
 };
 
-const getEnglishBreedName = (breedName: string): string => breedName.toLowerCase().trim();
-
-const encodeBreedNameForUrl = (breedName: string): string =>
-  encodeURIComponent(getEnglishBreedName(breedName));
-
-const RECOMMENDER_TIMEOUT_MS = 45000;
-const RECOMMENDER_OPTIMIZE_TIMEOUT_MS = 120000;
-
-const raiseUserError = (error: unknown, fallback: string): never => {
-  throw new Error(toUserErrorMessage(error, fallback));
+const getEnglishBreedName = (breedName: string): string => {
+  return breedName.toLowerCase().trim();
 };
 
-const enrichDisorderRecommendation = (data: any): DisorderRecommendation => {
-  // Auto-extract recommended_ingredients from ingr_ranges keys if not provided
-  if (!data.recommended_ingredients && data.ingr_ranges) {
-    data.recommended_ingredients = Object.keys(data.ingr_ranges);
-  }
-  return data;
+const encodeBreedNameForUrl = (breedName: string): string => {
+  const normalized = getEnglishBreedName(breedName);
+  return encodeURIComponent(normalized);
 };
 
 export const vetService = {
   async fetchAllHealthRecords(): Promise<VetPetRequest[]> {
-    return apiClient.get<VetPetRequest[]>('/api/v1/pets/health-records/all');
+    const data = await apiClient.get<VetPetRequest[]>('/api/v1/pets/health-records/all');
+    return data;
   },
 
   async fetchHealthRecordById(recordId: string): Promise<VetPetRequest> {
-    return apiClient.get<VetPetRequest>(`/api/v1/pets/health-records/${recordId}`);
+    const data = await apiClient.get<VetPetRequest>(`/api/v1/pets/health-records/${recordId}`);
+    return data;
   },
 
   async getBreedInfo(breedName: string): Promise<BreedInfo> {
     try {
       const encodedBreedName = encodeBreedNameForUrl(breedName);
-      return await apiClient.get<BreedInfo>(
-        `/recommender/breeds/${encodedBreedName}`,
-        RECOMMENDER_TIMEOUT_MS
-      );
+      const data = await apiClient.get<BreedInfo>(`/recommender/breeds/${encodedBreedName}`);
+      return data;
     } catch (error) {
-      raiseUserError(error, 'Не удалось загрузить информацию о породе');
+      throw new Error('Не удалось загрузить информацию о породе');
     }
   },
 
@@ -161,122 +151,72 @@ export const vetService = {
       const breedInfo = await this.getBreedInfo(breedName);
       return breedInfo.breed_info.diseases;
     } catch (error) {
-      raiseUserError(error, 'Не удалось загрузить список заболеваний для породы');
+      throw new Error('Не удалось загрузить список заболеваний для породы');
     }
   },
 
   async getDisorderRecommendations(request: {
     breed: string;
     disorder: string;
-    age: number;
-    age_metric: 'years' | 'months';
-    weight: number;
-    target_kcal?: number;
-    reproductive_status?: 'none' | 'pregnancy' | 'lactation';
   }): Promise<DisorderRecommendation> {
     try {
       const normalizedRequest = {
         ...request,
-        breed: getEnglishBreedName(request.breed),
+        breed: getEnglishBreedName(request.breed)
       };
 
       const data = await apiClient.post<DisorderRecommendation>(
         '/recommender/recommendations/disorder',
-        normalizedRequest,
-        RECOMMENDER_TIMEOUT_MS
+        normalizedRequest
       );
-
-      return enrichDisorderRecommendation(data);
+      return data;
     } catch (error) {
-      raiseUserError(error, 'Не удалось получить рекомендации по заболеванию');
+      throw new Error('Не удалось получить рекомендации по заболеванию');
     }
   },
 
-  async calculateCalories(request: CaloriesRequest): Promise<CaloriesCalculation> {
-    try {
-      const isFemale = request.gender.toLowerCase() === 'female';
-      
-      const normalizedRequest: CaloriesRequest = {
-        weight: request.weight,
-        age: request.age,
-        age_metric: request.age_metric,
-        gender: request.gender,
-        breed: getEnglishBreedName(request.breed),
-        activity_level: request.activity_level,
-      };
+ async calculateCalories(request: CaloriesRequest): Promise<CaloriesCalculation> {
+  try {
+    const normalizedRequest: any = {
+      weight: request.weight,
+      age: request.age,
+      age_metric: request.age_metric,
+      gender: request.gender,
+      breed: getEnglishBreedName(request.breed),
+      activity_level: request.activity_level
+    };
 
-      // Only include reproductive status for female dogs
-      if (isFemale) {
-      normalizedRequest.reproductive_status = request.reproductive_status ?? 'none';
-
-      if (request.reproductive_status === 'pregnancy') {
-        normalizedRequest.pregnancy_period = request.pregnancy_period ?? 'none';
-        normalizedRequest.lactation_week = 'none';
-        normalizedRequest.num_puppies = 0;
-      } else if (request.reproductive_status === 'lactation') {
-        normalizedRequest.lactation_week = request.lactation_week ?? 'none';
-        normalizedRequest.num_puppies = request.num_puppies ?? 0;
-        normalizedRequest.pregnancy_period = 'none';
-      } else {
-        normalizedRequest.pregnancy_period = 'none';
-        normalizedRequest.lactation_week = 'none';
-        normalizedRequest.num_puppies = 0;
-      }
-    } else {
+    if (request.gender.toLowerCase() === 'female') {
       normalizedRequest.reproductive_status = 'none';
-      normalizedRequest.pregnancy_period = 'none';
-      normalizedRequest.lactation_week = 'none';
-      normalizedRequest.num_puppies = 0;
     }
 
-      return await apiClient.post<CaloriesCalculation>(
-        '/recommender/calculate/calories',
-        normalizedRequest,
-        RECOMMENDER_TIMEOUT_MS
-      );
-    } catch (error) {
-      raiseUserError(error, 'Не удалось рассчитать калории');
-    }
-  },
+    console.log('Sending request:', normalizedRequest);
+
+    const data = await apiClient.post<CaloriesCalculation>(
+      '/recommender/calculate/calories',
+      normalizedRequest
+    );
+    return data;
+  } catch (error) {
+    console.error('Backend error:', error);
+    throw new Error('Не удалось рассчитать калории');
+  }
+},
 
   async calculateNutrients(request: NutrientsRequest): Promise<NutrientsCalculation> {
     try {
-      const { target_kcal, ...rest } = request;
-      const isFemale = request.gender.toLowerCase() === 'female';
-      
-      const normalizedRequest: CaloriesRequest = {
-        ...rest,
-        breed: getEnglishBreedName(request.breed),
+      const normalizedRequest = {
+        ...request,
+        breed: getEnglishBreedName(request.breed)
       };
 
-      if (isFemale) {
-        normalizedRequest.reproductive_status = request.reproductive_status ?? 'none';
-
-        if (request.reproductive_status === 'pregnancy') {
-          normalizedRequest.pregnancy_period = request.pregnancy_period ?? 'none';
-          normalizedRequest.lactation_week = 'none';
-          normalizedRequest.num_puppies = 0;
-        } else if (request.reproductive_status === 'lactation') {
-          normalizedRequest.lactation_week = request.lactation_week ?? 'none';
-          normalizedRequest.num_puppies = request.num_puppies ?? 0;
-          normalizedRequest.pregnancy_period = 'none';
-        } else {
-          normalizedRequest.pregnancy_period = 'none';
-          normalizedRequest.lactation_week = 'none';
-          normalizedRequest.num_puppies = 0;
-        }
-      } else {
-        normalizedRequest.reproductive_status = 'none';
-        normalizedRequest.pregnancy_period = 'none';
-        normalizedRequest.lactation_week = 'none';
-        normalizedRequest.num_puppies = 0;
-      }
-
-      const endpoint = `/recommender/calculate/nutrients?target_kcal=${encodeURIComponent(target_kcal)}`;
-
-      return await apiClient.post<NutrientsCalculation>(endpoint, normalizedRequest, RECOMMENDER_TIMEOUT_MS);
+      const data = await apiClient.post<NutrientsCalculation>(
+        '/recommender/calculate/nutrients',
+        normalizedRequest
+      );
+      return data;
     } catch (error) {
-      raiseUserError(error, 'Не удалось рассчитать нутриенты');
+      throw new Error('Не удалось рассчитать нутриенты');
     }
   },
 
@@ -284,27 +224,21 @@ export const vetService = {
     try {
       const normalizedRequest = {
         ...request,
-        breed: getEnglishBreedName(request.breed),
+        breed: getEnglishBreedName(request.breed)
       };
 
       const data = await apiClient.post<OptimizationResult>(
         '/recommender/optimize/recipe',
-        normalizedRequest,
-        RECOMMENDER_OPTIMIZE_TIMEOUT_MS
+        normalizedRequest
       );
 
       if (!data.success) {
-        throw new Error(
-          'Не удалось подобрать состав рациона с текущими ингредиентами и ограничениями. Попробуйте изменить ингредиенты или диапазоны нутриентов.'
-        );
+        throw new Error('Оптимизация не удалась');
       }
 
       return data;
     } catch (error) {
-      raiseUserError(
-        error,
-        'Не удалось рассчитать оптимальный состав. Попробуйте изменить параметры.'
-      );
+      throw new Error('Не удалось рассчитать оптимальный состав. Попробуйте изменить параметры.');
     }
   },
 
@@ -313,22 +247,29 @@ export const vetService = {
     optimizationResult: OptimizationResult
   ): Promise<SavedRecommendation> {
     try {
-      return await apiClient.post<SavedRecommendation>(
+      const payload = {
+        payload: optimizationResult
+      };
+
+      const data = await apiClient.post<SavedRecommendation>(
         `/api/v1/pets/health-records/${healthRecordId}/recommendation`,
-        { payload: optimizationResult }
+        payload
       );
+
+      return data;
     } catch (error) {
-      raiseUserError(error, 'Не удалось сохранить рекомендацию');
+      throw new Error('Не удалось сохранить рекомендацию');
     }
   },
 
   async getRecommendation(healthRecordId: string): Promise<SavedRecommendation> {
     try {
-      return await apiClient.get<SavedRecommendation>(
+      const data = await apiClient.get<SavedRecommendation>(
         `/api/v1/pets/health-records/${healthRecordId}/recommendation`
       );
+      return data;
     } catch (error) {
-      raiseUserError(error, 'Не удалось загрузить рекомендацию');
+      throw new Error('Не удалось загрузить рекомендацию');
     }
-  },
+  }
 };

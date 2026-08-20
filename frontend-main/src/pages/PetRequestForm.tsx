@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usePets } from '../../context/PetContext';
 import { useRequests, PetRequest } from '../../context/RequestContext';
+import { useLocation } from 'react-router-dom';
 import { usePetRequestForm } from '../hooks/usePetRequestForm';
 import { useFormPersistence } from '../hooks/useFormPersistence';
 
@@ -20,7 +21,7 @@ import styles from '../styles/PetRequestForm.module.css';
 export const PetRequestForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { pets, getPetById, isLoadingReference, isLoading: isLoadingPets } = usePets();
+  const { pets, getPetById } = usePets();
   const { addRequest, updateRequest } = useRequests();
 
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -127,109 +128,86 @@ export const PetRequestForm = () => {
     navigate('/requests');
   };
 
-  if (isLoadingPets || isLoadingReference) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.contentWrapper}>
-          <header className={styles.header}>
-            <button className={styles.backBtn} onClick={handleCancel}>
-              <MdKeyboardArrowLeft className={styles.backIcon} />
-              {FORM_LABELS.BACK_BUTTON}
-            </button>
-            <h1 className={styles.title}>{FORM_LABELS.PAGE_TITLE}</h1>
-          </header>
-          <main className={styles.main}>
-            <div className={styles.card} style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-              Загрузка данных...
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.container}>
-      <div className={styles.contentWrapper}>
-        <header className={styles.header}>
-          <button className={styles.backBtn} onClick={handleCancel}>
-            <MdKeyboardArrowLeft className={styles.backIcon} />
-            {FORM_LABELS.BACK_BUTTON}
-          </button>
-          <h1 className={styles.title}>{FORM_LABELS.PAGE_TITLE}</h1>
-        </header>
+      <header className={styles.header}>
+        <button className={styles.backBtn} onClick={handleCancel}>
+          <MdKeyboardArrowLeft className={styles.backIcon} />
+          {FORM_LABELS.BACK_BUTTON}
+        </button>
+        <h1 className={styles.title}>{FORM_LABELS.PAGE_TITLE}</h1>
+      </header>
 
-        <main className={styles.main}>
-          <div className={styles.card}>
-            <PetSelector
-              pets={pets}
-              selectedPetId={selectedPetId}
-              onSelect={updatePetId}
-              error={errors.pet}
-            />
+      <main className={styles.main}>
+        <div className={styles.card}>
+          <PetSelector
+            pets={pets}
+            selectedPetId={selectedPetId}
+            onSelect={updatePetId}
+            error={errors.pet}
+          />
 
-            {selectedPetId && (
-              <>
-                <ActivityDropdown
-                  value={activityLevel}
-                  onChange={updateActivityLevel}
-                  error={errors.activity}
-                />
+          {selectedPetId && (
+            <>
+              <ActivityDropdown
+                value={activityLevel}
+                onChange={updateActivityLevel}
+                error={errors.activity}
+              />
 
-                <div className={styles.twoColumns}>
-                  <div className={styles.column}>
-                    <label className={styles.label}>{FORM_LABELS.COMMENT_LABEL}</label>
-                    <textarea
-                      className={styles.textarea}
-                      placeholder={FORM_LABELS.COMMENT_PLACEHOLDER}
-                      value={comments}
-                      onChange={(e) => updateComments(e.target.value)}
-                      rows={8}
-                    />
-                  </div>
-
-                  <div className={styles.column}>
-                    <SymptomsSelector
-                      selectedSymptoms={symptoms}
-                      onSymptomsChange={updateSymptoms}
-                      error={errors.symptoms}
-                    />
-                  </div>
+              <div className={styles.twoColumns}>
+                <div className={styles.column}>
+                  <label className={styles.label}>{FORM_LABELS.COMMENT_LABEL}</label>
+                  <textarea
+                    className={styles.textarea}
+                    placeholder={FORM_LABELS.COMMENT_PLACEHOLDER}
+                    value={comments}
+                    onChange={(e) => updateComments(e.target.value)}
+                    rows={8}
+                  />
                 </div>
 
-                {submitError && (
-                  <div style={{
-                    color: '#d32f2f',
-                    padding: '12px',
-                    backgroundColor: '#ffebee',
-                    borderRadius: '8px',
-                    marginTop: '1rem'
-                  }}>
-                    {submitError}
-                  </div>
-                )}
+                <div className={styles.column}>
+                  <SymptomsSelector
+                    selectedSymptoms={symptoms}
+                    onSymptomsChange={updateSymptoms}
+                    error={errors.symptoms}
+                  />
+                </div>
+              </div>
 
-                <div className={styles.actions}>
-                  <button
-                    className={styles.cancelActionBtn}
-                    onClick={handleCancel}
-                  disabled={isSubmitting || isLoadingReference}
+              {submitError && (
+                <div style={{
+                  color: '#d32f2f',
+                  padding: '12px',
+                  backgroundColor: '#ffebee',
+                  borderRadius: '8px',
+                  marginTop: '1rem'
+                }}>
+                  {submitError}
+                </div>
+              )}
+
+              <div className={styles.actions}>
+                <button
+                  className={styles.cancelActionBtn}
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
                 >
                   {FORM_LABELS.CANCEL_BUTTON}
                 </button>
                 <button
                   className={styles.saveBtn}
                   onClick={handleSave}
-                  disabled={isSubmitting || isLoadingReference}
+                  disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Сохранение...' : isLoadingReference ? 'Загрузка...' : FORM_LABELS.SAVE_BUTTON}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </main>
-      </div>
+                  {isSubmitting ? 'Сохранение...' : FORM_LABELS.SAVE_BUTTON}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </main>
 
       <ConfirmationModal
         isOpen={showCancelModal}

@@ -1,0 +1,8 @@
+app:
+  security:
+    public-prefix: /
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGIN_LAN:http://10.1.10.144:5174}
+      - ${CORS_ALLOWED_ORIGIN_LOCALHOST:http://localhost:5174}
+      - ${CORS_ALLOWED_ORIGIN_LOOPBACK:http://127.0.0.1:5174}
+    trusted-proxies: ${TRUSTED_PROXY_ADDRESSES:}

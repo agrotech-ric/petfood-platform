@@ -1,0 +1,177 @@
+/* ── Fixed sidebar panel ─────────────────────────────── */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 90px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-right: 0.5px solid var(--color-border-strong);
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0px 1px 6px var(--color-shadow-strong);
+  transition: width 0.2s ease;
+  overflow: hidden;
+  padding-top: 40px; /* Space at the top */
+}
+
+.sidebarExpanded {
+  width: 240px;
+}
+
+/* Dim backdrop when expanded */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  z-index: 99;
+  pointer-events: none;
+}
+
+/* ── Top navigation ───────────────────────────────────── */
+.navTop {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 21px; /* Centers the 48px icon wrap in the 90px sidebar */
+}
+
+/* ── Unified Nav Item ─────────────────────────────────── */
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-nav);
+  transition: color 0.12s;
+}
+
+.navItem:hover {
+  color: var(--color-nav-hover);
+}
+
+.navItemActive {
+  color: var(--color-nav-active);
+}
+
+.navItemActive:hover {
+  color: var(--color-accent-alt-hover);
+}
+
+/* ── Unified Icon Wrapper (Active Background here) ────── */
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+}
+
+/* The active state styling shown in the screenshot */
+.navItemActive .iconWrap {
+  background: var(--color-accent-soft-bg);
+  border-left: 2px solid var(--color-nav-active);
+}
+
+.navIcon {
+  width: 24px;
+  height: 24px;
+  /* SVG inherits color via currentColor */
+}
+
+/* ── Text Label ───────────────────────────────────────── */
+.navLabel {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Spacer (pushes bottom nav down) ──────────────────── */
+.spacer {
+  flex: 1;
+  min-height: 20px;
+}
+
+/* ── Separator (short line before bottom nav) ─────────── */
+.separator {
+  width: 48px;
+  height: 1px;
+  background: var(--color-border-muted);
+  margin: 0 0 16px 21px; /* Align perfectly with icons */
+}
+
+/* ── Bottom navigation ────────────────────────────────── */
+.navBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 21px 32px 21px;
+  flex-shrink: 0;
+}
+
+.navBottom .navItem:last-child:hover {
+  color: var(--color-danger);
+}
+
+/* ── Mobile (≤ 640px) ─────────────────────────────────── */
+@media (max-width: 640px) {
+  .sidebar {
+    width: 56px;
+    padding-top: 24px;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .sidebarExpanded {
+    width: 200px;
+  }
+
+  .navTop {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .navBottom {
+    gap: 8px;
+    padding: 0 10px 20px 10px;
+  }
+
+  .navItem {
+    gap: 12px;
+  }
+
+  .iconWrap {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 6px;
+  }
+
+  .navIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .separator {
+    width: 36px;
+    margin: 0 0 12px 10px;
+  }
+
+  .navLabel {
+    font-size: 14px;
+  }
+}

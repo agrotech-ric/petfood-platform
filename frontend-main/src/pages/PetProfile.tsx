@@ -6,7 +6,6 @@ import { PET_PROFILE_TEXT } from '../const/petProfile';
 import { getReproductiveStatusLabel, isLactationStatus, formatGender } from '../utils/petProfileHelpers';
 import { formatAge, formatDate, getActivityColor } from '../utils/petUtils';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { PetProfileExportButton } from '../components/PetProfileExportButton';
 import { PetProfilePhoto } from '../components/PetProfilePhoto';
 import { PetProfileParamItem } from '../components/PetProfileParamItem';
 import { apiClient } from '../utils/apiClient';
@@ -29,7 +28,7 @@ type RequestWithRecommendation = {
 const PetProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { getPetById, deletePet, isLoading } = usePets();
+  const { getPetById, deletePet } = usePets();
   const { getRequestsByPetId, fetchRequestsByPetId } = useRequests();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [requestsWithRecommendations, setRequestsWithRecommendations] = useState<RequestWithRecommendation[]>([]);
@@ -104,16 +103,6 @@ const PetProfile = () => {
     navigate(`/analytics/${healthRecordId}`);
   };
 
-  if (isLoading) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.notFound}>
-          <h2>Загрузка...</h2>
-        </div>
-      </div>
-    );
-  }
-
   if (!pet) {
     return (
       <div className={styles.container}>
@@ -143,11 +132,6 @@ const PetProfile = () => {
               {PET_PROFILE_TEXT.BACK_BUTTON}
             </button>
             <h1 className={styles.title}>{PET_PROFILE_TEXT.PAGE_TITLE}</h1>
-            <PetProfileExportButton
-              pet={pet}
-              requests={petRequests}
-              recommendations={requestsWithRecommendations}
-            />
             <button onClick={() => setIsModalOpen(true)} className={styles.deleteBtn}>
               {PET_PROFILE_TEXT.DELETE_BUTTON}
             </button>

@@ -1,0 +1,381 @@
+/* ── Top bar card ─────────────────────────────────── */
+.topBar {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 20px 28px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.headerSpacer {
+  width: 1px;
+}
+
+.pageTitle {
+  grid-column: 2;
+  justify-self: center;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-accent-alt);
+  margin: 0;
+  text-align: center;
+}
+
+.registerBtn {
+  grid-column: 3;
+  justify-self: end;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+@media (max-width: 768px) {
+  .topBar {
+    grid-template-columns: 1fr;
+  }
+
+  .headerSpacer {
+    display: none;
+  }
+
+  .pageTitle,
+  .registerBtn {
+    grid-column: auto;
+    justify-self: stretch;
+  }
+
+  .pageTitle {
+    text-align: left;
+  }
+
+  .registerBtn {
+    width: 100%;
+  }
+}
+
+.registerBtn:hover {
+  background: var(--color-accent-alt-hover);
+}
+
+/* ── Content card ─────────────────────────────────── */
+.contentCard {
+  width: 100%;
+  max-width: 1176px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+  padding: 24px 28px 32px;
+}
+
+/* ── Search and Filters Container ─────────────────── */
+.searchContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* ── Search row ───────────────────────────────────── */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchInputWrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 200px;
+  border: 1.5px solid var(--color-border-muted);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-input-bg);
+}
+
+.searchInput {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 10px 14px;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  color: var(--color-text);
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--color-input-placeholder);
+}
+
+.searchBtn {
+  background: var(--color-accent-alt);
+  border: 0;
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.searchBtn:hover {
+  background: var(--color-accent-alt-hover);
+}
+
+.allFiltersBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1.5px solid var(--color-border-muted);
+  border-radius: 10px;
+  background: var(--color-surface);
+  padding: 9px 18px;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.allFiltersBtn:hover {
+  border-color: var(--color-accent-alt);
+  color: var(--color-accent-alt);
+}
+
+@media (max-width: 768px) {
+  .searchRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .searchInputWrap {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .searchInput {
+    min-width: 0;
+    padding: 10px 12px;
+  }
+
+  .searchBtn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    flex: 0 0 44px;
+  }
+
+  .searchBtn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .allFiltersBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.filtersIcon {
+  width: 24px;
+  height: auto;
+  color: var(--color-icon);
+  transition: color 0.15s;
+}
+
+.allFiltersBtn:hover .filtersIcon {
+  color: var(--color-accent-alt);
+}
+
+/* ── Active Filters Chips ─────────────────────────── */
+.activeFiltersRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filterChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 20px;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.chipCloseBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-icon-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.chipCloseBtn:hover {
+  color: var(--color-text);
+}
+
+/* ── Cards grid ───────────────────────────────────── */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.empty {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  color: var(--color-text-muted);
+  margin: 32px 0;
+  text-align: center;
+}
+
+/* ── Pet card ─────────────────────────────────────── */
+.petCard {
+  background: var(--color-surface);
+  border-radius: 14px;
+  border: 1px solid var(--color-border-muted);
+  box-shadow: 0 2px 8px var(--color-shadow);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.18s, transform 0.18s;
+  text-decoration: none;
+  display: block;
+}
+
+.petCard:hover {
+  box-shadow: 0 6px 20px var(--color-shadow-strong);
+  transform: translateY(-2px);
+}
+
+/* Image zone */
+.petImageWrap {
+  position: relative;
+  width: 100%;
+  height: 235px;
+  background: var(--color-bg-muted);
+  overflow: hidden;
+}
+
+.petImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.petImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  background: var(--color-bg);
+}
+
+/* Heart button — no circle, just icon floating over photo */
+.heartBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 3px var(--color-shadow-strong));
+}
+
+.heartBtn:hover {
+  transform: scale(1.15);
+}
+
+.heartIcon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* Meta zone — left/right padding matches Figma (≈25px), bottom 10px */
+.petMeta {
+  padding: 14px 25px 10px 25px;
+}
+
+.petMetaRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.petName {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+  color: var(--color-text-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.petAge {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.petBreed {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-text-heading);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

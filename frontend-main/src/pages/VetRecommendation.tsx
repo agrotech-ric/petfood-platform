@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRequests } from '../../context/RequestContext';
 import { vetService } from '../../services/vetService';
 import { usePets } from '../../context/PetContext';
 import { calculatePetAge } from '../utils/petAgeHelper';
 import { resolveBreedNameToEnglish } from '../utils/breedNameHelper';
-import { getDefaultRangeForIngredient } from '../const/ingredientRanges';
 import { INGREDIENT_CATEGORIES } from '../../data/mockData';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
 import { PetInfoCard } from '../components/PetInfoCard';
@@ -14,7 +13,6 @@ import { CalorieCalculator } from '../components/CalorieCalculator';
 import { IngredientSelector } from '../components/IngredientSelector';
 import { NutrientRanges } from '../components/NutrientRanges';
 import { MaximizationOptions } from '../components/MaximizationOptions';
-import { FormErrorBanner } from '../components/FormErrorBanner';
 import styles from '../styles/VetRecommendation.module.css';
 
 import type {
@@ -24,18 +22,20 @@ import type {
 } from '../types/vetRecommendation';
 
 const DEFAULT_NUTRIENT_RANGES: NutrientRangesType = {
-  moisture_per: { min: 65, max: 90 },
-  protein_per: { min: 10, max: 65 },
-  carbohydrate_per: { min: 10, max: 20 },
-  fats_per: { min: 5, max: 10 }
+  moisture: { min: 10, max: 35 },
+  protein: { min: 40, max: 65 },
+  carbs: { min: 30, max: 45 },
+  fats: { min: 5, max: 30 }
 };
+
+const NUTRIENT_RANGE_MARGIN = 5;
 
 export const VetRecommendation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { addRecommendationToRequest } = useRequests();
-  const { breeds, isLoadingReference, pets } = usePets();
+  const { breeds } = usePets();
 
   const request = location.state?.request || null;
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +46,6 @@ export const VetRecommendation = () => {
   const [selectedDisease, setSelectedDisease] = useState('');
 
   const [dailyKcal, setDailyKcal] = useState<number | null>(null);
-  const [formula, setFormula] = useState<string | null>(null);
-  const [referencePage, setReferencePage] = useState<string | null>(null);
-  const [additionalText, setAdditionalText] = useState<string | null>(null);
-
   const [targetKcal, setTargetKcal] = useState<number>(0);
   const [initialKcal, setInitialKcal] = useState<number>(0);
   const [isCalculatingKcal, setIsCalculatingKcal] = useState(false);
@@ -59,24 +55,14 @@ export const VetRecommendation = () => {
   const [showIngredientForm, setShowIngredientForm] = useState(false);
 
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-  const [ingrRanges, setIngrRanges] = useState<IngredientRangesType>({});
+  const [ingredientRanges, setIngredientRanges] = useState<IngredientRangesType>({});
   const [nutrientRanges, setNutrientRanges] = useState<NutrientRangesType>(DEFAULT_NUTRIENT_RANGES);
-  const [maximizeNutrients, setMaximizeNutrients] = useState<string[]>(["moisture_per","protein_per",]);
+  const [maximizeNutrients, setMaximizeNutrients] = useState<string[]>([]);
 
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
-  const [diseasesLoadError, setDiseasesLoadError] = useState<string | null>(null);
-  const [kcalError, setKcalError] = useState<string | null>(null);
-  const errorBannerRef = useRef<HTMLDivElement>(null);
 
   const kcalChanged = targetKcal !== initialKcal;
-
-  const showActionError = (message: string) => {
-    setCalculationError(message);
-    requestAnimationFrame(() => {
-      errorBannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-  };
 
   useEffect(() => {
     if (!request) {
@@ -84,23 +70,18 @@ export const VetRecommendation = () => {
       return;
     }
 
-    if (isLoadingReference) {
-      return;
+    const breedName = request.petBreed || request.breedName;
+
+    if (breedName && breeds.length > 0) {
+      const englishName = resolveBreedNameToEnglish(breedName, breeds);
+
+      if (englishName) {
+        setEnglishBreedName(englishName);
+      } else {
+        setEnglishBreedName('');
+      }
     }
-
-    const breedName =
-      request.petBreed ||
-      request.breedName ||
-      pets.find(p => p.id === request.petId)?.breedName;
-
-    if (!breedName) {
-      setEnglishBreedName('');
-      return;
-    }
-
-    const englishName = resolveBreedNameToEnglish(breedName, breeds);
-    setEnglishBreedName(englishName || '');
-  }, [request, breeds, pets, isLoadingReference]);
+  }, [request, breeds]);
 
   useEffect(() => {
     if (!englishBreedName) {
@@ -112,58 +93,19 @@ export const VetRecommendation = () => {
     const loadDiseases = async () => {
       setIsLoadingDiseases(true);
       setDiseases([]);
-      setDiseasesLoadError(null);
 
       try {
         const diseaseList = await vetService.getBreedDiseases(englishBreedName);
         setDiseases(diseaseList);
-      } catch (err) {
+        setIsLoadingDiseases(false);
+      } catch (err: any) {
         setDiseases([]);
-        setDiseasesLoadError(
-          err instanceof Error ? err.message : 'Не удалось загрузить список заболеваний для породы'
-        );
-      } finally {
         setIsLoadingDiseases(false);
       }
     };
 
     loadDiseases();
   }, [englishBreedName]);
-
-  const getActivityLevel = ( activityTypeName: string): 'passive' | 'low' | 'moderate' | 'active' | 'extreme' | 'obesity_prone' => {
-    const name = activityTypeName.toLowerCase();
-    if (name.includes('пассивный')) return 'passive';
-    if (name.includes('средний1')) return 'low';
-    if (name.includes('средний2')) return 'moderate';
-    if (name.includes('активный')) return 'active';
-    if (name.includes('экстремальных условиях')) return 'extreme';
-    if (name.includes('склонные к ожирению')) return 'obesity_prone';
-    return 'moderate';
-  };
-
-  const pet = pets.find(p => p.id === request?.petId);
-  const getReproductiveStatus = (status?: string| 'none' ): 'none' | 'pregnancy' | 'lactation' => { 
-    const value = status?.toLowerCase() ?? '';
-    if (value.includes('щенн')) { return 'pregnancy'; }
-    if (value.includes('лактац')) {  return 'lactation'; }
-    return 'none';
-  };
-
-  const getPregnantPeriod = ( subStatus?: string | 'none' ): 'early_4_weeks' | 'last_5_weeks' | 'none' => { 
-    const value = subStatus?.toLowerCase() ?? '';
-    if (value.includes('4')) { return 'early_4_weeks'; }
-    if (value.includes('5')) {  return 'last_5_weeks'; }
-    return 'none';
-  };
-
-  const getLactationWeek = ( subStatus?: string| 'none' ): 'week_1' | 'week_2' | 'week_3' | 'week_4' | 'none' => { 
-    const value = subStatus?.toLowerCase() ?? '';
-    if (value.includes('1')) { return 'week_1'; }
-    if (value.includes('2')) {  return 'week_2'; }
-    if (value.includes('3')) {  return 'week_3'; }
-    if (value.includes('4')) {  return 'week_4'; }
-    return 'none';
-  };
 
   useEffect(() => {
     if (!englishBreedName || !request) {
@@ -172,36 +114,26 @@ export const VetRecommendation = () => {
 
     const calculateDailyKcal = async () => {
       setIsCalculatingKcal(true);
-      setKcalError(null);
 
       try {
-        const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
+        const petAge = request.birthDate ? calculatePetAge(request.birthDate) : 2;
         const activityLevel = getActivityLevel(request.activityTypeName);
-        const reproductiveStatus = getReproductiveStatus( pet?.reproductiveStatusName);
 
         const result = await vetService.calculateCalories({
           weight: request.weightKg,
-          age: Math.floor(petAge.age),
-          age_metric: petAge.age_metric,
+          age: petAge,
+          age_metric: 'years',
           gender: request.gender || 'male',
           breed: englishBreedName,
-          activity_level: activityLevel,
-          reproductive_status: reproductiveStatus,
-          pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
-          lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
-          num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
+          activity_level: activityLevel
         });
 
         const calculatedKcal = Math.round(result.daily_kcal);
         setDailyKcal(calculatedKcal);
-        setFormula(result.formula || null);
-        setReferencePage(result.reference_page || null);
-        setAdditionalText(result.additional_text || null);
         setTargetKcal(calculatedKcal);
         setInitialKcal(calculatedKcal);
       } catch (err) {
         setDailyKcal(null);
-        setKcalError(err instanceof Error ? err.message : 'Не удалось рассчитать калории');
       } finally {
         setIsCalculatingKcal(false);
       }
@@ -210,46 +142,40 @@ export const VetRecommendation = () => {
     calculateDailyKcal();
   }, [englishBreedName, request]);
 
+  const getActivityLevel = (activityTypeName: string): 'passive' | 'moderate' | 'active' => {
+    const name = activityTypeName.toLowerCase();
+    if (name.includes('низк')) return 'passive';
+    if (name.includes('средн')) return 'moderate';
+    return 'active';
+  };
+
   const handleRecalculateNutrients = async () => {
     if (!request || !targetKcal || !englishBreedName) return;
 
-    setKcalError(null);
-
     try {
-      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
+      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : 2;
       const activityLevel = getActivityLevel(request.activityTypeName);
-      const reproductiveStatus = getReproductiveStatus(pet?.reproductiveStatusName);
 
       await vetService.calculateNutrients({
         weight: request.weightKg,
-        age: Math.floor(petAge.age),
-        age_metric: petAge.age_metric,
+        age: petAge,
+        age_metric: 'years',
         gender: request.gender || 'male',
         breed: englishBreedName,
         activity_level: activityLevel,
-        reproductive_status: reproductiveStatus,
-        pregnancy_period: reproductiveStatus === 'pregnancy' ? getPregnantPeriod(pet?.reproductiveSubStatusName) : 'none',
-        lactation_week: reproductiveStatus === 'lactation' ? getLactationWeek(pet?.reproductiveSubStatusName) : 'none',
-        num_puppies: reproductiveStatus === 'lactation' ? (pet?.puppiesCount ?? 0) : 0,
         target_kcal: targetKcal
       });
 
       setInitialKcal(targetKcal);
     } catch (err) {
-      setKcalError(err instanceof Error ? err.message : 'Не удалось пересчитать нутриенты');
+      console.error('Failed to calculate nutrients:', err);
     }
   };
 
   const handleDiseaseSelect = (disease: string) => {
     setSelectedDisease(disease);
-    setCalculationError(null);
     if (!disease) {
       setShowIngredientForm(false);
-      setDisorderRecommendation(null);
-      setIngrRanges({});
-      setSelectedIngredients([]);
-      setNutrientRanges(DEFAULT_NUTRIENT_RANGES);
-      setMaximizeNutrients(["moisture_per","protein_per",]);
     }
   };
 
@@ -260,65 +186,73 @@ export const VetRecommendation = () => {
     setCalculationError(null);
 
     try {
-      const petAge = request.birthDate
-        ? calculatePetAge(request.birthDate)
-        : { age: 2, age_metric: 'years' as const };
-
       const recommendation = await vetService.getDisorderRecommendations({
         breed: englishBreedName,
-        disorder: selectedDisease,
-        age: Math.floor(petAge.age),
-        age_metric: petAge.age_metric
+        disorder: selectedDisease
       });
 
       setDisorderRecommendation(recommendation);
-      setIngrRanges(recommendation.ingr_ranges);
-      setSelectedIngredients(Object.keys(recommendation.ingr_ranges));
-
-      setNutrientRangesFromPredicted(recommendation.nutrients_ranges);
+      populateRecommendedIngredients(recommendation);
+      setNutrientRangesFromPredicted(recommendation.predicted_nutrients);
       setShowIngredientForm(true);
-    } catch (err) {
-      showActionError(
-        err instanceof Error ? err.message : 'Не удалось получить рекомендации'
-      );
+    } catch (err: any) {
+      setCalculationError(err.message || 'Не удалось получить рекомендации');
     } finally {
       setIsLoadingRecommendation(false);
     }
   };
 
+  const populateRecommendedIngredients = (recommendation: DisorderRecommendation) => {
+    const newIngredients = recommendation.recommended_ingredients;
+    setSelectedIngredients(newIngredients);
 
-  const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['nutrients_ranges']) => {
+    const newRanges: IngredientRangesType = {};
+    newIngredients.forEach(ingredient => {
+      newRanges[ingredient] = { min: 0, max: 100 };
+    });
+    setIngredientRanges(newRanges);
+  };
+
+  const setNutrientRangesFromPredicted = (predicted: DisorderRecommendation['predicted_nutrients']) => {
     setNutrientRanges({
-      moisture_per: predicted.moisture_per,
-      protein_per: predicted.protein_per,
-      carbohydrate_per: predicted.carbohydrate_per,
-      fats_per: predicted.fats_per
+      moisture: {
+        min: Math.max(0, (predicted.moisture || 10) - NUTRIENT_RANGE_MARGIN),
+        max: Math.min(100, (predicted.moisture || 35) + NUTRIENT_RANGE_MARGIN)
+      },
+      protein: {
+        min: Math.max(0, predicted.protein - NUTRIENT_RANGE_MARGIN),
+        max: Math.min(100, predicted.protein + NUTRIENT_RANGE_MARGIN)
+      },
+      carbs: {
+        min: Math.max(0, predicted['carbohydrate (nfe)'] - NUTRIENT_RANGE_MARGIN),
+        max: Math.min(100, predicted['carbohydrate (nfe)'] + NUTRIENT_RANGE_MARGIN)
+      },
+      fats: {
+        min: Math.max(0, predicted.fat - NUTRIENT_RANGE_MARGIN),
+        max: Math.min(100, predicted.fat + NUTRIENT_RANGE_MARGIN)
+      }
     });
   };
 
   const toggleIngredient = (ingredient: string) => {
     if (selectedIngredients.includes(ingredient)) {
       setSelectedIngredients(prev => prev.filter(i => i !== ingredient));
-      setIngrRanges(prev => {
+      setIngredientRanges(prev => {
         const newRanges = { ...prev };
         delete newRanges[ingredient];
         return newRanges;
       });
     } else {
       setSelectedIngredients(prev => [...prev, ingredient]);
-      const categoryMap = INGREDIENT_CATEGORIES.reduce((acc, cat) => {
-        acc[cat.category.toLowerCase()] = cat.items;
-        return acc;
-      }, {} as Record<string, string[]>);
-      setIngrRanges(prev => ({
+      setIngredientRanges(prev => ({
         ...prev,
-        [ingredient]: getDefaultRangeForIngredient(ingredient, categoryMap)
+        [ingredient]: { min: 0, max: 100 }
       }));
     }
   };
 
   const updateIngredientRange = (ingredient: string, type: 'min' | 'max', value: number) => {
-    setIngrRanges(prev => ({
+    setIngredientRanges(prev => ({
       ...prev,
       [ingredient]: {
         ...prev[ingredient],
@@ -347,7 +281,7 @@ export const VetRecommendation = () => {
 
   const handleCalculate = async () => {
     if (!request || selectedIngredients.length === 0 || !englishBreedName) {
-      showActionError('Выберите хотя бы один ингредиент');
+      setCalculationError('Выберите хотя бы один ингредиент');
       return;
     }
 
@@ -355,24 +289,24 @@ export const VetRecommendation = () => {
     setCalculationError(null);
 
     try {
-      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : { age: 2, age_metric: 'years' as const };
+      const petAge = request.birthDate ? calculatePetAge(request.birthDate) : 2;
 
-      const ingredient_ranges = Object.entries(ingrRanges).map(([ingredient, range]) => ({
+      const ingredient_ranges = Object.entries(ingredientRanges).map(([ingredient, range]) => ({
         ingredient,
         min_percent: range.min,
         max_percent: range.max
       }));
 
       const nutrient_ranges = [
-        { nutrient: 'Влага', min_value: nutrientRanges.moisture_per.min, max_value: nutrientRanges.moisture_per.max },
-        { nutrient: 'Белки', min_value: nutrientRanges.protein_per.min, max_value: nutrientRanges.protein_per.max },
-        { nutrient: 'Углеводы', min_value: nutrientRanges.carbohydrate_per.min, max_value: nutrientRanges.carbohydrate_per.max },
-        { nutrient: 'Жиры', min_value: nutrientRanges.fats_per.min, max_value: nutrientRanges.fats_per.max }
+        { nutrient: 'Влага', min_value: nutrientRanges.moisture.min, max_value: nutrientRanges.moisture.max },
+        { nutrient: 'Белки', min_value: nutrientRanges.protein.min, max_value: nutrientRanges.protein.max },
+        { nutrient: 'Углеводы', min_value: nutrientRanges.carbs.min, max_value: nutrientRanges.carbs.max },
+        { nutrient: 'Жиры', min_value: nutrientRanges.fats.min, max_value: nutrientRanges.fats.max }
       ];
 
       const optimizationResult = await vetService.optimizeRecipe({
         weight: request.weightKg,
-        age: Math.floor(petAge.age),
+        age: petAge,
         breed: englishBreedName,
         ingredients: selectedIngredients,
         ingredient_ranges,
@@ -392,6 +326,7 @@ export const VetRecommendation = () => {
       };
 
       await addRecommendationToRequest(request.id, recommendation);
+
       navigate(`/vet/recommendation/${request.id}/view`, {
         state: {
           request,
@@ -399,10 +334,8 @@ export const VetRecommendation = () => {
           shouldRefreshDashboard: true
         }
       });
-    } catch (err) {
-      showActionError(
-        err instanceof Error ? err.message : 'Не удалось рассчитать оптимальный состав'
-      );
+    } catch (err: any) {
+      setCalculationError(err.message || 'Не удалось рассчитать оптимальный состав');
     } finally {
       setIsCalculating(false);
     }
@@ -439,18 +372,8 @@ export const VetRecommendation = () => {
 
         <PetInfoCard request={request} />
 
-        {calculationError && (
-          <div ref={errorBannerRef}>
-            <FormErrorBanner
-              message={calculationError}
-              onDismiss={() => setCalculationError(null)}
-            />
-          </div>
-        )}
-
         <DiseaseSelector
           englishBreedName={englishBreedName}
-          isLoadingBreed={isLoadingReference}
           diseases={diseases}
           isLoadingDiseases={isLoadingDiseases}
           selectedDisease={selectedDisease}
@@ -458,7 +381,6 @@ export const VetRecommendation = () => {
           onGetRecommendations={handleGetRecommendations}
           isLoadingRecommendation={isLoadingRecommendation}
           showIngredientForm={showIngredientForm}
-          loadError={diseasesLoadError}
         />
 
         {showIngredientForm && disorderRecommendation && (
@@ -470,16 +392,13 @@ export const VetRecommendation = () => {
               kcalChanged={kcalChanged}
               isCalculatingKcal={isCalculatingKcal}
               onRecalculate={handleRecalculateNutrients}
-              errorMessage={kcalError}
-              formula={formula}
-              referencePage={referencePage}
-              additionalText={additionalText}
             />
 
             <IngredientSelector
               categories={INGREDIENT_CATEGORIES}
               selectedIngredients={selectedIngredients}
-              ingrRanges={ingrRanges}
+              recommendedIngredients={disorderRecommendation.recommended_ingredients}
+              ingredientRanges={ingredientRanges}
               onToggleIngredient={toggleIngredient}
               onUpdateRange={updateIngredientRange}
               onClearAll={() => setSelectedIngredients([])}
@@ -496,6 +415,12 @@ export const VetRecommendation = () => {
                   maximizeNutrients={maximizeNutrients}
                   onToggle={toggleMaximizeNutrient}
                 />
+
+                {calculationError && (
+                  <div className={styles.errorMessage}>
+                    {calculationError}
+                  </div>
+                )}
 
                 <button
                   onClick={handleCalculate}

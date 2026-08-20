@@ -31,23 +31,14 @@ const PetProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
+    fetchReferenceData();
+  }, []);
 
-    if (isAuthenticated) {
-      fetchReferenceData();
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
       fetchPets();
-    } else {
+    } else if (!authLoading && !isAuthenticated) {
       setPets([]);
-      setSpecies([]);
-      setBreeds([]);
-      setColors([]);
-      setSymptoms([]);
-      setActivityTypes([]);
-      setReproductiveStatuses([]);
-      setReproductiveSubStatuses([]);
-      setIsLoadingReference(false);
     }
   }, [isAuthenticated, authLoading]);
 

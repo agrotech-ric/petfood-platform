@@ -1,6 +1,6 @@
 import { useContext, createContext, useState, ReactNode } from "react";
 import { apiClient } from "../src/utils/apiClient";
-import { usePets } from "./PetContext";
+import { useReferenceData } from "../src/hooks/useReferenceData";
 import { getActivityTypeId, getSymptomIdsFromNames } from "../src/const/petMappings";
 
 export type OptimizationResult = {
@@ -77,7 +77,7 @@ const RequestContext = createContext<RequestContextType | undefined>(undefined);
 export const RequestProvider = ({ children }: { children: ReactNode }) => {
   const [requests, setRequests] = useState<PetRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { activityTypes, symptoms, isLoadingReference } = usePets();
+  const { activityTypes, symptoms } = useReferenceData();
 
   const fetchRequestsByPetId = async (petId: string): Promise<void> => {
     if (!petId) return;
@@ -126,10 +126,6 @@ export const RequestProvider = ({ children }: { children: ReactNode }) => {
 
   const addRequest = async (requestData: CreateRequestPayload): Promise<string> => {
     try {
-      if (isLoadingReference) {
-        throw new Error('Справочные данные ещё загружаются. Подождите и попробуйте снова.');
-      }
-
       const activityTypeId = getActivityTypeId(requestData.activityTypeName, activityTypes);
       const symptomIds = getSymptomIdsFromNames(requestData.symptoms, symptoms);
 
@@ -168,10 +164,6 @@ export const RequestProvider = ({ children }: { children: ReactNode }) => {
     data: Pick<PetRequest, 'activityTypeName' | 'symptoms'>
   ): Promise<void> => {
     try {
-      if (isLoadingReference) {
-        throw new Error('Справочные данные ещё загружаются. Подождите и попробуйте снова.');
-      }
-
       const activityTypeId = getActivityTypeId(data.activityTypeName, activityTypes);
       const symptomIds = getSymptomIdsFromNames(data.symptoms, symptoms);
 

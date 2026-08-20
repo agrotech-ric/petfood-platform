@@ -1,0 +1,15 @@
+server:
+  port: 8082
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:}
+
+app:
+  jwt:
+    issuer: ${JWT_ISSUER:http://127.0.0.1:8082}
+    ttlSeconds: ${JWT_TTL_SECONDS:300}
+    kidTtlSeconds: ${JWT_KID_TTL_SECONDS:3600}

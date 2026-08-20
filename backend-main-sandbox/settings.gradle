@@ -1,0 +1,6 @@
+rootProject.name = 'petsRecipes'
+include 'platform:gateway'
+include 'services:account'
+include 'services:auth'
+include 'services:notifications'
+include 'services:pets'

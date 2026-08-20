@@ -1,0 +1,74 @@
+name: Validate beta candidate (deployment disabled)
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_commit:
+        description: Full commit SHA currently at origin/beta
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Share the production lock so validation cannot compete with a production
+# release on the self-hosted runner.
+concurrency:
+  group: petfood-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: [self-hosted, linux, petfood-prod]
+    timeout-minutes: 45
+    env:
+      REQUESTED_COMMIT: ${{ inputs.candidate_commit }}
+
+    steps:
+      - name: Check out the requested beta candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_commit }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact beta commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "candidate_commit must be a full lowercase Git SHA" >&2
+            exit 1
+          fi
+
+          checked_out_commit=$(git rev-parse HEAD)
+          test -n "${checked_out_commit:?}"
+          test "$checked_out_commit" = "$REQUESTED_COMMIT"
+
+          git fetch --no-tags origin beta
+          remote_beta=$(git rev-parse origin/beta)
+          test -n "${remote_beta:?}"
+          test "$remote_beta" = "$REQUESTED_COMMIT"
+
+      - name: Validate isolated sandbox definition
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f docker-compose.sandbox.yml config --quiet
+
+          rendered=$(docker compose -f docker-compose.sandbox.yml config --format json)
+          test -n "${rendered:?}"
+
+          if jq -e '.volumes | keys[] | select(test("production"; "i"))' <<<"$rendered" >/dev/null; then
+            echo "Sandbox definition unexpectedly references a production volume" >&2
+            exit 1
+          fi
+
+          if jq -e '.services | to_entries[] | select(.key | test("production"; "i"))' <<<"$rendered" >/dev/null; then
+            echo "Sandbox definition unexpectedly contains a production service" >&2
+            exit 1
+          fi
+
+          echo "Beta runtime deployment is disabled during cutover preparation."
+          echo "No containers, volumes, proxy routes, or domain state were changed."

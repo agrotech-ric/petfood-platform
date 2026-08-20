@@ -35,7 +35,7 @@ import { UserRecommendationCreateDetails } from './pages/UserRecommendationCreat
 
 function App() {
   return (
-     <Router basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+     <Router>
       <AuthProvider>
         <PetProvider>
           <RequestProvider>

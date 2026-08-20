@@ -75,9 +75,6 @@ class DisorderRequest(BaseModel):
     disorder: str = Field(..., description="Disorder/disease name")
     age: int = Field(..., ge=0, description="Dog age")
     age_metric: AgeMetricType = Field(..., description="Age measurement unit")
-    weight: float = Field(..., gt=0, description="Dog weight in kg")
-    target_kcal: Optional[float] = Field(None, description="Target daily kcal (optional, will be calculated if not provided)")
-    reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
 
 
 class IngredientRange(BaseModel):
@@ -92,9 +89,18 @@ class NutrientRange(BaseModel):
     max_value: float = Field(..., ge=0, le=100, description="Maximum value per 100g")
 
 
+class IngredientProfile(BaseModel):
+    ingredient: str = Field(..., description="Ingredient name used in ingredient ranges")
+    nutrients: Dict[str, float] = Field(
+        ...,
+        description="Nutrient values per 100g using internal recommender nutrient keys",
+    )
+
+
 class OptimizeRecipeRequest(BaseModel):
     weight: float = Field(..., gt=0, description="Dog weight in kg")
     age: int = Field(..., ge=0, description="Dog age")
+    age_metric: AgeMetricType = Field(AgeMetricType.YEARS, description="Age measurement unit")
     breed: str = Field(..., description="Dog breed name")
     reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
     ingredients: List[str] = Field(..., min_items=1, description="List of ingredient names")
@@ -102,6 +108,10 @@ class OptimizeRecipeRequest(BaseModel):
     nutrient_ranges: List[NutrientRange] = Field(..., description="Nutritional constraints")
     maximize_nutrients: List[str] = Field(default=['moisture_per', 'protein_per'], description="Nutrients to maximize")
     target_kcal: float = Field(..., gt=0, description="Target daily caloric intake")
+    ingredient_profiles: List[IngredientProfile] = Field(
+        default_factory=list,
+        description="Optional request-scoped custom ingredient profiles",
+    )
 
 
 # Response Models
@@ -137,9 +147,8 @@ class DisorderRecommendationsResponse(BaseModel):
     disorder: str = Field(..., description="Disorder name")
     disorder_type: str = Field(..., description="Disorder category")
     breed_size: str = Field(..., description="Breed size category")
-    ingr_ranges: Dict[str, Dict[str, float]] = Field(..., description="Recommended ingredient ranges")
+    recommended_ingredients: List[str] = Field(..., description="Top recommended ingredients")
     nutrients_ranges: Dict[str, NutrientRangeSimple] = Field(..., description="Recommend optimal nutrient levels")
-    maxim_main_nutr: List[str] = Field(..., description="Main nutrients to maximize")
 
 
 class RecipeIngredient(BaseModel):

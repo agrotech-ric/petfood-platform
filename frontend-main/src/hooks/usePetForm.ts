@@ -8,7 +8,7 @@ import {
 } from '../utils/petFormValidator';
 import { usePets } from '../../context/PetContext';
 import type { Species } from '../../context/PetContext/types';
-import { getReproductiveStatusId, getLactationWeekId, getPregnancyPeriodId } from '../const/petMappings';
+import { getReproductiveStatusId, getLactationWeekId } from '../const/petMappings';
 import { petService } from '../../services/petService';
 import { useFormPersistence } from './useFormPersistence';
 
@@ -33,7 +33,7 @@ const resolveDogSpeciesId = (species: Species[]): number => {
 const STORAGE_KEY = 'pet_registration_draft';
 
 export const usePetForm = (editPetId?: string) => {
-  const { species, breeds, colors, addPet, updatePet, isLoadingReference } = usePets();
+  const { species, breeds, colors, addPet, updatePet } = usePets();
   const isEditMode = !!editPetId;
 
   const [formData, setFormData] = useState<PetFormData>(INITIAL_FORM_DATA);
@@ -180,15 +180,8 @@ export const usePetForm = (editPetId?: string) => {
     let reproductiveSubStatusId: number | null = null;
     let puppiesCount = 0;
 
-    if (formData.reproductiveStatus === 'pregnancy') {
-      reproductiveSubStatusId = getPregnancyPeriodId(
-        formData.pregnancyPeriod || ''
-      );
-    }
-    else if (formData.reproductiveStatus === 'lactation') {
-      reproductiveSubStatusId = getLactationWeekId(
-        formData.lactationWeek || ''
-      );
+    if (formData.reproductiveStatus === 'lactation') {
+      reproductiveSubStatusId = getLactationWeekId(formData.lactationWeek || '');
       puppiesCount = formData.puppyCount || 0;
     }
 
@@ -243,13 +236,6 @@ export const usePetForm = (editPetId?: string) => {
 
   const submitForm = async (): Promise<boolean> => {
     if (!validateForm()) {
-      return false;
-    }
-
-    if (isLoadingReference) {
-      setErrors({
-        general: 'Справочные данные ещё загружаются. Подождите и попробуйте снова.',
-      });
       return false;
     }
 

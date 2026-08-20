@@ -17,7 +17,7 @@ export type RecipeOptimizationRequest = {
   age_metric: 'years' | 'months';
   gender: string;
   breed: string;
-  activity_level: 'passive' |'low' |'moderate' | 'active'| 'extreme'| 'obesity_prone';;
+  activity_level: 'passive' | 'moderate' | 'active';
   ingredients: string[];
   ingredient_ranges: Array<{
     ingredient: string;

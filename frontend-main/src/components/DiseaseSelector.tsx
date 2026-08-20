@@ -3,7 +3,6 @@ import styles from '../styles/DiseaseSelector.module.css';
 
 type DiseaseSelectorProps = {
   englishBreedName: string;
-  isLoadingBreed?: boolean;
   diseases: string[];
   isLoadingDiseases: boolean;
   selectedDisease: string;
@@ -11,20 +10,17 @@ type DiseaseSelectorProps = {
   onGetRecommendations: () => void;
   isLoadingRecommendation: boolean;
   showIngredientForm: boolean;
-  loadError?: string | null;
 };
 
 export const DiseaseSelector = ({
   englishBreedName,
-  isLoadingBreed = false,
   diseases,
   isLoadingDiseases,
   selectedDisease,
   onDiseaseSelect,
   onGetRecommendations,
   isLoadingRecommendation,
-  showIngredientForm,
-  loadError = null,
+  showIngredientForm
 }: DiseaseSelectorProps) => {
   const diseaseOptions = diseases.map(disease => ({
     value: disease,
@@ -40,15 +36,9 @@ export const DiseaseSelector = ({
       <h2 className={styles.sectionTitle}>Заболевание</h2>
 
       {!englishBreedName ? (
-        isLoadingBreed ? (
-          <div className={styles.loadingText}>Определение породы...</div>
-        ) : (
-          <div className={styles.errorText}>Не удалось определить породу</div>
-        )
+        <div className={styles.errorText}>Не удалось определить породу</div>
       ) : isLoadingDiseases ? (
         <div className={styles.loadingText}>Загрузка заболеваний...</div>
-      ) : loadError ? (
-        <div className={styles.errorText}>{loadError}</div>
       ) : diseases.length === 0 ? (
         <div className={styles.errorText}>Не удалось загрузить список заболеваний</div>
       ) : (

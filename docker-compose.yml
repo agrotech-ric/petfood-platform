@@ -20,15 +20,6 @@ services:
     networks:
       - pets_network
 
-  adminer:
-    image: adminer:latest
-    container_name: pets_adminer_ctn
-    ports:
-      - "8089:8080"
-    restart: unless-stopped
-    networks:
-      - pets_network
-
   redis:
     image: redis:7.2-alpine
     container_name: pets_redis
@@ -174,7 +165,6 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       # Persist pet photos when using app.photo-storage.type=fs (default in application.yml)
       PETS_PHOTO_DIR: /data/pets-photos
-      PETS_PHOTO_STORAGE_BASE_URL: https://agrotech.astanait.edu.kz/petfood
     volumes:
       - pets_photos:/data/pets-photos
     restart: unless-stopped
@@ -251,7 +241,7 @@ services:
       context: ./frontend-main
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: "/petfood"
+        VITE_API_BASE_URL: "http://10.1.10.144:5555/api"
     container_name: pets_frontend
     restart: unless-stopped
     networks:

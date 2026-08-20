@@ -1,21 +1,19 @@
-type NutrientRange = {
-  min: number;
-  max: number;
-};
-
 export type DisorderRecommendation = {
   disorder: string;
-  disorder_type: string;
   breed_size: string;
-  ingr_ranges: Record<string, { min: number; max: number }>;
-  nutrients_ranges: {
-    moisture_per: NutrientRange;
-    protein_per: NutrientRange;
-    fats_per: NutrientRange;
-    carbohydrate_per: NutrientRange;
+  recommended_ingredients: string[];
+  top_ingredients_with_scores: Array<{
+    ingredient: string;
+    score: number;
+    category: string;
+  }>;
+  predicted_nutrients: {
+    protein: number;
+    fat: number;
+    'carbohydrate (nfe)': number;
+    'crude fibre': number;
+    moisture?: number;
   };
-  maxim_main_nutr: string[];
-  recommended_ingredients?: string[];
 };
 
 export type RangeValue = {
@@ -28,10 +26,10 @@ export type IngredientRangesType = {
 };
 
 export type NutrientRangesType = {
-  moisture_per: RangeValue;
-  protein_per: RangeValue;
-  carbohydrate_per: RangeValue;
-  fats_per: RangeValue;
+  moisture: RangeValue;
+  protein: RangeValue;
+  carbs: RangeValue;
+  fats: RangeValue;
 };
 
 export type VetRequest = {
@@ -51,8 +49,4 @@ export type VetRequest = {
   symptoms: string[];
   comments?: string;
   createdAt: string;
-  reproductiveStatus?: string;
-  pregnancyPeriod?: string;
-  lactationWeek?: string;
-  puppyCount?: number;
 };

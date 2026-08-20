@@ -1,0 +1,44 @@
+spring:
+  config:
+    import: classpath:application-routes.yml
+  profiles:
+    default: dev
+
+server:
+  port: ${SERVER_PORT:8090}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  auth:
+    base-url: ${AUTH_BASE_URL:http://127.0.0.1:8082}
+    exchange-path: ${AUTH_EXCHANGE_PATH:/api/v1/auth/sid/exchange}
+    connect-timeout-ms: 1000
+    read-timeout-ms: 2000
+
+  security:
+    public-prefix: ${PUBLIC_PATH_PREFIX:/petfood}
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGIN:https://agrotech.astanait.edu.kz}
+    trusted-proxies: ${TRUSTED_PROXY_ADDRESSES:}
+    public-paths:
+      - /ping
+      - /.well-known/jwks.json
+
+      - /api/v1/account/register
+      - /api/v1/account/register/confirm
+      - /api/v1/account/login/email
+      - /api/v1/account/login/email/confirm
+      - /api/v1/account/login/phone
+      - /api/v1/account/login/phone/confirm
+
+      - /api/v1/account/password/reset/**
+
+  rate-limit:
+    replenish-rate: ${AUTH_RATE_REPLENISH_RATE:2}
+    burst-capacity: ${AUTH_RATE_BURST_CAPACITY:10}
+    requested-tokens: ${AUTH_RATE_REQUESTED_TOKENS:1}

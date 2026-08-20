@@ -1,4 +1,4 @@
-import { usePets } from '../../context/PetContext';
+import { useReferenceData } from '../hooks/useReferenceData';
 import PetRegistrationDropdown from './PetRegistrationDropdown';
 import styles from '../styles/PetRequestForm.module.css';
 
@@ -9,9 +9,9 @@ type ActivityDropdownProps = {
 };
 
 export const ActivityDropdown = ({ value, onChange, error }: ActivityDropdownProps) => {
-  const { activityTypes, isLoadingReference, fetchReferenceData } = usePets();
+  const { activityTypes, isLoading, error: fetchError } = useReferenceData();
 
-  if (isLoadingReference) {
+  if (isLoading) {
     return (
       <div className={styles.section}>
         <label className={styles.label}>
@@ -24,17 +24,14 @@ export const ActivityDropdown = ({ value, onChange, error }: ActivityDropdownPro
     );
   }
 
-  if (activityTypes.length === 0) {
+  if (fetchError) {
     return (
       <div className={styles.section}>
         <label className={styles.label}>
           Активность: <span className={styles.required}>*</span>
         </label>
         <div style={{ padding: '1rem', color: '#d32f2f', backgroundColor: '#ffebee', borderRadius: '8px' }}>
-          Не удалось загрузить справочник активности.{' '}
-          <button type="button" onClick={() => fetchReferenceData()} style={{ textDecoration: 'underline', background: 'none', border: 'none', color: '#d32f2f', cursor: 'pointer' }}>
-            Повторить
-          </button>
+          {fetchError}
         </div>
       </div>
     );

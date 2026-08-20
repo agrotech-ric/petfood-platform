@@ -2,21 +2,9 @@
 .env.*
 *.env
 !.env.example
-
-# Dependencies
-node_modules/
-
-# Build output
-dist/
-build/
-
-# Tool caches
-.gradle/
-.vite/
-
-# Logs and local deployment state
-*.log
+!.env.production.example
 deploy.log
-.deploy-last-commit
 actions-runner/
-AGENTS.md
+**/bin/
+.gradle
+**/build/
