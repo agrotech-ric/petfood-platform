@@ -1,6 +1,6 @@
 ## Context
 
-See `proposal.md` for motivation and the delta specs for the release contracts. The Git repository has a frozen legacy snapshot at `162dba90`, a final pre-promotion legacy `main` at `09eb6f1f`, a beta line at `e07f5fc3`, and a shared ancestor followed by substantial independent histories. The final legacy commit includes three post-freeze pull requests and remains legacy-only source: its content is preserved for recovery but is not imported into the beta-derived release tree. The production-style legacy stack and the isolated beta stack are both present on the host, with distinct containers and persistent stores. The beta application already defines the intended `/petfood/` routing and security boundary, but its promotion requires coordinated Git, data, runtime, and domain operations.
+See `proposal.md` for motivation and the delta specs for the release contracts. The Git repository has a frozen legacy snapshot at `162dba90`, an intermediate final boundary at `09eb6f1f`, a final pre-promotion legacy `main` at `2cb8259d`, a beta line at `e07f5fc3`, and a shared ancestor followed by substantial independent histories. The final legacy commit includes seven post-freeze pull requests and remains legacy-only source: its content is preserved for recovery but is not imported into the beta-derived release tree. The production-style legacy stack and the isolated beta stack are both present on the host, with distinct containers and persistent stores. The beta application already defines the intended `/petfood/` routing and security boundary, but its promotion requires coordinated Git, data, runtime, and domain operations.
 
 The original vendor snapshot is confirmed as commit `938de22696138012cb6f2a54cd0218fa88bc8009`. Production credentials and backup payloads cannot be committed. Git operations remain user-owned, and any remote branch update or domain cutover must be performed only after the corresponding review and execution approval. The current `main` push workflow deploys the legacy checkout and compose stack, while the beta workflow runs a Vite development server and Spring `dev` profiles; neither path is acceptable as the final production trigger. Automated scanning found no token or key leaks, but current containers still use development defaults that are visible in historical source.
 
@@ -28,7 +28,7 @@ The original vendor snapshot is confirmed as commit `938de22696138012cb6f2a54cd0
 
 ### 1. Preserve source generations in the existing repository
 
-Use protected archive branches for discoverability and annotated tags for fixed release identity. The expected references include `archive/vendor-original`, the already published `archive/legacy-main` frozen snapshot, a distinct final legacy reference for `09eb6f1f`, and tags for the vendor snapshot, both significant legacy boundaries, and the beta promotion candidate. Exact names are selected against existing remote conventions and recorded in the recovery manifest.
+Use protected archive branches for discoverability and annotated tags for fixed release identity. The expected references include `archive/vendor-original`, the already published `archive/legacy-main` frozen snapshot, the intermediate `archive/legacy-main-final` boundary at `09eb6f1f`, the final `archive/legacy-main-final-v3` boundary at `2cb8259d`, and tags for the vendor snapshot, every significant legacy boundary, and the beta promotion candidate. Exact names are selected against existing remote conventions and recorded in the recovery manifest.
 
 Tag and archive the confirmed vendor commit without rewriting its tree. Local archive branches and annotated tags may be prepared after scanning because they expose no blobs beyond the existing public history. Remote publication remains blocked until every historical development value that is still usable by a live container has been rotated or invalidated.
 
@@ -38,7 +38,7 @@ A separate repository was rejected because these are generations of the same pro
 
 ### 2. Promote beta with a history-preserving release merge
 
-Create the promotion branch from the approved beta commit, merge the final archived legacy `main` (`09eb6f1f`) as a second parent using a history-only merge whose resulting tree remains the beta tree, and verify the resulting tree hash against the beta candidate. The earlier `162dba90` boundary remains independently archived. The promotion branch can then advance `main` through the protected review path because current legacy `main` remains an ancestor of the release commit.
+Create the promotion branch from the approved beta commit, merge the final archived legacy `main` (`2cb8259d`) as a second parent using a history-only merge whose resulting tree remains the beta tree, and verify the resulting tree hash against the beta candidate. The earlier `162dba90` and `09eb6f1f` boundaries remain independently archived. The promotion branch can then advance `main` through the protected review path because current legacy `main` remains an ancestor of the release commit.
 
 This approach preserves both histories and avoids a force push. A normal content merge was rejected because conflict resolution could reintroduce legacy application files. Moving `main` directly to beta with a forced update was rejected because it increases operational risk and makes branch-protection exceptions necessary.
 
@@ -78,7 +78,7 @@ Define release-blocking checks and an operator decision deadline before maintena
 
 Code-only rollback against beta data and data-only rollback under beta code were rejected because Flyway state, API expectations, media associations, and credentials may not match. The matching legacy generation runs its rehearsed generation-specific functional, routing, integration, data, and isolation checks before traffic returns.
 
-The rehearsal confirmed that exact legacy `09eb6f1f` retains historical
+The rehearsal and final-drift inspection confirmed that exact legacy `2cb8259d` retains historical
 security behavior: `Secure=false` root-scoped session cookies, SID disclosure in
 the email-login response, and public filesystem-photo operations without owner
 enforcement. Correcting these behaviors would create a different code
