@@ -229,16 +229,17 @@ def kcal_calculate(reproductive_status, berem_time, num_pup, L_time, age_type, w
             page = "56"
 
     elif reproductive_status == rep_status_types[2]:
+        lactation_period = lact_time_types_dict.get(L_time, "неуказанного периода лактации")
         if num_pup < 5:
             kcal = 145 * (weight ** 0.75) + 24 * num_pup * weight * L
             formula = "lactation_num_pup_less_5"  
-            additional_text= f"n - количество щенков; L = {L} для {lact_time_types_dict[L_time]}"
+            additional_text= f"n - количество щенков; L = {L} для {lactation_period}"
             page = "56"
 
         else:
             kcal = 145 * (weight ** 0.75) + (96 + 12 * num_pup - 4) * weight * L
             formula = "lactation_num_pup_more_5"  
-            additional_text= f"n - количество щенков; L = {L} для {lact_time_types_dict[L_time]}"
+            additional_text= f"n - количество щенков; L = {L} для {lactation_period}"
             page = "56"
 
     else:
