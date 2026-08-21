@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from '../../../context/LanguageContext'
 import { ingredientService, type Ingredient } from '../../../services/ingredientService'
 import { petService, type HealthRecord, type PetProfileData } from '../../../services/petService'
 import {
@@ -585,6 +586,7 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
 export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const locationState = location.state as { from?: string; petId?: string; fromTab?: string } | null
   const origin = locationState?.from
   const originPetId = locationState?.petId
@@ -605,6 +607,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [calorieCalculation, setCalorieCalculation] = useState<CalorieCalculation | null>(null)
   const [availableDisorders, setAvailableDisorders] = useState<string[]>([])
   const [loadingDisorders, setLoadingDisorders] = useState(false)
+  const calculationInputRevision = useRef(0)
 
   const isEdit = recipeId != null
 
@@ -744,8 +747,20 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     setForm(current => ({ ...current, [key]: value }))
   }
 
+  const invalidateCalculation = () => {
+    calculationInputRevision.current += 1
+    setCalculationResult(null)
+    setCalculationVersion(null)
+    setNutrientNorms({})
+  }
+
+  const setCalculationField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    invalidateCalculation()
+    setField(key, value)
+  }
+
   const toggleSymptom = (symptomId: number) => {
-    setField(
+    setCalculationField(
       'symptomIds',
       form.symptomIds.includes(symptomId)
         ? form.symptomIds.filter(id => id !== symptomId)
@@ -755,9 +770,10 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
   const toggleIngredient = (ingredientId: number) => {
     if (form.ingredientIds.includes(ingredientId)) {
-      setField('ingredientIds', form.ingredientIds.filter(id => id !== ingredientId))
+      setCalculationField('ingredientIds', form.ingredientIds.filter(id => id !== ingredientId))
       return
     }
+    invalidateCalculation()
     setForm(current => ({
       ...current,
       ingredientIds: [...current.ingredientIds, ingredientId],
@@ -769,11 +785,11 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   }
 
   const updateIngredientRange = (ingredientId: number, range: Range) => {
-    setField('ingredientRanges', { ...form.ingredientRanges, [ingredientId]: range })
+    setCalculationField('ingredientRanges', { ...form.ingredientRanges, [ingredientId]: range })
   }
 
   const updateNutrientRange = (key: string, range: Range) => {
-    setField('nutrientRanges', { ...form.nutrientRanges, [key]: range })
+    setCalculationField('nutrientRanges', { ...form.nutrientRanges, [key]: range })
   }
 
   const goBack = () => {
@@ -797,7 +813,11 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     }
     setError('')
     setStep(2)
-    void handleUpdateRecommendations()
+    if (calculationResult) {
+      requestAnimationFrame(showOptimization)
+    } else {
+      void handleUpdateRecommendations()
+    }
   }
 
   const showOptimization = () => {
@@ -809,6 +829,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
   const handleUpdateRecommendations = async (disorderOverride?: string) => {
     if (updatingRecommendations || calculating) return
+    invalidateCalculation()
     setUpdatingRecommendations(true)
     setError('')
     setNotice('')
@@ -901,6 +922,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
   const handleCalculate = async () => {
     if (calculating || updatingRecommendations) return
+    const inputRevision = calculationInputRevision.current
     setCalculating(true)
     setError('')
     try {
@@ -967,6 +989,10 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           .map(toRecommenderIngredientProfile),
       })
       if (!optimized.success) throw new Error('Алгоритм не смог подобрать состав')
+      if (inputRevision !== calculationInputRevision.current) {
+        setError(t('recipes.calculationInputsChanged'))
+        return
+      }
 
       setCalculationResult(
         toCalculationResult(optimized, norms, references.ingredients, targetKcal),
@@ -986,7 +1012,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   }
 
   const handleSave = async () => {
-    if (saving) return
+    if (saving || calculating || updatingRecommendations) return
     if (!form.name.trim()) {
       setError('Укажите название корма')
       setStep(1)
@@ -1000,7 +1026,9 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             recipeId,
             toPayload(form, originPetId, calculationResult, calculationVersion),
           )
-        : await recipeService.create(toPayload(form, originPetId))
+        : await recipeService.create(
+            toPayload(form, originPetId, calculationResult, calculationVersion),
+          )
       navigate(`/recipes/${saved.id}`, {
         state: origin === 'pet-profile'
           ? { from: origin, petId: originPetId, fromTab: locationState?.fromTab ?? 'food' }
@@ -1147,7 +1175,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   step="0.1"
                   className={styles.fieldInput}
                   value={form.weight}
-                  onChange={event => setField('weight', event.target.value)}
+                  onChange={event => setCalculationField('weight', event.target.value)}
                 />
               </div>
               <div className={styles.fieldGroup}>
@@ -1155,7 +1183,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 <select
                   className={styles.fieldSelect}
                   value={form.breedId}
-                  onChange={event => setField('breedId', event.target.value)}
+                  onChange={event => setCalculationField('breedId', event.target.value)}
                 >
                   <option value="">Не указана</option>
                   {references.breeds.map(item => (
@@ -1172,7 +1200,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   step="1"
                   className={styles.fieldInput}
                   value={form.ageMonths}
-                  onChange={event => setField('ageMonths', event.target.value)}
+                  onChange={event => setCalculationField('ageMonths', event.target.value)}
                   placeholder="Например, 18"
                 />
               </div>
@@ -1181,7 +1209,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 <select
                   className={styles.fieldSelect}
                   value={form.activityId}
-                  onChange={event => setField('activityId', event.target.value)}
+                  onChange={event => setCalculationField('activityId', event.target.value)}
                 >
                   <option value="">Не указан</option>
                   {references.activities.map(item => (
@@ -1195,6 +1223,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   className={styles.fieldSelect}
                   value={form.gender}
                   onChange={event => {
+                    invalidateCalculation()
                     setForm(current => ({
                       ...current,
                       gender: event.target.value as RecipeGender,
@@ -1211,7 +1240,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 <select
                   className={styles.fieldSelect}
                   value={form.reproductiveStatusId}
-                  onChange={event => setField('reproductiveStatusId', event.target.value)}
+                  onChange={event => setCalculationField('reproductiveStatusId', event.target.value)}
                 >
                   <option value="">Не указан</option>
                   {compatibleStatuses.map(item => (
@@ -1237,6 +1266,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                       const matchingCondition = references.healthConditions.find(
                         item => normalizeLabel(displayName(item)) === normalizeLabel(disorder),
                       )
+                      invalidateCalculation()
                       setForm(current => ({
                         ...current,
                         targetDisorder: disorder,
@@ -1321,7 +1351,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 type="number"
                 min="0.1"
                 value={form.energy}
-                onChange={event => setField('energy', event.target.value)}
+                onChange={event => setCalculationField('energy', event.target.value)}
               />
               <span className={styles.energyHint}>
                 Рекомендуемая: {recommendedEnergy ?? '—'} ккал
@@ -1389,7 +1419,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 })}
               </div>
               {form.ingredientIds.length > 0 && (
-                <button className={styles.clearAllBtn} onClick={() => setField('ingredientIds', [])}>
+                <button className={styles.clearAllBtn} onClick={() => setCalculationField('ingredientIds', [])}>
                   Очистить все
                 </button>
               )}
@@ -1436,23 +1466,37 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           <SearchableNutrientSelect
             options={RECIPE_MAXIMIZE_OPTIONS}
             value={form.maximizeNutrients}
-            onChange={value => setField('maximizeNutrients', value)}
+            onChange={value => setCalculationField('maximizeNutrients', value)}
           />
 
-          <button
-            className={styles.primaryBtn}
-            style={{ marginTop: 24 }}
-            disabled={saving || calculating || updatingRecommendations}
-            onClick={isEdit ? () => void handleCalculate() : () => void handleSave()}
-          >
-            {isEdit
-              ? calculating ? 'Расчёт...' : 'Рассчитать оптимальный состав'
-              : saving ? 'Сохранение...' : 'Сохранить черновик'}
-          </button>
+          <div className={styles.recipeActions}>
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              disabled={saving || calculating || updatingRecommendations}
+              onClick={() => void handleCalculate()}
+            >
+              {calculating ? t('recipes.calculating') : t('recipes.calculateComposition')}
+            </button>
+            {!isEdit && (
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                disabled={saving || calculating || updatingRecommendations}
+                onClick={() => void handleSave()}
+              >
+                {saving
+                  ? t('common.saving')
+                  : calculationResult
+                    ? t('recipes.saveRecipe')
+                    : t('recipes.saveDraft')}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {isEdit && calculationResult && <EditCalculationResult result={calculationResult} />}
+      {calculationResult && <EditCalculationResult result={calculationResult} />}
 
       {isEdit && (
         <button
@@ -1460,7 +1504,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           disabled={saving}
           onClick={() => void handleSave()}
         >
-          {saving ? 'Сохранение...' : 'Сохранить изменения'}
+          {saving ? t('common.saving') : t('recipes.saveChanges')}
         </button>
       )}
     </div>
