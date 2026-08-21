@@ -1,132 +1,147 @@
-# PetFood Platform Beta
+<div align="center">
+  <img
+    src="frontend-next/src/assets/figma/pets-list/logo.png"
+    alt="PetFood Platform logo"
+    width="72"
+  />
 
-PetFood Platform is a web application for managing pet profiles, health data,
-ingredients, and calculated food recipes. This repository contains both the
-current beta stack and older main/legacy implementations.
+  <h1>PetFood Platform</h1>
 
-## Active development scope
+  <p><strong>Personalized nutrition planning for healthier, happier pets.</strong></p>
 
-Use these directories for beta work:
+  <p>
+    <a href="#about">About</a> ·
+    <a href="#features">Features</a> ·
+    <a href="#how-it-works">How it works</a> ·
+    <a href="#product-walkthrough">Walkthrough</a> ·
+    <a href="#product-experience">Product experience</a>
+  </p>
+</div>
 
-| Area | Active code | Do not edit for beta tasks |
-| --- | --- | --- |
-| Frontend | `frontend-next/` | `frontend-main/` |
-| Backend | `backend-main-sandbox/` | `backend-main/` |
-| Recommender | `nutrient-recommender-main/` | - |
-| Runtime | `docker-compose.sandbox.yml` | main compose files |
+## About
 
-The beta environment is isolated from main: it has its own containers,
-database, Redis, RabbitMQ, and MinIO data.
+PetFood Platform helps pet owners organize everything needed for thoughtful
+everyday nutrition. It brings pet profiles, health context, ingredients, and
+food recipes together in one clear workspace.
 
-## Quick start
+Instead of keeping important details in different notes and calculating meals
+manually, owners can build a complete pet profile, select suitable ingredients,
+create recipes, and review their nutritional composition before saving them.
 
-Prerequisites:
+<p align="center">
+  <img
+    src="docs/assets/petfood-dashboard.png"
+    alt="PetFood Platform pet dashboard"
+    width="100%"
+  />
+</p>
+<p align="center"><em>Keep every pet close at hand from one focused dashboard.</em></p>
 
-- Docker with the Compose plugin;
-- access to the proxy targets configured in `frontend-next/.env`;
-- SMTP values in the root `.env` when email delivery must work.
+## Features
 
-Create local environment files once:
+### Pet profiles
 
-```bash
-cp .env.example .env
-cp frontend-next/.env.example frontend-next/.env
-```
+Keep each pet's essential information in one place, including breed, age,
+weight, activity level, photo, and other individual characteristics.
 
-Review the copied values, then start the beta stack:
+### Health context
 
-```bash
-./run-beta.sh start
-./run-beta.sh status
-```
+Maintain a structured view of the pet's current condition,
+contraindications, and disease history so that important context is always
+close to the nutrition workflow.
 
-The frontend dev server listens on port `5174`. Backend service addresses and
-diagnostic commands are documented in
-[`README_SANDBOX_BACKEND.md`](README_SANDBOX_BACKEND.md).
+### Ingredient library
 
-Useful lifecycle commands:
+Browse available ingredients, inspect their nutritional values, search and
+filter the catalog, and create private custom ingredients when something is
+missing from the shared library.
 
-```bash
-./run-beta.sh logs
-./run-beta.sh stop
-```
+### Recipe builder
 
-`./run-beta.sh update` pulls the remote `beta` branch. Do not use it when the
-working tree contains local changes that have not been saved.
+Combine ingredients in a guided workflow, adjust quantities, associate a
+recipe with the right pet, and keep personal recipes organized for future use.
 
-## Architecture at a glance
+### Nutritional calculations
 
-```text
-Browser (React/Vite)
-  |-- /api ----------> Gateway -- sid cookie -> JWT
-  |                       |-- Account service
-  |                       |-- Auth service
-  |                       `-- Pets service ----> PostgreSQL / MinIO
-  |
-                          `-- FastAPI recommender
+Calculate calorie and nutrient targets, review the composition of a recipe,
+and explore adjustments before saving the final version.
 
-Account/Pets services --> RabbitMQ --> Notifications service --> SMTP
-Sessions and signing data --> Redis
-```
+### Personal workspace
 
-The main ownership boundaries are:
+Pet profiles, custom ingredients, photos, and recipes remain connected to
+their owner. Account settings and profile management are available directly
+inside the application.
 
-- `account`: users, profiles, credentials, sessions, and audit history;
-- `auth`: exchange of a session identifier for a short-lived JWT;
-- `pets`: pets, health records, ingredients, recipes, and photo metadata;
-- `notifications`: outgoing email consumers;
-- `gateway`: public entry point and authentication exchange;
-- `recommender`: calorie, nutrient, disorder, and recipe calculations.
+## How it works
 
-See [`docs/architecture/overview.md`](docs/architecture/overview.md) for the
-request flow, data ownership, and integration boundaries.
+1. **Create a pet profile** with the details that make the pet unique.
+2. **Add health context** such as current conditions and contraindications.
+3. **Choose ingredients** from the library or create your own.
+4. **Build and calculate a recipe** based on the pet's profile.
+5. **Save the result** and return to it whenever the recipe needs an update.
 
-## Repository map
+## Product walkthrough
 
-```text
-frontend-next/                 React 19 + TypeScript + Vite beta UI
-backend-main-sandbox/          Java 21 + Spring Boot beta services
-nutrient-recommender-main/     Python + FastAPI calculation service
-docker-compose.sandbox.yml     isolated beta runtime
-run-beta.sh                    beta lifecycle helper
-docs/                          durable project documentation
-AGENTS.md                      mandatory rules for coding agents
-```
+### See the complete pet profile
 
-## Development
+Move from basic information to health history, contraindications, activity,
+nutrition, and weight tracking without leaving the pet's profile.
 
-Read these before changing code:
+<p align="center">
+  <img
+    src="docs/assets/pet-profile.png"
+    alt="Pet profile with health information and weight tracking"
+    width="100%"
+  />
+</p>
 
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) - workflow and Definition of Done;
-- [`docs/development/local-development.md`](docs/development/local-development.md)
-  - setup, rebuilds, and troubleshooting;
-- [`docs/development/verification.md`](docs/development/verification.md) - checks
-  by change type;
-- [`docs/development/openspec.md`](docs/development/openspec.md) - specification
-  workflow for significant changes;
-- [`docs/production-readiness.md`](docs/production-readiness.md) - current
-  release blockers and production acceptance criteria;
-- [`docs/operations/production-promotion-recovery.md`](docs/operations/production-promotion-recovery.md)
-  - backup manifests, isolated restore checks, and coordinated rollback;
-- [`docs/operations/production-deployment.md`](docs/operations/production-deployment.md)
-  - guarded release inputs, dependency order, and deployment boundaries;
-- [`docs/operations/production-proxy-switch.md`](docs/operations/production-proxy-switch.md)
-  - reviewed maintenance and production route switching;
-- [`AGENTS.md`](AGENTS.md) - repository rules for AI coding agents.
+### Build around the pet
 
-Native toolchains are optional when Docker is used. Direct local development
-requires Node.js 20+ for the frontend and Java 21 for the backend.
+Start a recipe around its purpose, then account for the pet's age, breed,
+activity, reproductive status, conditions, and symptoms.
 
-## Documentation sources of truth
+<p align="center">
+  <img
+    src="docs/assets/recipe-builder-1.png"
+    alt="Recipe builder with food, pet, and health parameters"
+    width="100%"
+  />
+</p>
 
-- Runtime topology and environment wiring: `docker-compose.sandbox.yml`.
-- Frontend proxy behavior: `frontend-next/vite.config.ts` and
-  `frontend-next/.env`.
-- Backend routes and authorization: controllers, security configuration, and
-  gateway `application.yml`.
-- Database schema: Flyway migrations in each service.
-- Stable working conventions: `AGENTS.md` and `docs/`.
-- Change specifications and history: `openspec/`.
+### Choose ingredients and set targets
 
-Do not commit `.env` files or real credentials. Examples must contain
-placeholders only.
+Select ingredients, review the daily energy target, and define acceptable
+ranges for ingredient quantities and key nutrients.
+
+<p align="center">
+  <img
+    src="docs/assets/recipe-builder-2.png"
+    alt="Recipe builder with ingredients and nutrient constraints"
+    width="100%"
+  />
+</p>
+
+### Understand the result
+
+Review the finished ration, energy values, nutrient composition, minerals, and
+vitamins in a visual summary designed for quick comparison.
+
+<p align="center">
+  <img
+    src="docs/assets/nutrition-result.png"
+    alt="Calculated recipe with energy and nutrient charts"
+    width="100%"
+  />
+</p>
+
+## Product experience
+
+- A focused dashboard for navigating pets and their information.
+- Search and filters for working with growing ingredient and recipe lists.
+- Visual charts that make recipe composition easier to understand.
+- Light and dark themes for comfortable everyday use.
+- Russian, English, and Kazakh interface languages.
+- Responsive screens for working across different device sizes.
+
+The platform supports nutrition planning and organization. It does not replace
+professional veterinary diagnosis or treatment.

@@ -26,7 +26,6 @@ public class RecipeController {
     public List<RecipeListItemResponse> listMine(
         @AuthenticationPrincipal Jwt jwt,
         @RequestParam(required = false) String q,
-        @RequestParam(required = false) List<String> formats,
         @RequestParam(required = false) List<String> ageCategories,
         @RequestParam(required = false) List<String> breedSizes,
         @RequestParam(required = false) List<Long> reproductiveStatusIds,
@@ -42,7 +41,6 @@ public class RecipeController {
         return service.listMine(
             jwt,
             q,
-            formats,
             ageCategories,
             breedSizes,
             reproductiveStatusIds,

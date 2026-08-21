@@ -12,7 +12,6 @@ public record RecipeResponse(
     String petName,
     String name,
     String description,
-    String format,
     String ageCategory,
     String breedSize,
     Double targetWeightKg,

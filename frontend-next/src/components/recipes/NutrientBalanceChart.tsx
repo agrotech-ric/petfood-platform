@@ -1,10 +1,12 @@
 import type { RecipeCalculationResult } from '../../../services/recipeService'
+import { useTranslation } from '../../../context/LanguageContext'
 import styles from '../../styles/NutrientBalanceChart.module.css'
 
 type BalanceItem = NonNullable<RecipeCalculationResult['minerals']>[number]
   | NonNullable<RecipeCalculationResult['vitamins']>[number]
 
 export function NutrientBalanceChart({ title, items }: { title: string; items: BalanceItem[] }) {
+  const { t } = useTranslation()
   const maxScale = 175
   const ticks = [0, 25, 50, 75, 100, 125, 150]
 
@@ -47,7 +49,11 @@ export function NutrientBalanceChart({ title, items }: { title: string; items: B
                 <strong>{item.label}</strong>
                 {hasValues ? (
                   <>
-                    <span>Текущее: {item.current} {item.unit ?? ''}</span>
+                    <span>
+                      Текущее: {item.current}{item.unit
+                        ? ` ${t('recipes.unitPer100', { unit: item.unit })}`
+                        : ''}
+                    </span>
                     <span>Норма: {item.norm} {item.unit ?? ''}</span>
                     <span>
                       {item.current! >= item.norm! ? 'Превышение' : 'Дефицит'}: {Math.round(difference * 100) / 100} {item.unit ?? ''}
