@@ -26,6 +26,24 @@ docker compose --env-file /path/to/petfood-production.env \
   -f docker-compose.production.yml config --quiet
 ```
 
+For selective production workflow changes, also run the path-classification
+matrix and static workflow checks:
+
+```bash
+bash scripts/test-select-production-services.sh
+bash -n scripts/select-production-services.sh \
+  scripts/test-select-production-services.sh \
+  scripts/deploy-selected-production-services.sh
+
+docker run --rm -v "$PWD:/repo" -w /repo \
+  rhysd/actionlint:1.7.7 -color
+```
+
+`petfood-prod` is a repository-specific self-hosted runner label, so standalone
+`actionlint` reports it as unknown unless supplied through an actionlint
+configuration. Treat that label warning as expected; all other warnings and
+errors must be resolved.
+
 Use `--require-volumes` only on the deployment host after the five reviewed
 beta-derived external volume names exist. Confirm that no legacy volume name is
 selected, only the frontend edge has a host binding, Java services use `prod`,

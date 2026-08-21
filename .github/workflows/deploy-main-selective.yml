@@ -1,0 +1,194 @@
+name: Deploy changed main services to production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: Build and deploy every active application service
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: petfood-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, petfood-prod]
+    environment: production
+    timeout-minutes: 180
+    env:
+      RELEASE_COMMIT: ${{ github.sha }}
+      PRODUCTION_ENV_FILE: ${{ vars.PETFOOD_PRODUCTION_ENV_FILE }}
+
+    steps:
+      - name: Check out the exact main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify main revision
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+          [[ "$RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+
+          if [ "$EVENT_NAME" = push ]; then
+            test "$EVENT_REF" = refs/heads/main
+          else
+            git fetch --no-tags origin main
+            test "$(git rev-parse origin/main)" = "$RELEASE_COMMIT"
+          fi
+
+      - name: Classify changed services
+        id: classify
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          FORCE_ALL: ${{ inputs.force_all || false }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = workflow_dispatch ] && [ "$FORCE_ALL" = true ]; then
+            echo "COMPARED_BASE=manual-force-all" >> "$GITHUB_ENV"
+            bash scripts/select-production-services.sh --force-all
+          else
+            base_commit=$EVENT_BEFORE
+            if [ "$EVENT_NAME" = workflow_dispatch ]; then
+              base_commit=$(git rev-parse "$RELEASE_COMMIT^" 2>/dev/null || printf '%040d' 0)
+            fi
+            echo "COMPARED_BASE=$base_commit" >> "$GITHUB_ENV"
+            bash scripts/select-production-services.sh "$base_commit" "$RELEASE_COMMIT"
+          fi
+
+      - name: Summarize classification
+        shell: bash
+        env:
+          SERVICES: ${{ steps.classify.outputs.services }}
+          SERVICE_COUNT: ${{ steps.classify.outputs.service_count }}
+          NO_OP: ${{ steps.classify.outputs.no_op }}
+          DEPLOY_ALL: ${{ steps.classify.outputs.deploy_all }}
+          REASON: ${{ steps.classify.outputs.reason }}
+          CHANGED_PATH_COUNT: ${{ steps.classify.outputs.changed_path_count }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Selective production release"
+            echo
+            echo "- Base commit: \`$COMPARED_BASE\`"
+            echo "- Head commit: \`$RELEASE_COMMIT\`"
+            echo "- Changed paths classified: \`$CHANGED_PATH_COUNT\`"
+            echo "- Selected services: \`${SERVICES:-none}\`"
+            echo "- Selection count: \`$SERVICE_COUNT\`"
+            echo "- Full fallback: \`$DEPLOY_ALL\`"
+            echo "- Classification reason: \`$REASON\`"
+            echo "- Runtime deployment required: \`$([ "$NO_OP" = true ] && echo false || echo true)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Finish non-runtime release
+        if: ${{ steps.classify.outputs.no_op == 'true' }}
+        shell: bash
+        run: echo "No active production service is affected; production remains unchanged."
+
+      - name: Validate protected production configuration
+        if: ${{ steps.classify.outputs.no_op != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$PRODUCTION_ENV_FILE" in
+            /home/iot/PetFood/production-config/*.env) ;;
+            *) echo "PETFOOD_PRODUCTION_ENV_FILE is missing or outside the approved directory" >&2; exit 1 ;;
+          esac
+          test -f "$PRODUCTION_ENV_FILE"
+          test ! -L "$PRODUCTION_ENV_FILE"
+          bash scripts/validate-production-config.sh "$PRODUCTION_ENV_FILE" "$RELEASE_COMMIT" --require-volumes
+
+      - name: Test selected frontend
+        if: ${{ steps.classify.outputs.no_op != 'true' && contains(steps.classify.outputs.services, 'frontend-production') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD/frontend-next:/source:ro" \
+            node:22-alpine \
+            sh -c 'mkdir /work && tar -C /source --exclude=node_modules --exclude=dist -cf - . | tar -C /work -xf - && cd /work && npm ci && npm run lint && VITE_PUBLIC_BASE=/petfood/ VITE_API_BASE_URL=/petfood npm run build'
+
+      - name: Test selected Java services
+        if: ${{ steps.classify.outputs.no_op != 'true' && (contains(steps.classify.outputs.services, 'auth-production') || contains(steps.classify.outputs.services, 'account-production') || contains(steps.classify.outputs.services, 'pets-production') || contains(steps.classify.outputs.services, 'notifications-production') || contains(steps.classify.outputs.services, 'gateway-production')) }}
+        shell: bash
+        env:
+          SERVICES: ${{ steps.classify.outputs.services }}
+        run: |
+          set -euo pipefail
+          gradle_tasks=()
+          case ",$SERVICES," in *,auth-production,*) gradle_tasks+=(":services:auth:test") ;; esac
+          case ",$SERVICES," in *,account-production,*) gradle_tasks+=(":services:account:test") ;; esac
+          case ",$SERVICES," in *,pets-production,*) gradle_tasks+=(":services:pets:test") ;; esac
+          case ",$SERVICES," in *,notifications-production,*) gradle_tasks+=(":services:notifications:test") ;; esac
+          case ",$SERVICES," in *,gateway-production,*) gradle_tasks+=(":platform:gateway:test") ;; esac
+
+          docker run --rm \
+            -v "$PWD/backend-main-sandbox:/source:ro" \
+            gradle:8.5-jdk21 \
+            bash -lc 'mkdir /work && tar -C /source --exclude=.gradle --exclude=build --exclude="*/build" -cf - . | tar -C /work -xf - && cd /work && gradle --no-daemon "$@"' \
+            bash "${gradle_tasks[@]}"
+
+      - name: Build selected exact-commit images
+        if: ${{ steps.classify.outputs.no_op != 'true' }}
+        shell: bash
+        env:
+          SERVICES: ${{ steps.classify.outputs.services }}
+        run: |
+          set -euo pipefail
+          IFS=',' read -r -a selected_services <<< "$SERVICES"
+          compose=(docker compose --env-file "$PRODUCTION_ENV_FILE" -f docker-compose.production.yml)
+          PETFOOD_RELEASE_ID="$RELEASE_COMMIT" "${compose[@]}" build --pull "${selected_services[@]}"
+
+          declare -A image_repositories=(
+            [auth-production]=petfood/auth
+            [account-production]=petfood/account
+            [pets-production]=petfood/pets
+            [notifications-production]=petfood/notifications
+            [recommender-production]=petfood/recommender
+            [gateway-production]=petfood/gateway
+            [frontend-production]=petfood/frontend
+          )
+          for service in "${selected_services[@]}"; do
+            docker image inspect "${image_repositories[$service]}:$RELEASE_COMMIT" --format '{{.Id}}' >/dev/null
+          done
+
+      - name: Test selected recommender
+        if: ${{ steps.classify.outputs.no_op != 'true' && contains(steps.classify.outputs.services, 'recommender-production') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm "petfood/recommender:$RELEASE_COMMIT" \
+            sh -c 'python -m pip install --quiet --no-cache-dir pytest && python -m pytest tests'
+
+      - name: Deploy and verify selected services
+        if: ${{ steps.classify.outputs.no_op != 'true' }}
+        shell: bash
+        env:
+          SERVICES: ${{ steps.classify.outputs.services }}
+          ROLLBACK_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          bash scripts/deploy-selected-production-services.sh \
+            "$PRODUCTION_ENV_FILE" \
+            "$RELEASE_COMMIT" \
+            "$SERVICES" \
+            "$ROLLBACK_ID"
