@@ -334,7 +334,43 @@
   margin-top: 8px;
 }
 
-.primaryBtn:hover { background: var(--color-accent-alt-hover); }
+.primaryBtn:hover:not(:disabled) { background: var(--color-accent-alt-hover); }
+
+.primaryBtn:disabled,
+.secondaryBtn:disabled,
+.updateRecommendationsBtn:disabled,
+.finalSaveBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.recipeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.recipeActions .primaryBtn {
+  margin-top: 0;
+}
+
+.secondaryBtn {
+  border: 1px solid var(--color-accent-alt);
+  border-radius: 10px;
+  padding: 9px 28px;
+  background: var(--color-surface);
+  color: var(--color-accent-alt);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+}
 
 .updateRecommendationsBtn,
 .finalSaveBtn {
@@ -945,5 +981,15 @@
 
   .sliderLabel {
     width: 110px;
+  }
+
+  .recipeActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recipeActions .primaryBtn,
+  .recipeActions .secondaryBtn {
+    width: 100%;
   }
 }
