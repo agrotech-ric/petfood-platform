@@ -8,7 +8,6 @@ public record RecipeListItemResponse(
     UUID petId,
     String petName,
     String name,
-    String format,
     String ageCategory,
     String breedSize,
     String status,

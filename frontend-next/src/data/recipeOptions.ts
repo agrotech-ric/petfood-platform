@@ -9,14 +9,6 @@ export type FilterGroup = {
 
 export const STATIC_RECIPE_FILTER_GROUPS: FilterGroup[] = [
   {
-    key: 'format',
-    title: 'Формат',
-    options: [
-      { key: 'wet', label: 'Влажный' },
-      { key: 'dry', label: 'Сухой' },
-    ],
-  },
-  {
     key: 'ageCategory',
     title: 'Возрастная категория',
     options: [
@@ -36,11 +28,6 @@ export const STATIC_RECIPE_FILTER_GROUPS: FilterGroup[] = [
     ],
   },
 ]
-
-export const RECIPE_FORMAT_LABELS = {
-  wet: 'Влажный',
-  dry: 'Сухой',
-} as const
 
 export const RECIPE_AGE_LABELS = {
   puppies: 'Щенки',

@@ -19,7 +19,6 @@ import {
   type RecipeAgeCategory,
   type RecipeBreedSize,
   type RecipeCalculationResult,
-  type RecipeFormat,
   type RecipeGender,
   type RecipePayload,
 } from '../../../services/recipeService'
@@ -35,7 +34,6 @@ import {
 import {
   RECIPE_AGE_LABELS,
   RECIPE_BREED_SIZE_LABELS,
-  RECIPE_FORMAT_LABELS,
   RECIPE_MAXIMIZE_OPTIONS,
   RECIPE_NUTRIENT_LIMITS,
 } from '../../data/recipeOptions'
@@ -48,12 +46,13 @@ import { SearchableNutrientSelect } from './SearchableNutrientSelect'
 import styles from '../../styles/CreateRecipe.module.css'
 
 type Range = { min: number; max: number }
+type PregnancyPeriod = 'early_4_weeks' | 'last_5_weeks'
+type LactationWeek = 'week_1' | 'week_2' | 'week_3' | 'week_4'
 
 type FormState = {
   petId: string | null
   name: string
   description: string
-  format: RecipeFormat
   ageCategory: RecipeAgeCategory
   breedSize: RecipeBreedSize
   weight: string
@@ -62,6 +61,9 @@ type FormState = {
   gender: RecipeGender
   activityId: string
   reproductiveStatusId: string
+  pregnancyPeriod: PregnancyPeriod
+  lactationWeek: LactationWeek
+  puppyCount: string
   healthConditionId: string
   targetDisorder: string
   symptomIds: number[]
@@ -95,7 +97,6 @@ function createInitialState(): FormState {
     petId: null,
     name: '',
     description: '',
-    format: 'wet',
     ageCategory: 'adults',
     breedSize: 'all',
     weight: '',
@@ -104,6 +105,9 @@ function createInitialState(): FormState {
     gender: 'male',
     activityId: '',
     reproductiveStatusId: '',
+    pregnancyPeriod: 'early_4_weeks',
+    lactationWeek: 'week_1',
+    puppyCount: '1',
     healthConditionId: '',
     targetDisorder: '',
     symptomIds: [],
@@ -116,12 +120,18 @@ function createInitialState(): FormState {
         { min: item.defaultMin, max: item.defaultMax },
       ]),
     ),
-    maximizeNutrients: [],
+    maximizeNutrients: ['protein', 'moisture'],
   }
 }
 
 function displayName(item: RefItem) {
   return item.nameRu ?? item.name ?? item.nameEn ?? `ID ${item.id}`
+}
+
+function ingredientDisplayName(ingredient: Ingredient) {
+  return ingredient.subtype
+    ? `${ingredient.name} — ${ingredient.subtype}`
+    : ingredient.name
 }
 
 function monthsSince(dateValue?: string) {
@@ -147,7 +157,6 @@ function stateFromRecipe(recipe: Recipe): FormState {
     petId: recipe.petId ?? null,
     name: recipe.name,
     description: recipe.description ?? '',
-    format: recipe.format,
     ageCategory: recipe.ageCategory,
     breedSize: recipe.breedSize,
     weight: recipe.targetWeightKg == null ? '' : String(recipe.targetWeightKg),
@@ -157,6 +166,9 @@ function stateFromRecipe(recipe: Recipe): FormState {
     activityId: recipe.targetActivityTypeId == null ? '' : String(recipe.targetActivityTypeId),
     reproductiveStatusId:
       recipe.targetReproductiveStatusId == null ? '' : String(recipe.targetReproductiveStatusId),
+    pregnancyPeriod: 'early_4_weeks',
+    lactationWeek: 'week_1',
+    puppyCount: '1',
     healthConditionId:
       recipe.targetHealthConditionId == null ? '' : String(recipe.targetHealthConditionId),
     targetDisorder: recipe.targetDisorder ?? recipe.targetHealthConditionName ?? '',
@@ -206,6 +218,13 @@ function prefillFromPet(
       pet.reproductiveStatusId == null
         ? current.reproductiveStatusId
         : String(pet.reproductiveStatusId),
+    lactationWeek: (() => {
+      const week = pet.reproductiveSubStatusName?.match(/[1-4]/)?.[0]
+      return week ? `week_${week}` as LactationWeek : current.lactationWeek
+    })(),
+    puppyCount: pet.puppiesCount == null || pet.puppiesCount <= 0
+      ? current.puppyCount
+      : String(pet.puppiesCount),
     healthConditionId:
       healthCondition == null ? current.healthConditionId : String(healthCondition.id),
     targetDisorder: record?.conditionName ?? current.targetDisorder,
@@ -279,9 +298,13 @@ function buildDogInfo(form: FormState, references: References): RecommenderDogIn
 
   if (form.gender === 'female') {
     request.reproductive_status = status
-    request.pregnancy_period = status === 'pregnancy' ? 'none' : undefined
-    request.lactation_week = status === 'lactation' ? 'none' : undefined
-    request.num_puppies = 0
+    if (status === 'pregnancy') {
+      request.pregnancy_period = form.pregnancyPeriod
+    }
+    if (status === 'lactation') {
+      request.lactation_week = form.lactationWeek
+      request.num_puppies = Math.max(1, Math.floor(Number(form.puppyCount) || 1))
+    }
   }
   return request
 }
@@ -431,7 +454,6 @@ function toPayload(
     petId: petId ?? state.petId,
     name: state.name.trim(),
     description: state.description.trim() || null,
-    format: state.format,
     ageCategory: state.ageCategory,
     breedSize: state.breedSize,
     targetWeightKg: toOptionalNumber(state.weight),
@@ -470,6 +492,7 @@ function toPayload(
 const RESULT_COLORS = RECIPE_CHART_COLORS
 
 function EditCalculationResult({ result }: { result: RecipeCalculationResult }) {
+  const { t } = useTranslation()
   const composition = result.composition ?? []
   const nutrition = result.nutrition ?? []
   const nutrients = result.nutrients ?? []
@@ -480,8 +503,10 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
     <div id="recipe-result" className={styles.editResult}>
       <div className={styles.metricsRow}>
         <div className={styles.metricCard}>
-          <p className={styles.metricValue}>{result.calories ?? '—'} ккал</p>
-          <p className={styles.metricLabel}>Энергетическая ценность</p>
+          <p className={styles.metricValue}>
+            {t('recipes.energyPer100Value', { value: result.calories ?? '—' })}
+          </p>
+          <p className={styles.metricLabel}>{t('recipes.energyValueLabel')}</p>
         </div>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>{result.dailyNorm ?? '—'} г</p>
@@ -528,7 +553,7 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
                 name: item.label,
                 value: item.value,
                 color: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length],
-                label: `${item.value} ${item.unit}`,
+                label: `${item.value} ${t('recipes.unitPer100', { unit: item.unit })}`,
               }))} />
             </div>
             <div className={styles.donutLegend}>
@@ -538,13 +563,15 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
                     className={styles.legendDot}
                     style={{ background: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length] }}
                   />
-                  <span>{item.label} — {item.value} {item.unit}</span>
+                  <span>
+                    {item.label} — {item.value} {t('recipes.unitPer100', { unit: item.unit })}
+                  </span>
                 </div>
               ))}
             </div>
             {result.nutritionPer100 && (
               <p className={styles.resultEnergy}>
-                Энергетическая ценность: {result.nutritionPer100.calories} ккал
+                {t('recipes.energyPer100Summary', { value: result.nutritionPer100.calories })}
               </p>
             )}
           </div>
@@ -560,7 +587,7 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
                 {nutrients.map((item, index) => (
                   <div key={`${item.key ?? item.label}-${index}`} className={styles.nutrientRow}>
                     <span>{item.label}</span>
-                    <span>{item.value} {item.unit}</span>
+                    <span>{item.value} {t('recipes.unitPer100', { unit: item.unit })}</span>
                   </div>
                 ))}
               </div>
@@ -718,6 +745,11 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     if (!status.gender) return true
     return status.gender.toLowerCase() === form.gender
   })
+  const selectedReproductiveStatus = reproductiveStatus(
+    references.reproductiveStatuses.find(
+      status => String(status.id) === form.reproductiveStatusId,
+    ),
+  )
 
   useEffect(() => {
     const breed = references.breeds.find(item => String(item.id) === form.breedId)
@@ -773,13 +805,16 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
       setCalculationField('ingredientIds', form.ingredientIds.filter(id => id !== ingredientId))
       return
     }
+    const ingredient = references.ingredients.find(item => item.id === ingredientId)
+    if (!ingredient) return
     invalidateCalculation()
     setForm(current => ({
       ...current,
       ingredientIds: [...current.ingredientIds, ingredientId],
       ingredientRanges: {
         ...current.ingredientRanges,
-        [ingredientId]: current.ingredientRanges[ingredientId] ?? { min: 0, max: 100 },
+        [ingredientId]: current.ingredientRanges[ingredientId]
+          ?? ingredientDefaultRange(ingredient.category),
       },
     }))
   }
@@ -1122,20 +1157,6 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 </div>
               </div>
               <div className={styles.formColumn}>
-                {!isEdit && (
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>Формат</label>
-                    <select
-                      className={styles.fieldSelect}
-                      value={form.format}
-                      onChange={event => setField('format', event.target.value as RecipeFormat)}
-                    >
-                      {Object.entries(RECIPE_FORMAT_LABELS).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
                 <div className={styles.fieldGroup}>
                   <label className={styles.fieldLabel}>Возраст</label>
                   <select
@@ -1236,7 +1257,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 </select>
               </div>
               <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Репродуктивный статус</label>
+                <label className={styles.fieldLabel}>{t('recipes.reproductiveStatus')}</label>
                 <select
                   className={styles.fieldSelect}
                   value={form.reproductiveStatusId}
@@ -1248,6 +1269,60 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   ))}
                 </select>
               </div>
+              {selectedReproductiveStatus === 'pregnancy' && (
+                <div className={styles.fieldGroup}>
+                  <label className={styles.fieldLabel}>{t('recipes.pregnancyPeriod')}</label>
+                  <select
+                    className={styles.fieldSelect}
+                    value={form.pregnancyPeriod}
+                    onChange={event => setCalculationField(
+                      'pregnancyPeriod',
+                      event.target.value as PregnancyPeriod,
+                    )}
+                  >
+                    <option value="early_4_weeks">{t('recipes.pregnancyEarly')}</option>
+                    <option value="last_5_weeks">{t('recipes.pregnancyLate')}</option>
+                  </select>
+                </div>
+              )}
+              {selectedReproductiveStatus === 'lactation' && (
+                <>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>{t('recipes.lactationWeek')}</label>
+                    <select
+                      className={styles.fieldSelect}
+                      value={form.lactationWeek}
+                      onChange={event => setCalculationField(
+                        'lactationWeek',
+                        event.target.value as LactationWeek,
+                      )}
+                    >
+                      {([1, 2, 3, 4] as const).map(week => (
+                        <option key={week} value={`week_${week}`}>
+                          {t('recipes.lactationWeekNumber', { week })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>{t('recipes.puppyCount')}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      className={styles.fieldInput}
+                      value={form.puppyCount}
+                      onChange={event => {
+                        const value = event.target.value
+                        setCalculationField(
+                          'puppyCount',
+                          value === '' ? '' : String(Math.max(1, Math.floor(Number(value) || 1))),
+                        )
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1394,9 +1469,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                           }`}
                           onClick={() => toggleIngredient(ingredient.id)}
                         >
-                          {ingredient.subtype
-                            ? `${ingredient.name} — ${ingredient.subtype}`
-                            : ingredient.name}
+                          {ingredientDisplayName(ingredient)}
                           {form.ingredientIds.includes(ingredient.id) && ' ×'}
                         </button>
                       ))}
@@ -1412,7 +1485,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   const ingredient = references.ingredients.find(item => item.id === ingredientId)
                   return (
                     <span key={ingredientId} className={styles.selectedChip}>
-                      {ingredient?.name ?? `ID ${ingredientId}`}
+                      {ingredient ? ingredientDisplayName(ingredient) : `ID ${ingredientId}`}
                       <button className={styles.selectedChipRemove} onClick={() => toggleIngredient(ingredientId)}>×</button>
                     </span>
                   )
@@ -1435,7 +1508,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 return (
                   <DualRangeSlider
                     key={ingredientId}
-                    label={`${ingredient?.name ?? `ID ${ingredientId}`}:`}
+                    label={`${ingredient ? ingredientDisplayName(ingredient) : `ID ${ingredientId}`}:`}
                     minValue={range.min}
                     maxValue={range.max}
                     onChange={value => updateIngredientRange(ingredientId, value)}
@@ -1445,7 +1518,9 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             </>
           )}
 
-          <p className={styles.sectionTitle} style={{ marginTop: 20 }}>Ограничения по нутриентам:</p>
+          <p className={styles.sectionTitle} style={{ marginTop: 20 }}>
+            {t('recipes.nutrientConstraintsPer100')}
+          </p>
           {RECIPE_NUTRIENT_LIMITS.map(item => {
             const range = form.nutrientRanges[item.key]
             return (

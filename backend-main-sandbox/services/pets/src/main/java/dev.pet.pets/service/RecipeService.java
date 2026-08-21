@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RecipeService {
 
     private static final Set<String> SORTABLE_FIELDS = Set.of(
-        "name", "format", "ageCategory", "breedSize", "status", "createdAt", "updatedAt"
+        "name", "ageCategory", "breedSize", "status", "createdAt", "updatedAt"
     );
     private static final Set<String> NUTRIENT_KEYS = Set.of(
         "calories", "protein", "fat", "carbs", "moisture", "fiber", "ash", "cholesterol", "sugar",
@@ -69,7 +69,6 @@ public class RecipeService {
     public List<RecipeListItemResponse> listMine(
         Jwt jwt,
         String query,
-        List<String> formats,
         List<String> ageCategories,
         List<String> breedSizes,
         List<Long> reproductiveStatusIds,
@@ -95,7 +94,6 @@ public class RecipeService {
                     cb.like(cb.lower(root.get("description")), pattern)
                 ));
             }
-            addIn(predicates, root.get("format"), formats);
             addIn(predicates, root.get("ageCategory"), ageCategories);
             addIn(predicates, root.get("breedSize"), breedSizes);
             if (status != null && !status.isBlank()) {
@@ -163,7 +161,6 @@ public class RecipeService {
         recipe.setPet(resolvePet(request.petId(), ownerId));
         recipe.setName(request.name().trim());
         recipe.setDescription(blankToNull(request.description()));
-        recipe.setFormat(request.format());
         recipe.setAgeCategory(request.ageCategory());
         recipe.setBreedSize(request.breedSize());
         recipe.setTargetWeightKg(request.targetWeightKg());
@@ -333,7 +330,6 @@ public class RecipeService {
             recipe.getPet() == null ? null : recipe.getPet().getId(),
             recipe.getPet() == null ? null : recipe.getPet().getName(),
             recipe.getName(),
-            recipe.getFormat(),
             recipe.getAgeCategory(),
             recipe.getBreedSize(),
             recipe.getStatus(),
@@ -358,7 +354,6 @@ public class RecipeService {
             recipe.getPet() == null ? null : recipe.getPet().getName(),
             recipe.getName(),
             recipe.getDescription(),
-            recipe.getFormat(),
             recipe.getAgeCategory(),
             recipe.getBreedSize(),
             recipe.getTargetWeightKg(),

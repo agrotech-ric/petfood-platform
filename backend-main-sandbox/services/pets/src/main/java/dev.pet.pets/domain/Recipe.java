@@ -32,9 +32,6 @@ public class Recipe {
     @Column
     private String description;
 
-    @Column(name = "food_format", nullable = false, length = 32)
-    private String format;
-
     @Column(name = "age_category", nullable = false, length = 32)
     private String ageCategory;
 
@@ -122,8 +119,6 @@ public class Recipe {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public String getFormat() { return format; }
-    public void setFormat(String format) { this.format = format; }
     public String getAgeCategory() { return ageCategory; }
     public void setAgeCategory(String ageCategory) { this.ageCategory = ageCategory; }
     public String getBreedSize() { return breedSize; }

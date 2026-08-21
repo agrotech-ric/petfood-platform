@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from '../../context/LanguageContext'
 import {
   recipeService,
   type Recipe,
@@ -8,7 +9,6 @@ import {
 import {
   RECIPE_AGE_LABELS,
   RECIPE_BREED_SIZE_LABELS,
-  RECIPE_FORMAT_LABELS,
 } from '../data/recipeOptions'
 import styles from '../styles/RecipeProfile.module.css'
 import DeleteIcon from '../assets/icons/delete.svg?react'
@@ -158,6 +158,7 @@ function CalculationSections({
   activeTab: 'protein' | 'fat' | 'carbs'
   onTabChange: (tab: 'protein' | 'fat' | 'carbs') => void
 }) {
+  const { t } = useTranslation()
   const composition = result.composition ?? []
   const nutrition = result.nutrition ?? []
   const nutrients = result.nutrients ?? []
@@ -189,8 +190,10 @@ function CalculationSections({
     <>
       <div className={styles.metricsRow}>
         <div className={styles.metricCard}>
-          <p className={styles.metricValue}>{result.calories ?? '—'} ккал</p>
-          <p className={styles.metricLabel}>Энергетическая ценность</p>
+          <p className={styles.metricValue}>
+            {t('recipes.energyPer100Value', { value: result.calories ?? '—' })}
+          </p>
+          <p className={styles.metricLabel}>{t('recipes.energyValueLabel')}</p>
         </div>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>{result.dailyNorm ?? '—'} г</p>
@@ -252,10 +255,10 @@ function CalculationSections({
                   name: item.label,
                   value: item.value,
                   color: item.color ?? CHART_COLORS[index % CHART_COLORS.length],
-                  label: `${item.value} ${item.unit}`,
+                  label: `${item.value} ${t('recipes.unitPer100', { unit: item.unit })}`,
                 }))} />
               </div>
-              <p className={styles.nutritionLegendTitle}>Питательная ценность на 100 г:</p>
+              <p className={styles.nutritionLegendTitle}>{t('recipes.nutritionPer100')}</p>
               <div className={styles.donutLegend}>
                 {nutrition.map((item, index) => (
                   <div key={`${item.key ?? item.label}-${index}`} className={styles.donutLegendRow}>
@@ -266,13 +269,13 @@ function CalculationSections({
                       />
                       {item.label}
                     </span>
-                    <span>{item.value} {item.unit}</span>
+                    <span>{item.value} {t('recipes.unitPer100', { unit: item.unit })}</span>
                   </div>
                 ))}
               </div>
               {result.nutritionPer100 && (
                 <div className={styles.nutritionSummary}>
-                  Энергетическая ценность: {result.nutritionPer100.calories} ккал
+                  {t('recipes.energyPer100Summary', { value: result.nutritionPer100.calories })}
                 </div>
               )}
             </div>
@@ -288,7 +291,9 @@ function CalculationSections({
               {nutrients.map((item, index) => (
                 <div key={`${item.key ?? item.label}-${index}`} className={styles.nutrientRow}>
                   <span className={styles.nutrientName}>{item.label}</span>
-                  <span className={styles.nutrientVal}>{item.value} {item.unit}</span>
+                  <span className={styles.nutrientVal}>
+                    {item.value} {t('recipes.unitPer100', { unit: item.unit })}
+                  </span>
                 </div>
               ))}
             </div>
@@ -494,7 +499,6 @@ export function RecipeProfilePage() {
         </div>
         <div className={styles.recipeMeta}>
           {[
-            { label: 'Формат', value: RECIPE_FORMAT_LABELS[recipe.format] },
             { label: 'Возраст', value: RECIPE_AGE_LABELS[recipe.ageCategory] },
             { label: 'Размер породы', value: RECIPE_BREED_SIZE_LABELS[recipe.breedSize] },
           ].map(item => (
