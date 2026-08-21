@@ -1,9 +1,5 @@
 <div align="center">
-  <img
-    src="frontend-next/src/assets/figma/pets-list/logo.png"
-    alt="PetFood Platform logo"
-    width="72"
-  />
+
 
   <h1>PetFood Platform</h1>
 
