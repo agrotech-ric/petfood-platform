@@ -99,10 +99,14 @@ authoritative per-service release record; do not infer the complete generation
 from the newest frontend tag alone.
 
 After rollout, the script checks container state and declared Docker health,
-checks each selected service from the application network, and verifies the
-configured HTTPS `/petfood/` route. Gateway or recommender changes also verify
-the public recommender route. Authentication, account, pets, or gateway changes
-verify that the public protected route still rejects an anonymous request.
+checks listening selected services from the application network, and verifies
+the configured HTTPS `/petfood/` route. The notifications consumer has no HTTP
+listener, so its stable running state is its readiness signal. Gateway or
+recommender changes also verify the public recommender route; an authentication
+rejection is accepted there because recommender requests are session-protected,
+while its internal health is checked separately. Authentication, account, pets,
+or gateway changes verify that the public protected route still rejects an
+anonymous request.
 
 Each Actions summary records the compared commits, changed-path count,
 classification reason, selected services, full-fallback/no-op state, target

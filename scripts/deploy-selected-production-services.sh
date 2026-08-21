@@ -153,7 +153,9 @@ verify_internal_service() {
       PETFOOD_RELEASE_ID="$release_id" "${compose[@]}" exec -T frontend-production wget -q -O /dev/null http://pets-production:8083/actuator/health
       ;;
     notifications-production)
-      PETFOOD_RELEASE_ID="$release_id" "${compose[@]}" exec -T frontend-production wget -q -O /dev/null http://notifications-production:8080/actuator/health
+      # Notifications is a message consumer without an HTTP listener. Its
+      # stable running state is verified by wait_for_container.
+      return 0
       ;;
     recommender-production)
       PETFOOD_RELEASE_ID="$release_id" "${compose[@]}" exec -T frontend-production wget -q -O /dev/null http://recommender-production:8000/
@@ -167,13 +169,35 @@ verify_internal_service() {
   esac
 }
 
+wait_for_internal_service() {
+  local service=$1
+  local release_id=$2
+  local attempts=60
+
+  while [ "$attempts" -gt 0 ]; do
+    if verify_internal_service "$service" "$release_id" >/dev/null 2>&1; then
+      return 0
+    fi
+    attempts=$((attempts - 1))
+    sleep 2
+  done
+
+  echo "Internal readiness check timed out for $service" >&2
+  return 1
+}
+
 verify_release() {
   local release_id=$1
   local service public_url http_status
 
   for service in "${selected_services[@]}"; do
-    wait_for_container "$service" "$release_id"
-    verify_internal_service "$service" "$release_id"
+    if ! wait_for_container "$service" "$release_id"; then
+      echo "Container readiness check timed out for $service" >&2
+      return 1
+    fi
+    if ! wait_for_internal_service "$service" "$release_id"; then
+      return 1
+    fi
   done
 
   public_url=$(PETFOOD_RELEASE_ID="$release_id" "${compose[@]}" config --format json |
@@ -183,10 +207,20 @@ verify_release() {
     return 1
   fi
 
-  curl --fail --silent --show-error --max-time 20 "$public_url/" >/dev/null
+  if ! curl --fail --silent --show-error --max-time 20 "$public_url/" >/dev/null; then
+    echo "Public application route failed readiness verification" >&2
+    return 1
+  fi
 
   if [ "${requested[recommender-production]:-}" = 1 ] || [ "${requested[gateway-production]:-}" = 1 ]; then
-    curl --fail --silent --show-error --max-time 30 "$public_url/recommender/" >/dev/null
+    http_status=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 30 "$public_url/recommender/")
+    case "$http_status" in
+      200|401|403) ;;
+      *)
+        echo "Public recommender route returned unexpected HTTP status: $http_status" >&2
+        return 1
+        ;;
+    esac
   fi
 
   if [ "${requested[auth-production]:-}" = 1 ] ||
