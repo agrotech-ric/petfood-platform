@@ -75,6 +75,10 @@ class DisorderRequest(BaseModel):
     disorder: str = Field(..., description="Disorder/disease name")
     age: int = Field(..., ge=0, description="Dog age")
     age_metric: AgeMetricType = Field(..., description="Age measurement unit")
+    weight: float = Field(..., gt=0, description="Dog weight in kg")
+    target_kcal: Optional[float] = Field(None, description="Target daily kcal (optional, will be calculated if not provided)")
+    reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
+
 
 
 class IngredientRange(BaseModel):
@@ -147,8 +151,9 @@ class DisorderRecommendationsResponse(BaseModel):
     disorder: str = Field(..., description="Disorder name")
     disorder_type: str = Field(..., description="Disorder category")
     breed_size: str = Field(..., description="Breed size category")
-    recommended_ingredients: List[str] = Field(..., description="Top recommended ingredients")
+    ingr_ranges: Dict[str, Dict[str, float]] = Field(..., description="Recommended ingredient ranges")
     nutrients_ranges: Dict[str, NutrientRangeSimple] = Field(..., description="Recommend optimal nutrient levels")
+    maxim_main_nutr: List[str] = Field(..., description="Main nutrients to maximize")
 
 
 class RecipeIngredient(BaseModel):

@@ -417,13 +417,13 @@ function toCalculationResult(
 function ingredientDefaultRange(category: string): Range {
   const value = category.toLowerCase()
   if (value.includes('мясо') || value.includes('яйца') || value.includes('молоч')) {
-    return { min: 40, max: 60 }
+    return { min: 40, max: 90 }
   }
   if (value.includes('масло') || value.includes('жир')) return { min: 1, max: 10 }
   if (value.includes('круп')) return { min: 5, max: 35 }
   if (value.includes('овощ') || value.includes('фрукт')) return { min: 5, max: 25 }
   if (value.includes('вода')) return { min: 0, max: 30 }
-  return { min: 1, max: 100 }
+  return { min: 1, max: 3 }
 }
 
 function calculationErrorMessage(error: unknown) {
