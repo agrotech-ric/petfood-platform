@@ -17,11 +17,13 @@ import { FiltersDrawer } from '../components/recipes/FiltersDrawer'
 import EditRecipeIcon from '../assets/icons/edit-recipe.svg?react'
 import SearchIcon from '../assets/icons/search.svg?react'
 import styles from '../styles/Recipes.module.css'
+import { useTranslation } from '../../context/LanguageContext'
 
 type ActiveFilter = { groupKey: string; optionKey: string; label: string }
 
 export function RecipesPage() {
   const navigate = useNavigate()
+  const { locale, t } = useTranslation()
   const [search, setSearch] = useState('')
   const [isDrawerOpen, setDrawerOpen] = useState(false)
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([])
@@ -140,7 +142,7 @@ export function RecipesPage() {
       }).catch(errorValue => {
         if (!cancelled) {
           setRecipes([])
-          setError(errorValue instanceof Error ? errorValue.message : 'Не удалось загрузить рецепты')
+          setError(errorValue instanceof Error ? errorValue.message : t('recipes.loadError'))
         }
       }).finally(() => {
         if (!cancelled) setLoading(false)
@@ -151,14 +153,14 @@ export function RecipesPage() {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [search, requestFilters, reloadKey])
+  }, [search, requestFilters, reloadKey, t])
 
   const handleAdd = () => {
     navigate('/recipes/create')
   }
 
-  const handleOpenProfile = (id: number) => {
-    navigate(`/recipes/${id}`)
+  const handleOpenProfile = (recipe: RecipeListItem) => {
+    navigate(recipe.status === 'draft' ? `/recipes/${recipe.id}/edit` : `/recipes/${recipe.id}`)
   }
 
   const handleEdit = (id: number) => {
@@ -166,16 +168,18 @@ export function RecipesPage() {
   }
 
   const formatDate = (value: string) =>
-    new Date(value).toLocaleDateString('ru-RU')
+    new Date(value).toLocaleDateString(
+      locale === 'kz' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU',
+    )
 
   return (
     <div className={styles.page}>
       {/* Top bar */}
       <div className={styles.topBar}>
         <div className={styles.headerSpacer} />
-        <h1 className={styles.pageTitle}>Список всех кормов</h1>
+        <h1 className={styles.pageTitle}>{t('recipes.listTitle')}</h1>
         <button className={styles.addBtn} onClick={handleAdd}>
-          + Добавить корм
+          + {t('recipes.addRecipe')}
         </button>
       </div>
 
@@ -186,14 +190,14 @@ export function RecipesPage() {
           <div className={styles.searchBox}>
             <input
               className={styles.searchInput}
-              placeholder="Поиск"
+              placeholder={t('common.search')}
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
             <button
               type="button"
               className={styles.searchBtn}
-              aria-label="Поиск"
+              aria-label={t('common.search')}
               onClick={() => setReloadKey(value => value + 1)}
             >
               <SearchIcon width={16} height={16} className="no-filter" />
@@ -208,7 +212,7 @@ export function RecipesPage() {
               <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
               <line x1="17" y1="16" x2="23" y2="16"/>
             </svg>
-            Все фильтры
+            {t('recipes.allFilters')}
           </button>
         </div>
 
@@ -229,38 +233,45 @@ export function RecipesPage() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Название</th>
-                <th>Возрастная категория</th>
-                <th>Последнее изменения</th>
-                <th>Изменить</th>
+                <th>{t('recipes.columnName')}</th>
+                <th>{t('recipes.columnAge')}</th>
+                <th>{t('recipes.columnUpdated')}</th>
+                <th>{t('recipes.columnEdit')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={4} className={styles.emptyRow}>Загрузка...</td></tr>
+                <tr><td colSpan={4} className={styles.emptyRow}>{t('common.loading')}</td></tr>
               ) : error ? (
                 <tr>
                   <td colSpan={4} className={styles.emptyRow}>
-                    Не удалось загрузить рецепты
+                    {t('recipes.loadError')}
                   </td>
                 </tr>
               ) : recipes.length === 0 ? (
-                <tr><td colSpan={4} className={styles.emptyRow}>Ничего не найдено</td></tr>
+                <tr><td colSpan={4} className={styles.emptyRow}>{t('recipes.empty')}</td></tr>
               ) : (
                 recipes.map(item => (
                   <tr
                     key={item.id}
                     className={styles.clickableRow}
                     tabIndex={0}
-                    onClick={() => handleOpenProfile(item.id)}
+                    onClick={() => handleOpenProfile(item)}
                     onKeyDown={event => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault()
-                        handleOpenProfile(item.id)
+                        handleOpenProfile(item)
                       }
                     }}
                   >
-                    <td>{item.name}</td>
+                    <td>
+                      <div className={styles.recipeNameCell}>
+                        <span>{item.name.trim() || t('recipes.untitled')}</span>
+                        {item.status === 'draft' && (
+                          <span className={styles.draftBadge}>{t('recipes.draftBadge')}</span>
+                        )}
+                      </div>
+                    </td>
                     <td>{RECIPE_AGE_LABELS[item.ageCategory]}</td>
                     <td>{formatDate(item.updatedAt)}</td>
                     <td>
@@ -270,7 +281,9 @@ export function RecipesPage() {
                           event.stopPropagation()
                           handleEdit(item.id)
                         }}
-                        aria-label={`Изменить ${item.name}`}
+                        aria-label={t('recipes.editAria', {
+                          name: item.name.trim() || t('recipes.untitled'),
+                        })}
                       >
                         <EditRecipeIcon width={16} height={16} />
                       </button>

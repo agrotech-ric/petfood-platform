@@ -1,6 +1,6 @@
 import { useContext, createContext, useState, ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiBaseUrl } from "../src/utils/apiClient";
+import { AUTH_UNAUTHORIZED_EVENT, apiBaseUrl } from "../src/utils/apiClient";
 
 export type UserRole = 'USER' | 'ADMIN' | 'VET';
 
@@ -38,19 +38,31 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      await fetchUserProfile();
-    } catch {
-      setIsAuthenticated(false);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const checkAuth = async () => {
+      try {
+        await fetchUserProfile();
+      } catch {
+        setIsAuthenticated(false);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  checkAuth();
-}, []);
+    void checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      navigate('/login', { replace: true });
+    };
+
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, [navigate]);
 
   const fetchUserProfile = async () => {
     try {

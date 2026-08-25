@@ -39,8 +39,9 @@ export type DisorderRecommendation = {
   disorder: string
   disorder_type: string
   breed_size: string
-  recommended_ingredients: string[]
+  ingr_ranges: Record<string, { min: number; max: number }>
   nutrients_ranges: Record<string, { min: number; max: number }>
+  maxim_main_nutr: string[]
 }
 
 export type BreedDetails = {
@@ -264,6 +265,9 @@ export const recommenderService = {
     disorder: string
     age: number
     age_metric: 'years' | 'months'
+    weight: number
+    target_kcal?: number
+    reproductive_status?: 'none' | 'pregnancy' | 'lactation'
   }) =>
     apiClient.post<DisorderRecommendation>(
       '/recommender/recommendations/disorder',

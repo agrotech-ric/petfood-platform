@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 public record RecipeRequest(
     UUID petId,
-    @NotBlank @Size(max = 255) String name,
+    @NotNull @Size(max = 255) String name,
     String description,
     @NotBlank @Pattern(regexp = "puppies|adults|senior") String ageCategory,
     @NotBlank @Pattern(regexp = "all|small|medium|large") String breedSize,

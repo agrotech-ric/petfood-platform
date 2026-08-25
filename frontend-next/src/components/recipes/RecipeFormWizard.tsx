@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from '../../../context/LanguageContext'
 import { ingredientService, type Ingredient } from '../../../services/ingredientService'
 import { petService, type HealthRecord, type PetProfileData } from '../../../services/petService'
+import { petSearchService, type PetListItem } from '../../../services/petSearchService'
 import {
   RECOMMENDER_NUTRIENT_NAMES,
   recommenderService,
@@ -21,6 +22,7 @@ import {
   type RecipeCalculationResult,
   type RecipeGender,
   type RecipePayload,
+  type RecipeStatus,
 } from '../../../services/recipeService'
 import {
   referenceService,
@@ -43,11 +45,16 @@ import { NutrientBalanceChart } from './NutrientBalanceChart'
 import { RecipeDonutChart, RECIPE_CHART_COLORS } from './RecipeDonutChart'
 import { DualRangeSlider } from './DualRangeSlider'
 import { SearchableNutrientSelect } from './SearchableNutrientSelect'
+import { SearchablePetSelect } from './SearchablePetSelect'
+import { EMPTY_PET_DASHBOARD_FILTERS } from '../../types/petDashboardFilters'
 import styles from '../../styles/CreateRecipe.module.css'
 
 type Range = { min: number; max: number }
 type PregnancyPeriod = 'early_4_weeks' | 'last_5_weeks'
 type LactationWeek = 'week_1' | 'week_2' | 'week_3' | 'week_4'
+type AutosaveStatus = 'pristine' | 'saving' | 'saved' | 'failed'
+
+const AUTOSAVE_DELAY_MS = 800
 
 type FormState = {
   petId: string | null
@@ -234,6 +241,26 @@ function prefillFromPet(
   }
 }
 
+function clearPetPrefill(current: FormState): FormState {
+  const initial = createInitialState()
+  return {
+    ...current,
+    petId: null,
+    weight: initial.weight,
+    breedId: initial.breedId,
+    ageMonths: initial.ageMonths,
+    gender: initial.gender,
+    activityId: initial.activityId,
+    reproductiveStatusId: initial.reproductiveStatusId,
+    pregnancyPeriod: initial.pregnancyPeriod,
+    lactationWeek: initial.lactationWeek,
+    puppyCount: initial.puppyCount,
+    healthConditionId: initial.healthConditionId,
+    targetDisorder: initial.targetDisorder,
+    symptomIds: initial.symptomIds,
+  }
+}
+
 function toOptionalNumber(value: string) {
   if (!value.trim()) return null
   const parsed = Number(value)
@@ -251,6 +278,20 @@ function normalizeLabel(value: string) {
     .replace(/[–—]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+const RECOMMENDER_MAXIMIZE_KEYS: Record<string, string> = {
+  moisture_per: 'moisture',
+  protein_per: 'protein',
+  carbohydrate_per: 'carbs',
+  fats_per: 'fat',
+}
+
+function normalizeRecommendedRange(range?: Range): Range | null {
+  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return null
+  const min = Math.max(0, Math.min(100, range.min))
+  const max = Math.max(0, Math.min(100, range.max))
+  return min <= max ? { min, max } : null
 }
 
 function activityLevel(activity?: ActivityType): RecommenderActivityLevel {
@@ -446,12 +487,11 @@ function calculationErrorMessage(error: unknown) {
 
 function toPayload(
   state: FormState,
-  petId?: string,
   calculationResult: RecipeCalculationResult | null = null,
   calculationVersion: string | null = null,
 ): RecipePayload {
   return {
-    petId: petId ?? state.petId,
+    petId: state.petId,
     name: state.name.trim(),
     description: state.description.trim() || null,
     ageCategory: state.ageCategory,
@@ -510,7 +550,7 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
         </div>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>{result.dailyNorm ?? '—'} г</p>
-          <p className={styles.metricLabel}>Суточная норма корма</p>
+          <p className={styles.metricLabel}>{t('recipes.dailyPortion')}</p>
         </div>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>{result.dailyCaloriesNorm ?? '—'} ккал</p>
@@ -614,18 +654,28 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useTranslation()
-  const locationState = location.state as { from?: string; petId?: string; fromTab?: string } | null
+  const locationState = location.state as {
+    from?: string
+    petId?: string
+    fromTab?: string
+    autosavedDraft?: boolean
+  } | null
   const origin = locationState?.from
   const originPetId = locationState?.petId
-  const [step, setStep] = useState<1 | 2>(1)
   const [form, setForm] = useState<FormState>(createInitialState)
   const [references, setReferences] = useState<References>(EMPTY_REFERENCES)
+  const [pets, setPets] = useState<PetListItem[]>([])
+  const [loadingPets, setLoadingPets] = useState(true)
+  const [selectingPet, setSelectingPet] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [updatingRecommendations, setUpdatingRecommendations] = useState(false)
   const [calculating, setCalculating] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('pristine')
+  const [autosaveError, setAutosaveError] = useState('')
+  const [persistedStatus, setPersistedStatus] = useState<RecipeStatus | null>(null)
+  const [dirtyRevision, setDirtyRevision] = useState(0)
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set())
   const [calculationResult, setCalculationResult] = useState<RecipeCalculationResult | null>(null)
   const [calculationVersion, setCalculationVersion] = useState<string | null>(null)
@@ -635,8 +685,44 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [availableDisorders, setAvailableDisorders] = useState<string[]>([])
   const [loadingDisorders, setLoadingDisorders] = useState(false)
   const calculationInputRevision = useRef(0)
+  const revisionRef = useRef(0)
+  const persistedRevisionRef = useRef(0)
+  const activeRecipeIdRef = useRef<number | undefined>(recipeId)
+  const latestPayloadRef = useRef<RecipePayload>(toPayload(createInitialState()))
+  const autosaveTimerRef = useRef<number | null>(null)
+  const autosavePromiseRef = useRef<Promise<boolean> | null>(null)
+  const autosaveRef = useRef<() => Promise<boolean>>(async () => true)
+  const saveImmediatelyRef = useRef(false)
+  const pendingRouteIdRef = useRef<number | null>(null)
+  const suppressRouteReplacementRef = useRef(false)
+  const discardingRef = useRef(false)
+  const mountedRef = useRef(true)
+  const petSelectionRevisionRef = useRef(0)
 
   const isEdit = recipeId != null
+  activeRecipeIdRef.current = recipeId ?? activeRecipeIdRef.current
+  latestPayloadRef.current = toPayload(
+    form,
+    calculationResult,
+    calculationVersion,
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingPets(true)
+    petSearchService.search('', EMPTY_PET_DASHBOARD_FILTERS, 0, 100)
+      .then(page => {
+        if (!cancelled) setPets(page.content ?? [])
+      })
+      .catch(() => {
+        if (!cancelled) setPets([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPets(false)
+      })
+
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -697,6 +783,10 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         setRecommendedEnergy(recipe?.targetEnergyKcal ?? null)
         setCalculationResult(recipe?.calculationResult ?? null)
         setCalculationVersion(recipe?.calculationVersion ?? null)
+        if (recipe) {
+          setPersistedStatus(recipe.status)
+          setAutosaveStatus('saved')
+        }
       } catch (errorValue) {
         if (!cancelled) {
           setError(errorValue instanceof Error ? errorValue.message : 'Не удалось загрузить форму')
@@ -775,8 +865,145 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     return () => { cancelled = true }
   }, [form.breedId, references.breeds])
 
+  const markDirty = (immediate = false) => {
+    revisionRef.current += 1
+    if (immediate) saveImmediatelyRef.current = true
+    setDirtyRevision(revisionRef.current)
+  }
+
+  const runAutosave = async (): Promise<boolean> => {
+    if (discardingRef.current || revisionRef.current <= persistedRevisionRef.current) {
+      return true
+    }
+    if (autosavePromiseRef.current) return autosavePromiseRef.current
+
+    const savingRevision = revisionRef.current
+    const payload = latestPayloadRef.current
+    const existingId = activeRecipeIdRef.current
+    if (mountedRef.current) {
+      setAutosaveStatus('saving')
+      setAutosaveError('')
+    }
+
+    const request = existingId == null
+      ? recipeService.create(payload)
+      : recipeService.update(existingId, payload)
+
+    const pending = request.then(saved => {
+      if (existingId == null) {
+        activeRecipeIdRef.current = saved.id
+        pendingRouteIdRef.current = saved.id
+      }
+      persistedRevisionRef.current = Math.max(persistedRevisionRef.current, savingRevision)
+      if (mountedRef.current) {
+        setPersistedStatus(saved.status)
+        setAutosaveStatus('saved')
+      }
+      return true
+    }).catch(() => {
+      if (mountedRef.current) {
+        setAutosaveStatus('failed')
+        setAutosaveError(t('recipes.autosaveFailed'))
+      }
+      return false
+    }).finally(() => {
+      if (autosavePromiseRef.current === pending) autosavePromiseRef.current = null
+    })
+
+    autosavePromiseRef.current = pending
+    const success = await pending
+    if (!success || discardingRef.current) return success
+
+    if (revisionRef.current > persistedRevisionRef.current) {
+      return autosaveRef.current()
+    }
+
+    const routeId = pendingRouteIdRef.current
+    if (routeId != null && !suppressRouteReplacementRef.current && mountedRef.current) {
+      pendingRouteIdRef.current = null
+      const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+      const historyState = window.history.state ?? {}
+      window.history.replaceState(
+        {
+          ...historyState,
+          usr: { ...(locationState ?? {}), autosavedDraft: true },
+        },
+        '',
+        `${basePath}/recipes/${routeId}/edit`,
+      )
+    }
+    return true
+  }
+  autosaveRef.current = runAutosave
+
+  const flushAutosave = async (): Promise<boolean> => {
+    if (autosaveTimerRef.current != null) {
+      window.clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+    while (revisionRef.current > persistedRevisionRef.current) {
+      const success = autosavePromiseRef.current == null
+        ? await autosaveRef.current()
+        : await autosavePromiseRef.current
+      if (!success) return false
+    }
+    return true
+  }
+
+  useEffect(() => {
+    if (loading || dirtyRevision <= persistedRevisionRef.current) return
+    if (autosaveTimerRef.current != null) window.clearTimeout(autosaveTimerRef.current)
+
+    setAutosaveStatus('saving')
+    const delay = saveImmediatelyRef.current ? 0 : AUTOSAVE_DELAY_MS
+    saveImmediatelyRef.current = false
+    autosaveTimerRef.current = window.setTimeout(() => {
+      autosaveTimerRef.current = null
+      void autosaveRef.current()
+    }, delay)
+
+    return () => {
+      if (autosaveTimerRef.current != null) {
+        window.clearTimeout(autosaveTimerRef.current)
+        autosaveTimerRef.current = null
+      }
+    }
+  }, [dirtyRevision, loading])
+
+  useEffect(() => {
+    const warnAboutUnsavedChanges = (event: BeforeUnloadEvent) => {
+      if (
+        revisionRef.current > persistedRevisionRef.current
+        || autosavePromiseRef.current != null
+        || autosaveStatus === 'failed'
+      ) {
+        event.preventDefault()
+        event.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', warnAboutUnsavedChanges)
+    return () => window.removeEventListener('beforeunload', warnAboutUnsavedChanges)
+  }, [autosaveStatus])
+
+  useEffect(() => {
+    mountedRef.current = true
+    suppressRouteReplacementRef.current = false
+    return () => {
+      mountedRef.current = false
+      suppressRouteReplacementRef.current = true
+      if (autosaveTimerRef.current != null) {
+        window.clearTimeout(autosaveTimerRef.current)
+        autosaveTimerRef.current = null
+      }
+      if (revisionRef.current > persistedRevisionRef.current) {
+        void autosaveRef.current()
+      }
+    }
+  }, [])
+
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm(current => ({ ...current, [key]: value }))
+    markDirty()
   }
 
   const invalidateCalculation = () => {
@@ -817,6 +1044,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           ?? ingredientDefaultRange(ingredient.category),
       },
     }))
+    markDirty()
   }
 
   const updateIngredientRange = (ingredientId: number, range: Range) => {
@@ -827,31 +1055,87 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     setCalculationField('nutrientRanges', { ...form.nutrientRanges, [key]: range })
   }
 
-  const goBack = () => {
-    if (!isEdit && step === 2) {
-      setStep(1)
+  const handlePetChange = async (petId: string | null) => {
+    if (petId === form.petId) return
+    const selectionRevision = petSelectionRevisionRef.current + 1
+    petSelectionRevisionRef.current = selectionRevision
+
+    if (petId == null) {
+      invalidateCalculation()
+      setForm(clearPetPrefill)
+      setRecommendedEnergy(null)
+      setCalorieCalculation(null)
+      markDirty(true)
       return
     }
+
+    setSelectingPet(true)
+    setError('')
+    try {
+      const [pet, records] = await Promise.all([
+        petService.getPet(petId),
+        petService.getHealthRecords(petId).catch(() => []),
+      ])
+      if (selectionRevision !== petSelectionRevisionRef.current) return
+
+      invalidateCalculation()
+      setForm(current => prefillFromPet(current, pet, records, references))
+      markDirty(true)
+    } catch {
+      if (selectionRevision === petSelectionRevisionRef.current) {
+        setError(t('recipes.petSelectionError'))
+      }
+    } finally {
+      if (selectionRevision === petSelectionRevisionRef.current) setSelectingPet(false)
+    }
+  }
+
+  const navigateBack = () => {
     if (origin === 'pet-profile' && originPetId) {
       navigate(`/pet-profile/${originPetId}`, { state: { tab: locationState?.fromTab ?? 'food' } })
-    } else if (isEdit) {
+    } else if (isEdit && !locationState?.autosavedDraft) {
       navigate(`/recipes/${recipeId}`)
     } else {
       navigate('/recipes')
     }
   }
 
-  const handleContinue = () => {
-    if (!form.name.trim()) {
-      setError('Укажите название корма')
+  const goBack = async () => {
+    suppressRouteReplacementRef.current = true
+    const saved = await flushAutosave()
+    if (!saved) {
+      suppressRouteReplacementRef.current = false
       return
     }
-    setError('')
-    setStep(2)
-    if (calculationResult) {
-      requestAnimationFrame(showOptimization)
-    } else {
-      void handleUpdateRecommendations()
+    navigateBack()
+  }
+
+  const handleDelete = async () => {
+    const persistedId = activeRecipeIdRef.current
+    if (persistedId != null && !window.confirm(t('recipes.deleteDraftConfirm'))) return
+
+    discardingRef.current = true
+    suppressRouteReplacementRef.current = true
+    if (autosaveTimerRef.current != null) {
+      window.clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+    persistedRevisionRef.current = revisionRef.current
+    try {
+      if (autosavePromiseRef.current) await autosavePromiseRef.current
+      const draftId = activeRecipeIdRef.current
+      if (draftId != null) await recipeService.delete(draftId)
+      if (origin === 'pet-profile' && originPetId) {
+        navigate(`/pet-profile/${originPetId}`, {
+          state: { tab: locationState?.fromTab ?? 'food' },
+        })
+      } else {
+        navigate('/recipes')
+      }
+    } catch {
+      discardingRef.current = false
+      suppressRouteReplacementRef.current = false
+      setError(t('recipes.deleteDraftFailed'))
     }
   }
 
@@ -878,6 +1162,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
       setNutrientNorms(nutrientResult.norms)
 
       let recommendedIngredients: Ingredient[] = []
+      const recommendedIngredientRanges = new Map<number, Range>()
+      let recommendedMaximizeNutrients: string[] = []
       let recommendationWarning = ''
       const disorder = disorderOverride ?? form.targetDisorder
       const healthyCondition = normalizeLabel(disorder) === normalizeLabel('Здоровый')
@@ -888,14 +1174,30 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             disorder,
             age: dog.age,
             age_metric: dog.age_metric,
+            weight: dog.weight,
+            target_kcal: targetKcal,
+            reproductive_status: dog.reproductive_status ?? 'none',
           })
-          const recommendations = new Set(
-            recommendation.recommended_ingredients.map(normalizeLabel),
+          const rangesByName = new Map(
+            Object.entries(recommendation.ingr_ranges).map(([name, range]) => [
+              normalizeLabel(name),
+              range,
+            ]),
           )
           recommendedIngredients = references.ingredients.filter(item =>
             item.recommenderSupported
-            && recommendations.has(normalizeLabel(toRecommenderIngredientName(item)))
+            && rangesByName.has(normalizeLabel(toRecommenderIngredientName(item)))
           )
+          recommendedIngredients.forEach(item => {
+            const recommendedRange = rangesByName.get(
+              normalizeLabel(toRecommenderIngredientName(item)),
+            )
+            const normalizedRange = normalizeRecommendedRange(recommendedRange)
+            if (normalizedRange) recommendedIngredientRanges.set(item.id, normalizedRange)
+          })
+          recommendedMaximizeNutrients = recommendation.maxim_main_nutr
+            .map(key => RECOMMENDER_MAXIMIZE_KEYS[key] ?? key)
+            .filter(key => RECIPE_MAXIMIZE_OPTIONS.some(option => option.key === key))
           const predicted = recommendation.nutrients_ranges
           setForm(current => ({
             ...current,
@@ -931,7 +1233,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           : current.ingredientIds
         const ranges = { ...current.ingredientRanges }
         recommendedIngredients.forEach(item => {
-          ranges[item.id] = ranges[item.id] ?? ingredientDefaultRange(item.category)
+          ranges[item.id] = recommendedIngredientRanges.get(item.id)
+            ?? ingredientDefaultRange(item.category)
         })
         return {
           ...current,
@@ -944,9 +1247,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             : calorieResult.size_category === 'medium' ? 'medium' : 'large',
           ingredientIds,
           ingredientRanges: ranges,
+          maximizeNutrients: recommendedMaximizeNutrients.length > 0
+            ? recommendedMaximizeNutrients
+            : current.maximizeNutrients,
         }
       })
       setNotice(recommendationWarning)
+      markDirty(true)
       requestAnimationFrame(showOptimization)
     } catch (errorValue) {
       setError(errorValue instanceof Error ? errorValue.message : 'Не удалось обновить рекомендации')
@@ -957,6 +1264,10 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
 
   const handleCalculate = async () => {
     if (calculating || updatingRecommendations) return
+    if (!form.name.trim()) {
+      setError(t('recipes.nameRequired'))
+      return
+    }
     const inputRevision = calculationInputRevision.current
     setCalculating(true)
     setError('')
@@ -1033,6 +1344,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         toCalculationResult(optimized, norms, references.ingredients, targetKcal),
       )
       setCalculationVersion('recommender-1.0.0')
+      markDirty(true)
       requestAnimationFrame(() => {
         document.getElementById('recipe-result')?.scrollIntoView({
           behavior: 'smooth',
@@ -1046,55 +1358,59 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     }
   }
 
-  const handleSave = async () => {
-    if (saving || calculating || updatingRecommendations) return
-    if (!form.name.trim()) {
-      setError('Укажите название корма')
-      setStep(1)
-      return
-    }
-    setSaving(true)
-    setError('')
-    try {
-      const saved = isEdit
-        ? await recipeService.update(
-            recipeId,
-            toPayload(form, originPetId, calculationResult, calculationVersion),
-          )
-        : await recipeService.create(
-            toPayload(form, originPetId, calculationResult, calculationVersion),
-          )
-      navigate(`/recipes/${saved.id}`, {
-        state: origin === 'pet-profile'
-          ? { from: origin, petId: originPetId, fromTab: locationState?.fromTab ?? 'food' }
-          : undefined,
-      })
-    } catch (errorValue) {
-      setError(errorValue instanceof Error ? errorValue.message : 'Не удалось сохранить рецепт')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (loading) {
-    return <div className={styles.page}><div className={styles.card}>Загрузка...</div></div>
+    return <div className={styles.page}><div className={styles.card}>{t('common.loading')}</div></div>
   }
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <button className={styles.backBtn} onClick={goBack}>‹ Назад</button>
+        <button className={styles.backBtn} onClick={() => void goBack()}>
+          ‹ {t('common.back')}
+        </button>
         <h1 className={styles.headerTitle}>
-          {isEdit ? 'Редактирование корма' : 'Создание корма'}
+          {isEdit && !locationState?.autosavedDraft
+            ? t('recipes.editTitle')
+            : t('recipes.createTitle')}
         </h1>
-        {isEdit ? (
-          <div className={styles.headerActionPlaceholder} />
-        ) : (
-          <button className={styles.deleteBtn} onClick={goBack}>
-            <DeleteIcon width="14" height="14" className="no-filter" />
-            Удалить
-          </button>
-        )}
+        <div className={styles.headerActions}>
+          <div
+            className={`${styles.autosaveStatus} ${
+              autosaveStatus === 'failed' ? styles.autosaveStatusFailed : ''
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {autosaveStatus === 'saving' && t('recipes.autosaveSaving')}
+            {autosaveStatus === 'saved' && (
+              calculationResult
+                ? t('recipes.autosaveRecipeSaved')
+                : t('recipes.autosaveDraftSaved')
+            )}
+            {autosaveStatus === 'pristine' && t('recipes.autosaveHint')}
+            {autosaveStatus === 'failed' && (
+              <>
+                <span>{autosaveError}</span>
+                <button
+                  type="button"
+                  className={styles.autosaveRetry}
+                  onClick={() => {
+                    suppressRouteReplacementRef.current = false
+                    void flushAutosave()
+                  }}
+                >
+                  {t('recipes.autosaveRetry')}
+                </button>
+              </>
+            )}
+          </div>
+          {(!isEdit || locationState?.autosavedDraft || persistedStatus === 'draft') && (
+            <button className={styles.deleteBtn} onClick={() => void handleDelete()}>
+              <DeleteIcon width="14" height="14" className="no-filter" />
+              {t('common.delete')}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -1131,26 +1447,47 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         </div>
       )}
 
-      {(isEdit || step === 1) && (
-        <>
+      <>
           <div className={styles.card}>
-            <p className={styles.sectionTitle}>Параметры корма</p>
+            <p className={styles.sectionTitle}>{t('recipes.parameters')}</p>
+            <div className={styles.petSelectorPanel}>
+              <div className={styles.petSelectorCopy}>
+                <label className={styles.fieldLabel}>{t('recipes.petSelectorLabel')}</label>
+              </div>
+              <SearchablePetSelect
+                options={pets.map(pet => ({
+                  id: pet.id,
+                  name: pet.name,
+                  breedName: pet.breedName,
+                }))}
+                value={form.petId}
+                loading={loadingPets}
+                selecting={selectingPet}
+                placeholder={t('recipes.petSelectorPlaceholder')}
+                searchPlaceholder={t('recipes.petSearchPlaceholder')}
+                noSelectionLabel={t('recipes.petNoSelection')}
+                emptyLabel={t('recipes.petSearchEmpty')}
+                loadingLabel={t('recipes.petLoading')}
+                selectingLabel={t('recipes.petApplying')}
+                onChange={petId => void handlePetChange(petId)}
+              />
+            </div>
             <div className={styles.formGrid2}>
               <div>
                 <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel}>Название корма</label>
+                  <label className={styles.fieldLabel}>{t('recipes.name')}</label>
                   <input
                     className={styles.fieldInput}
-                    placeholder="Введите название корма"
+                    placeholder={t('recipes.namePlaceholder')}
                     value={form.name}
                     onChange={event => setField('name', event.target.value)}
                   />
                 </div>
                 <div className={styles.fieldGroup} style={{ marginTop: 16 }}>
-                  <label className={styles.fieldLabel}>Описание корма</label>
+                  <label className={styles.fieldLabel}>{t('recipes.description')}</label>
                   <textarea
                     className={styles.fieldTextarea}
-                    placeholder="Введите описание продукта, его назначение"
+                    placeholder={t('recipes.descriptionPlaceholder')}
                     value={form.description}
                     onChange={event => setField('description', event.target.value)}
                   />
@@ -1250,6 +1587,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                       gender: event.target.value as RecipeGender,
                       reproductiveStatusId: '',
                     }))
+                    markDirty()
                   }}
                 >
                   <option value="male">Самец</option>
@@ -1347,6 +1685,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                         targetDisorder: disorder,
                         healthConditionId: matchingCondition == null ? '' : String(matchingCondition.id),
                       }))
+                      markDirty()
                       if (disorder) void handleUpdateRecommendations(disorder)
                     }}
                   >
@@ -1394,30 +1733,19 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 </div>
               </div>
             </div>
-            {!isEdit && (
-              <button
-                className={styles.primaryBtn}
-                disabled={updatingRecommendations}
-                onClick={handleContinue}
-              >
-                {updatingRecommendations ? 'Расчёт...' : 'Продолжить'}
-              </button>
-            )}
           </div>
-          {isEdit && (
-            <button
-              className={styles.updateRecommendationsBtn}
-              disabled={updatingRecommendations || calculating}
-              onClick={() => void handleUpdateRecommendations()}
-            >
-              {updatingRecommendations ? 'Обновление...' : 'Обновить рекомендации'}
-            </button>
-          )}
-        </>
-      )}
+          <button
+            className={styles.updateRecommendationsBtn}
+            disabled={updatingRecommendations || calculating}
+            onClick={() => void handleUpdateRecommendations()}
+          >
+            {updatingRecommendations
+              ? t('recipes.recommendationsUpdating')
+              : t('recipes.updateRecommendations')}
+          </button>
+      </>
 
-      {(isEdit || step === 2) && (
-        <div id="recipe-optimization" className={styles.card}>
+      <div id="recipe-optimization" className={styles.card}>
           <div className={styles.energyRow}>
             <div className={styles.energyControls}>
               <p className={styles.energyTitle}>Целевая энергия (ккал)</p>
@@ -1548,40 +1876,15 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             <button
               type="button"
               className={styles.primaryBtn}
-              disabled={saving || calculating || updatingRecommendations}
+              disabled={calculating || updatingRecommendations}
               onClick={() => void handleCalculate()}
             >
               {calculating ? t('recipes.calculating') : t('recipes.calculateComposition')}
             </button>
-            {!isEdit && (
-              <button
-                type="button"
-                className={styles.secondaryBtn}
-                disabled={saving || calculating || updatingRecommendations}
-                onClick={() => void handleSave()}
-              >
-                {saving
-                  ? t('common.saving')
-                  : calculationResult
-                    ? t('recipes.saveRecipe')
-                    : t('recipes.saveDraft')}
-              </button>
-            )}
           </div>
-        </div>
-      )}
+      </div>
 
       {calculationResult && <EditCalculationResult result={calculationResult} />}
-
-      {isEdit && (
-        <button
-          className={`${styles.primaryBtn} ${styles.finalSaveBtn}`}
-          disabled={saving}
-          onClick={() => void handleSave()}
-        >
-          {saving ? t('common.saving') : t('recipes.saveChanges')}
-        </button>
-      )}
     </div>
   )
 }
