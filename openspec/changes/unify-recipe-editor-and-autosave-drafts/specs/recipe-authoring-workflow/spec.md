@@ -111,4 +111,3 @@ Leaving the authoring page SHALL keep an autosaved draft. Deleting from the auth
 #### Scenario: User deletes the current draft
 - **WHEN** the owner confirms deletion of the persisted draft
 - **THEN** the system removes the draft and returns the user to the originating recipe context
-

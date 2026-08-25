@@ -280,6 +280,20 @@ function normalizeLabel(value: string) {
     .trim()
 }
 
+const RECOMMENDER_MAXIMIZE_KEYS: Record<string, string> = {
+  moisture_per: 'moisture',
+  protein_per: 'protein',
+  carbohydrate_per: 'carbs',
+  fats_per: 'fat',
+}
+
+function normalizeRecommendedRange(range?: Range): Range | null {
+  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return null
+  const min = Math.max(0, Math.min(100, range.min))
+  const max = Math.max(0, Math.min(100, range.max))
+  return min <= max ? { min, max } : null
+}
+
 function activityLevel(activity?: ActivityType): RecommenderActivityLevel {
   const value = `${activity?.code ?? ''} ${displayName(activity ?? { id: 0 })}`.toLowerCase()
   if (value.includes('пассив') || value.includes('passive')) return 'passive'
@@ -1148,6 +1162,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
       setNutrientNorms(nutrientResult.norms)
 
       let recommendedIngredients: Ingredient[] = []
+      const recommendedIngredientRanges = new Map<number, Range>()
+      let recommendedMaximizeNutrients: string[] = []
       let recommendationWarning = ''
       const disorder = disorderOverride ?? form.targetDisorder
       const healthyCondition = normalizeLabel(disorder) === normalizeLabel('Здоровый')
@@ -1158,14 +1174,30 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             disorder,
             age: dog.age,
             age_metric: dog.age_metric,
+            weight: dog.weight,
+            target_kcal: targetKcal,
+            reproductive_status: dog.reproductive_status ?? 'none',
           })
-          const recommendations = new Set(
-            recommendation.recommended_ingredients.map(normalizeLabel),
+          const rangesByName = new Map(
+            Object.entries(recommendation.ingr_ranges).map(([name, range]) => [
+              normalizeLabel(name),
+              range,
+            ]),
           )
           recommendedIngredients = references.ingredients.filter(item =>
             item.recommenderSupported
-            && recommendations.has(normalizeLabel(toRecommenderIngredientName(item)))
+            && rangesByName.has(normalizeLabel(toRecommenderIngredientName(item)))
           )
+          recommendedIngredients.forEach(item => {
+            const recommendedRange = rangesByName.get(
+              normalizeLabel(toRecommenderIngredientName(item)),
+            )
+            const normalizedRange = normalizeRecommendedRange(recommendedRange)
+            if (normalizedRange) recommendedIngredientRanges.set(item.id, normalizedRange)
+          })
+          recommendedMaximizeNutrients = recommendation.maxim_main_nutr
+            .map(key => RECOMMENDER_MAXIMIZE_KEYS[key] ?? key)
+            .filter(key => RECIPE_MAXIMIZE_OPTIONS.some(option => option.key === key))
           const predicted = recommendation.nutrients_ranges
           setForm(current => ({
             ...current,
@@ -1201,7 +1233,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           : current.ingredientIds
         const ranges = { ...current.ingredientRanges }
         recommendedIngredients.forEach(item => {
-          ranges[item.id] = ranges[item.id] ?? ingredientDefaultRange(item.category)
+          ranges[item.id] = recommendedIngredientRanges.get(item.id)
+            ?? ingredientDefaultRange(item.category)
         })
         return {
           ...current,
@@ -1214,6 +1247,9 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             : calorieResult.size_category === 'medium' ? 'medium' : 'large',
           ingredientIds,
           ingredientRanges: ranges,
+          maximizeNutrients: recommendedMaximizeNutrients.length > 0
+            ? recommendedMaximizeNutrients
+            : current.maximizeNutrients,
         }
       })
       setNotice(recommendationWarning)

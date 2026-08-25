@@ -42,4 +42,3 @@ The system SHALL invalidate the displayed calculation result when the user chang
 #### Scenario: Non-calculation metadata changes
 - **WHEN** a user changes only recipe metadata that does not affect optimization, such as the recipe name or description
 - **THEN** the current calculation remains available and is included in the next autosave
-
