@@ -1,13 +1,17 @@
 package dev.pet.pets.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.pet.pets.domain.Recipe;
 import dev.pet.pets.dto.RecipeRequest;
+import dev.pet.pets.error.BadRequestException;
+import dev.pet.pets.error.NotFoundException;
 import dev.pet.pets.repo.ActivityTypeRepository;
 import dev.pet.pets.repo.BreedRepository;
 import dev.pet.pets.repo.HealthConditionRepository;
@@ -115,7 +119,74 @@ class RecipeServiceTest {
             .doesNotContain("format");
     }
 
+    @Test
+    void createsAndUpdatesUnnamedInputOnlyDraft() {
+        UUID ownerId = UUID.randomUUID();
+        Jwt jwt = jwt(ownerId);
+
+        var created = service.create(jwt, request(""));
+
+        assertThat(created.name()).isEmpty();
+        assertThat(created.status()).isEqualTo("draft");
+        assertThat(created.calculationResult()).isNull();
+
+        Recipe existing = recipe("Temporary name", ownerId);
+        when(recipeRepository.findByIdAndOwnerId(7L, ownerId)).thenReturn(Optional.of(existing));
+
+        var updated = service.update(jwt, 7L, request("   "));
+
+        assertThat(updated.name()).isEmpty();
+        assertThat(updated.status()).isEqualTo("draft");
+    }
+
+    @Test
+    void calculatedRecipeRequiresNameAndStaleResultReturnsToDraft() {
+        UUID ownerId = UUID.randomUUID();
+        Jwt jwt = jwt(ownerId);
+        RecipeRequest calculated = request("Calculated recipe", true);
+
+        var created = service.create(jwt, calculated);
+
+        assertThat(created.status()).isEqualTo("calculated");
+        assertThat(created.calculationResult()).isNotNull();
+
+        assertThatThrownBy(() -> service.create(jwt, request(" ", true)))
+            .isInstanceOf(BadRequestException.class)
+            .hasMessageContaining("Recipe name is required");
+
+        Recipe existing = recipe("Calculated recipe", ownerId);
+        existing.setCalculationResult(JsonNodeFactory.instance.objectNode().put("calories", 120));
+        existing.setCalculationVersion("recommender-1.0.0");
+        existing.setCalculatedAt(OffsetDateTime.now());
+        existing.setStatus("calculated");
+        when(recipeRepository.findByIdAndOwnerId(9L, ownerId)).thenReturn(Optional.of(existing));
+
+        var updated = service.update(jwt, 9L, request("Calculated recipe"));
+
+        assertThat(updated.status()).isEqualTo("draft");
+        assertThat(updated.calculationResult()).isNull();
+        assertThat(updated.calculationVersion()).isNull();
+        assertThat(updated.calculatedAt()).isNull();
+    }
+
+    @Test
+    void doesNotExposeAnotherOwnersDraft() {
+        UUID ownerId = UUID.randomUUID();
+        UUID otherOwnerId = UUID.randomUUID();
+        when(recipeRepository.findByIdAndOwnerId(11L, ownerId)).thenReturn(Optional.empty());
+        when(recipeRepository.findByIdAndOwnerId(11L, otherOwnerId))
+            .thenReturn(Optional.of(recipe("Private draft", otherOwnerId)));
+
+        assertThatThrownBy(() -> service.getMine(jwt(ownerId), 11L))
+            .isInstanceOf(NotFoundException.class)
+            .hasMessageContaining("Recipe not found");
+    }
+
     private RecipeRequest request(String name) {
+        return request(name, false);
+    }
+
+    private RecipeRequest request(String name, boolean calculated) {
         return new RecipeRequest(
             null,
             name,
@@ -135,8 +206,8 @@ class RecipeServiceTest {
             List.of(),
             List.of(),
             List.of(),
-            null,
-            null
+            calculated ? JsonNodeFactory.instance.objectNode().put("calories", 120) : null,
+            calculated ? "recommender-1.0.0" : null
         );
     }
 

@@ -197,7 +197,7 @@ function CalculationSections({
         </div>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>{result.dailyNorm ?? '—'} г</p>
-          <p className={styles.metricLabel}>Суточная норма корма</p>
+          <p className={styles.metricLabel}>{t('recipes.dailyPortion')}</p>
         </div>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>{result.dailyCaloriesNorm ?? '—'} ккал</p>
@@ -367,6 +367,7 @@ export function RecipeProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const recipeId = Number(id)
   const origin = (location.state as { from?: string } | null)?.from
   const originPetId = (location.state as { petId?: string } | null)?.petId
@@ -467,7 +468,7 @@ export function RecipeProfilePage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <button className={styles.backBtn} onClick={goBack}>‹ Назад</button>
-        <h1 className={styles.headerTitle}>Профиль корма</h1>
+        <h1 className={styles.headerTitle}>{t('recipes.profileTitle')}</h1>
         <div className={styles.headerActions}>
           <button
             className={styles.editBtn}
@@ -487,7 +488,7 @@ export function RecipeProfilePage() {
 
       <div className={`${styles.card} ${styles.profileCard}`}>
         <div className={styles.recipeTopRow}>
-          <h2 className={styles.recipeName}>{recipe.name}</h2>
+          <h2 className={styles.recipeName}>{recipe.name.trim() || t('recipes.untitled')}</h2>
           <div className={styles.shareActions}>
             <button className={styles.iconBtn} title="Поделиться" onClick={handleShare}>
               <ShareIcon width="30" height="30" />

@@ -3,6 +3,8 @@ export const apiBaseUrl = configuredApiBase?.trim()
   ? configuredApiBase.trim().replace(/\/$/, '')
   : (import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, ''))
 
+export const AUTH_UNAUTHORIZED_EVENT = 'petfood:auth-unauthorized'
+
 const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 15000): Promise<Response> => {
   const controller = new AbortController()
 
@@ -15,6 +17,10 @@ const fetchWithTimeout = async (url: string, options: RequestInit, timeout = 150
       ...options,
       signal: controller.signal,
     })
+
+    if (response.status === 401) {
+      window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT))
+    }
 
     clearTimeout(timeoutId)
     return response

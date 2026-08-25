@@ -106,17 +106,6 @@ export function Sidebar() {
           </button>
 
           <button
-            className={`${styles.navItem} ${isActive('/ingredients') ? styles.navItemActive : ''}`}
-            onClick={() => navigate('/ingredients')}
-            type="button"
-          >
-            <div className={styles.iconWrap}>
-              <IconIngredients className={styles.navIcon} />
-            </div>
-            {expanded && <span className={styles.navLabel}>{t('sidebar.ingredients')}</span>}
-          </button>
-
-          <button
             className={`${styles.navItem} ${isActive('/recipes') ? styles.navItemActive : ''}`}
             onClick={() => navigate('/recipes')}
             type="button"
@@ -125,6 +114,17 @@ export function Sidebar() {
               <IconRecipe className={styles.navIcon} />
             </div>
             {expanded && <span className={styles.navLabel}>{t('sidebar.recipes')}</span>}
+          </button>
+
+          <button
+            className={`${styles.navItem} ${isActive('/ingredients') ? styles.navItemActive : ''}`}
+            onClick={() => navigate('/ingredients')}
+            type="button"
+          >
+            <div className={styles.iconWrap}>
+              <IconIngredients className={styles.navIcon} />
+            </div>
+            {expanded && <span className={styles.navLabel}>{t('sidebar.ingredients')}</span>}
           </button>
         </nav>
 

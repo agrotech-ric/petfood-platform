@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useTranslation } from '../../context/LanguageContext'
 import { petService, type HealthRecord, type PetContraindications, type PetProfileData } from '../../services/petService'
 import { recipeService, type RecipeListItem } from '../../services/recipeService'
 import { referenceService, type ActivityType, type Symptom } from '../../services/referenceService'
@@ -313,6 +314,7 @@ function LineChart({
 function TabFood({ foods }: { foods: PetFoodView[] }) {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <div>
@@ -320,7 +322,7 @@ function TabFood({ foods }: { foods: PetFoodView[] }) {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Корм</th>
+              <th>{t('recipes.petTableColumn')}</th>
               <th>Калорийность</th>
               <th>Последнее изменения</th>
               <th>Изменить</th>

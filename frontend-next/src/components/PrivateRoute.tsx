@@ -7,15 +7,9 @@ interface PrivateRouteProps {
   allowedRoles: UserRole[];
 }
 
-const DEV_MODE = true;
-
 const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { t } = useTranslation();
-
-  if (DEV_MODE) {
-    return <>{children}</>;
-  }
 
   if (isLoading) {
     return (
@@ -50,4 +44,3 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
 };
 
 export default PrivateRoute;
-

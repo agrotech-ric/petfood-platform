@@ -158,8 +158,14 @@ public class RecipeService {
     }
 
     private void apply(Recipe recipe, RecipeRequest request, UUID ownerId, OffsetDateTime now) {
+        boolean calculated = request.calculationResult() != null && !request.calculationResult().isNull();
+        String name = request.name().trim();
+        if (calculated && name.isEmpty()) {
+            throw new BadRequestException("Recipe name is required before calculation can be saved");
+        }
+
         recipe.setPet(resolvePet(request.petId(), ownerId));
-        recipe.setName(request.name().trim());
+        recipe.setName(name);
         recipe.setDescription(blankToNull(request.description()));
         recipe.setAgeCategory(request.ageCategory());
         recipe.setBreedSize(request.breedSize());
@@ -192,7 +198,6 @@ public class RecipeService {
         }
         recipe.setMaximizeNutrients(maximizeNutrients);
 
-        boolean calculated = request.calculationResult() != null && !request.calculationResult().isNull();
         recipe.setCalculationResult(calculated ? request.calculationResult() : null);
         recipe.setCalculationVersion(calculated ? blankToNull(request.calculationVersion()) : null);
         recipe.setCalculatedAt(calculated ? now : null);
