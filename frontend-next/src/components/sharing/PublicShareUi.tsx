@@ -29,10 +29,6 @@ export function PublicHeader({ title }: { title: string }) {
   const { locale, setLanguage, t } = useTranslation()
   return (
     <header className={styles.pageHeader}>
-      <Link to="/login" className={styles.brand} title="PetFood">
-        <span className={styles.brandMark}><PawIcon /></span>
-        <span>PetFood</span>
-      </Link>
       <h1 className={styles.headerTitle}>{title}</h1>
       <div className={styles.headerRight}>
         <div className={styles.languages} aria-label={t('public.language')}>
@@ -60,16 +56,7 @@ export function PublicFooter() {
   return (
     <footer className={styles.publicFooter}>
       <div className={styles.footerContent}>
-        <div className={styles.footerBrand}>
-          <span className={styles.footerBrandMark}><PawIcon /></span>
-          <span className={styles.footerBrandText}>PetFood</span>
-        </div>
         <p className={styles.footerNote}>{t('public.footerText')}</p>
-        <div className={styles.footerActions}>
-          <Link to="/login" className={styles.footerBtnPrimary}>
-            {t('public.login')}
-          </Link>
-        </div>
       </div>
     </footer>
   )

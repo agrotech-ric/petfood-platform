@@ -351,6 +351,17 @@ export const ru = {
   'public.gender.male': 'Самец',
   'public.gender.female': 'Самка',
   'public.disease': 'Заболевание',
+  'public.ageLabel': 'Возраст',
+  'public.yearsShort': 'г.',
+  'public.monthsShort': 'мес.',
+  'public.g': 'г',
+  'public.kcal': 'ккал',
+  'public.kcalPer100': 'ккал/100 г',
+  'public.moisture': 'Влага',
+  'public.fiber': 'Клетчатка',
+  'public.ash': 'Зола',
+  'public.calcium': 'Кальций',
+  'public.phosphorus': 'Фосфор',
 } as const;
 
 export type RuKeys = keyof typeof ru;

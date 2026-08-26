@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PdfReportService {
     private static final DateTimeFormatter DATE = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final String PLATFORM_URL = "https://agrotech.astanait.edu.kz/petfood";
 
     private final PetRepository petRepository;
     private final RecipeRepository recipeRepository;
@@ -325,16 +326,7 @@ public class PdfReportService {
                 }
             }
             if (source == null) return null;
-            double scale = Math.min(1d, (double) properties.getMaxImageDimension() / Math.max(source.getWidth(), source.getHeight()));
-            int width = Math.max(1, (int) Math.round(source.getWidth() * scale));
-            int height = Math.max(1, (int) Math.round(source.getHeight() * scale));
-            BufferedImage normalized = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphics = normalized.createGraphics();
-            graphics.setColor(Color.WHITE);
-            graphics.fillRect(0, 0, width, height);
-            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            graphics.drawImage(source, 0, 0, width, height, null);
-            graphics.dispose();
+            BufferedImage normalized = coverSquare(source, properties.getMaxImageDimension());
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             ImageIO.write(normalized, "jpg", output);
             return "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(output.toByteArray());
@@ -346,20 +338,20 @@ public class PdfReportService {
     private String document(String title, String body, ReportMessages m) {
         return """
             <!DOCTYPE html><html lang='%s'><head><meta charset='UTF-8'/><style>
-            @page { size: A4; margin: 15mm 13mm 17mm; @bottom-center { content: '%s · ' counter(page) ' / ' counter(pages); font-family: 'Inter'; font-size: 7.5pt; color: #858585; } }
+            @page { size: A4; margin: 15mm 13mm 17mm; @bottom-center { content: counter(page) ' / ' counter(pages); font-family: 'Inter'; font-size: 7.5pt; color: #858585; } }
             * { box-sizing: border-box; }
             body { margin: 0; font-family: 'Inter'; color: #242424; font-size: 9pt; line-height: 1.45; }
             h1 { margin: 0 0 4px; color: #242424; font-size: 22pt; font-weight: bold; }
             h2 { margin: 18px 0 8px; padding: 9px 12px; border: 1px solid #dddddd; border-radius: 6px; background: #ffffff; color: #f28c4c; font-size: 13pt; font-weight: bold; page-break-after: avoid; }
             p { margin: 6px 0; }
-            .brand { margin-bottom: 8px; color: #f28c4c; font-size: 10pt; font-weight: bold; }
             .hero { min-height: 100px; padding: 14px 16px; border: 1px solid #dddddd; border-radius: 8px; background: #ffffff; page-break-inside: avoid; }
             .hero-table { width: 100%%; margin: 0; }
             .hero-table td { padding: 0; border: 0; vertical-align: middle; }
             .hero-photo-cell { width: 108px; padding-right: 16px !important; }
-            .hero img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; }
+            .hero img { width: 96px; height: 96px; border-radius: 8px; }
             .subtitle { color: #858585; font-size: 11pt; }
-            .read-only { margin-bottom: 3px; color: #f28c4c; font-size: 7.5pt; font-weight: bold; text-transform: uppercase; }
+            .platform-link { margin-top: 18px; color: #858585; font-size: 7.5pt; text-align: center; }
+            .platform-link a { color: #858585; text-decoration: none; }
             table { width: 100%%; margin: 5px 0 12px; border-collapse: collapse; page-break-inside: auto; }
             tr { page-break-inside: avoid; }
             th, td { padding: 6px 7px; border-bottom: 1px solid #dddddd; vertical-align: top; text-align: left; }
@@ -393,15 +385,32 @@ public class PdfReportService {
             .appendix th { background: #fff1e6; color: #242424; }
             .appendix td:first-child { width: 52%%; color: #242424; font-weight: bold; overflow-wrap: break-word; }
             svg { width: 100%%; height: 190px; }
-            </style><title>%s</title></head><body>%s</body></html>
-            """.formatted(escape(m.locale()), escape(m.get("generated")), escape(title), body);
+            </style><title>%s</title></head><body>%s<div class='platform-link'><a href='%s'>%s</a></div></body></html>
+            """.formatted(escape(m.locale()), escape(title), body,
+                escape(PLATFORM_URL), escape(PLATFORM_URL));
     }
 
     private void hero(StringBuilder body, String title, String subtitle, String image) {
-        body.append("<div class='brand'>● PetFood Platform</div><div class='hero'><table class='hero-table'><tr>");
+        body.append("<div class='hero'><table class='hero-table'><tr>");
         if (image != null) body.append("<td class='hero-photo-cell'><img src='").append(image).append("' alt='' /></td>");
-        body.append("<td><div class='read-only'>PetFood</div><h1>").append(escape(title))
+        body.append("<td><h1>").append(escape(title))
             .append("</h1><div class='subtitle'>").append(escape(subtitle)).append("</div></td></tr></table></div>");
+    }
+
+    static BufferedImage coverSquare(BufferedImage source, int maxDimension) {
+        int cropSize = Math.min(source.getWidth(), source.getHeight());
+        int sourceX = (source.getWidth() - cropSize) / 2;
+        int sourceY = (source.getHeight() - cropSize) / 2;
+        int targetSize = Math.min(cropSize, maxDimension);
+        BufferedImage normalized = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = normalized.createGraphics();
+        graphics.setColor(Color.WHITE);
+        graphics.fillRect(0, 0, targetSize, targetSize);
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        graphics.drawImage(source, 0, 0, targetSize, targetSize,
+            sourceX, sourceY, sourceX + cropSize, sourceY + cropSize, null);
+        graphics.dispose();
+        return normalized;
     }
 
     private String lineChart(List<PetHealthRecord> records, boolean weight, String title) {

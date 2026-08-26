@@ -13,6 +13,9 @@ import dev.pet.pets.repo.PetContraindicationRepository;
 import dev.pet.pets.repo.PetHealthRecordRepository;
 import dev.pet.pets.repo.PetRepository;
 import dev.pet.pets.repo.RecipeRepository;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -46,6 +49,25 @@ class PdfReportServiceTest {
             pets, recipes, health, contraindications, photos,
             mock(ResourceShareService.class), new ObjectMapper(), properties
         );
+    }
+
+    @Test
+    void cropsPhotosFromTheCenterWithoutChangingTheirAspectRatio() {
+        BufferedImage source = new BufferedImage(6, 2, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = source.createGraphics();
+        graphics.setColor(Color.RED);
+        graphics.fillRect(0, 0, 2, 2);
+        graphics.setColor(Color.GREEN);
+        graphics.fillRect(2, 0, 2, 2);
+        graphics.setColor(Color.BLUE);
+        graphics.fillRect(4, 0, 2, 2);
+        graphics.dispose();
+
+        BufferedImage cropped = PdfReportService.coverSquare(source, 1600);
+
+        assertThat(cropped.getWidth()).isEqualTo(2);
+        assertThat(cropped.getHeight()).isEqualTo(2);
+        assertThat(new Color(cropped.getRGB(0, 0))).isEqualTo(Color.GREEN);
     }
 
     @AfterEach
