@@ -10,3 +10,15 @@ logging:
     org.springframework.security: debug
     org.springframework.web: debug
     dev.pet.pets: debug
+
+app:
+  sharing:
+    public-base-url: ${PETFOOD_PUBLIC_URL:http://localhost:5174}
+    signing-secret: ${SHARE_TOKEN_SECRET:local-development-share-secret-change-me}
+  pdf:
+    font-path: ${PDF_FONT_PATH:/usr/share/fonts/truetype/inter-vf/InterVariable.ttf}
+    max-records: ${PDF_MAX_RECORDS:500}
+    max-image-bytes: ${PDF_MAX_IMAGE_BYTES:5242880}
+    max-image-dimension: ${PDF_MAX_IMAGE_DIMENSION:1600}
+    max-output-bytes: ${PDF_MAX_OUTPUT_BYTES:15728640}
+    max-render-seconds: ${PDF_MAX_RENDER_SECONDS:15}

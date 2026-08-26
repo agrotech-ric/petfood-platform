@@ -43,6 +43,7 @@ public class GatewaySecurityConfig {
         cors.addAllowedHeader("Accept");
         cors.addAllowedHeader("X-Requested-With");
         cors.addAllowedHeader("Authorization");
+        cors.addAllowedHeader("X-Share-Token");
         cors.setAllowCredentials(true);
         cors.setMaxAge(3600L);
 

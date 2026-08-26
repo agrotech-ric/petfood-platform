@@ -1,4 +1,5 @@
 import { apiClient } from '../src/utils/apiClient'
+import type { PublicPetProfile, ShareLinkState } from './shareTypes'
 
 const MAX_PUBLIC_PHOTO_UPLOAD_BYTES = 900 * 1024
 
@@ -182,4 +183,25 @@ export const petService = {
 
   removeFavorite: (petId: string) =>
     apiClient.delete(`/api/v1/pets/${petId}/favorite`),
+
+  getShare: (petId: string) =>
+    apiClient.get<ShareLinkState>(`/api/v1/pets/${petId}/share`),
+
+  createShare: (petId: string) =>
+    apiClient.post<ShareLinkState>(`/api/v1/pets/${petId}/share`, {}),
+
+  rotateShare: (petId: string) =>
+    apiClient.post<ShareLinkState>(`/api/v1/pets/${petId}/share/rotate`, {}),
+
+  revokeShare: (petId: string) =>
+    apiClient.delete(`/api/v1/pets/${petId}/share`),
+
+  getPublicProfile: (token: string) =>
+    apiClient.getWithHeaders<PublicPetProfile>('/api/v1/public/shares/pet', { 'X-Share-Token': token }),
+
+  getPublicPhoto: (token: string) =>
+    apiClient.download('/api/v1/public/shares/pet/photo', { 'X-Share-Token': token }),
+
+  downloadPdf: (petId: string, locale: string) =>
+    apiClient.download(`/api/v1/pets/${petId}/export.pdf?locale=${encodeURIComponent(locale)}`),
 }

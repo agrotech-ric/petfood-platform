@@ -1,4 +1,5 @@
 import { apiClient } from '../src/utils/apiClient'
+import type { PublicRecipe, ShareLinkState } from './shareTypes'
 
 export type RecipeAgeCategory = 'puppies' | 'adults' | 'senior'
 export type RecipeBreedSize = 'all' | 'small' | 'medium' | 'large'
@@ -187,4 +188,21 @@ export const recipeService = {
     apiClient.patch<Recipe>(`/api/v1/recipes/${id}`, payload),
 
   delete: (id: number) => apiClient.delete(`/api/v1/recipes/${id}`),
+
+  getShare: (id: number) => apiClient.get<ShareLinkState>(`/api/v1/recipes/${id}/share`),
+
+  createShare: (id: number) => apiClient.post<ShareLinkState>(`/api/v1/recipes/${id}/share`, {}),
+
+  rotateShare: (id: number) => apiClient.post<ShareLinkState>(`/api/v1/recipes/${id}/share/rotate`, {}),
+
+  revokeShare: (id: number) => apiClient.delete(`/api/v1/recipes/${id}/share`),
+
+  getPublicRecipe: (token: string) =>
+    apiClient.getWithHeaders<PublicRecipe>('/api/v1/public/shares/recipe', { 'X-Share-Token': token }),
+
+  getPublicPetPhoto: (token: string) =>
+    apiClient.download('/api/v1/public/shares/recipe/pet-photo', { 'X-Share-Token': token }),
+
+  downloadPdf: (id: number, locale: string) =>
+    apiClient.download(`/api/v1/recipes/${id}/export.pdf?locale=${encodeURIComponent(locale)}`),
 }

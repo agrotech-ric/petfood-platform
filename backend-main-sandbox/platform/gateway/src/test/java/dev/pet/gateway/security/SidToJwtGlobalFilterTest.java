@@ -20,6 +20,38 @@ import static org.mockito.Mockito.when;
 class SidToJwtGlobalFilterTest {
 
     @Test
+    void bypassesSidOnlyForExactPublicShareGetPaths() {
+        AuthProps props = new AuthProps();
+        props.getSecurity().setPublicPaths(List.of(
+            "/api/v1/public/shares/pet",
+            "/api/v1/public/shares/pet/photo"
+        ));
+        props.getSecurity().setAllowedOrigins(List.of("http://localhost:5174"));
+        SidToJwtGlobalFilter filter = new SidToJwtGlobalFilter(mock(AuthExchangeClient.class), props);
+
+        for (String path : List.of(
+            "/api/v1/public/shares/pet",
+            "/petfood/api/v1/public/shares/pet/photo"
+        )) {
+            AtomicInteger forwarded = new AtomicInteger();
+            MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get(path).build());
+            filter.filter(exchange, request -> { forwarded.incrementAndGet(); return Mono.empty(); }).block();
+            assertThat(forwarded).as(path).hasValue(1);
+        }
+
+        for (MockServerHttpRequest request : List.of(
+            MockServerHttpRequest.get("/api/v1/public/shares/pet/extra").build(),
+            MockServerHttpRequest.post("/api/v1/public/shares/pet").build()
+        )) {
+            AtomicInteger forwarded = new AtomicInteger();
+            MockServerWebExchange exchange = MockServerWebExchange.from(request);
+            filter.filter(exchange, ignored -> { forwarded.incrementAndGet(); return Mono.empty(); }).block();
+            assertThat(forwarded).hasValue(0);
+            assertThat(exchange.getResponse().getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @Test
     void successfulExchangeDoesNotFallThroughToEmptyExchangeHandling() {
         AuthExchangeClient authClient = mock(AuthExchangeClient.class);
         SidExchangeResponse response = new SidExchangeResponse();

@@ -83,6 +83,11 @@ jq -e --arg release "$release_commit" '
   (.services["pets-production"].environment.PETS_MINIO_ENDPOINT == "http://minio-production:9000") and
   (.services["pets-production"].environment.PETS_PHOTO_STORAGE_TYPE == "fs") and
   (.services["pets-production"].environment.PETS_PHOTO_STORAGE_BASE_URL | test("^https://.+/petfood$")) and
+  (.services["pets-production"].environment.PETFOOD_PUBLIC_URL == "https://agrotech.astanait.edu.kz/petfood") and
+  (.services["pets-production"].environment.SHARE_TOKEN_SECRET | length >= 32) and
+  (.services["pets-production"].environment.SHARE_TOKEN_SECRET != .services["account-production"].environment.RATE_LIMIT_PEPPER) and
+  ((.services["pets-production"].environment.PDF_MAX_RECORDS | tonumber) > 0) and
+  ((.services["pets-production"].environment.PDF_MAX_OUTPUT_BYTES | tonumber) > 0) and
   (.services["notifications-production"].environment.SMTP_HOST | length > 0) and
   (.services["notifications-production"].environment.SMTP_GMAIL_USER | length > 0) and
   (.services["notifications-production"].environment.SMTP_GMAIL_PASS | length > 0) and
@@ -102,8 +107,9 @@ jq -e --arg release "$release_commit" '
 grep -Fq 'Path=/petfood/api/v1/account/' "$routes_file"
 grep -Fq 'Path=/petfood/api/v1/pets/' "$routes_file"
 grep -Fq 'Path=/petfood/recommender/**' "$routes_file"
+grep -Fq 'Path=/petfood/api/v1/public/shares/pet,' "$routes_file"
 
-if grep -nE '\$\{(POSTGRES_PASSWORD|RABBITMQ_PASSWORD|MINIO_ROOT_PASSWORD|RATE_LIMIT_PEPPER|SMTP_GMAIL_PASS)(:-|-[^?])' "$compose_file"; then
+if grep -nE '\$\{(POSTGRES_PASSWORD|RABBITMQ_PASSWORD|MINIO_ROOT_PASSWORD|RATE_LIMIT_PEPPER|SHARE_TOKEN_SECRET|SMTP_GMAIL_PASS)(:-|-[^?])' "$compose_file"; then
   echo "A production secret has a usable fallback" >&2
   exit 1
 fi

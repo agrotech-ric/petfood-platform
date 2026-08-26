@@ -20,6 +20,7 @@ class GatewaySecurityConfigTest {
         var allowedRequest = MockServerHttpRequest.options("http://localhost/api/v1/account/login/email")
             .header("Origin", "http://10.1.10.144:5174")
             .header("Access-Control-Request-Method", "POST")
+            .header("Access-Control-Request-Headers", "X-Share-Token")
             .build();
         var allowedExchange = MockServerWebExchange.from(allowedRequest);
         AtomicBoolean forwarded = new AtomicBoolean();
@@ -32,6 +33,8 @@ class GatewaySecurityConfigTest {
         assertThat(forwarded).isFalse();
         assertThat(allowedExchange.getResponse().getHeaders().getAccessControlAllowOrigin())
             .isEqualTo("http://10.1.10.144:5174");
+        assertThat(allowedExchange.getResponse().getHeaders().getAccessControlAllowHeaders())
+            .contains("X-Share-Token");
 
         var rejectedExchange = MockServerWebExchange.from(
             MockServerHttpRequest.options("http://localhost/api/v1/account/login/email")

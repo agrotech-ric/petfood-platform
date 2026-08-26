@@ -17,7 +17,7 @@ export function NutrientBalanceChart({ title, items }: { title: string; items: B
         <span />
         <span className={styles.normTrack}>
           <span className={styles.norm} style={{ left: `${(100 / maxScale) * 100}%` }}>
-            Норма
+            {t('public.norm')}
           </span>
         </span>
         <span />
@@ -50,17 +50,17 @@ export function NutrientBalanceChart({ title, items }: { title: string; items: B
                 {hasValues ? (
                   <>
                     <span>
-                      Текущее: {item.current}{item.unit
+                      {t('public.currentValue')}: {item.current}{item.unit
                         ? ` ${t('recipes.unitPer100', { unit: item.unit })}`
                         : ''}
                     </span>
-                    <span>Норма: {item.norm} {item.unit ?? ''}</span>
+                    <span>{t('public.norm')}: {item.norm} {item.unit ?? ''}</span>
                     <span>
-                      {item.current! >= item.norm! ? 'Превышение' : 'Дефицит'}: {Math.round(difference * 100) / 100} {item.unit ?? ''}
+                      {item.current! >= item.norm! ? t('public.excess') : t('public.deficit')}: {Math.round(difference * 100) / 100} {item.unit ?? ''}
                     </span>
                   </>
                 ) : (
-                  <span>Текущее значение: {Math.round(percent)}% от нормы</span>
+                  <span>{t('public.currentPercent', { value: Math.round(percent) })}</span>
                 )}
               </span>
             </div>
@@ -72,7 +72,7 @@ export function NutrientBalanceChart({ title, items }: { title: string; items: B
           <span key={tick} style={{ left: `${(tick / maxScale) * 100}%` }}>{tick}</span>
         ))}
       </div>
-      <p className={styles.caption}>Процентное соотношение с нормой (%)</p>
+      <p className={styles.caption}>{t('public.percentOfNorm')}</p>
     </div>
   )
 }

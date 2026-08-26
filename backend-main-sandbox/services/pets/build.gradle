@@ -50,9 +50,11 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
     implementation 'io.minio:minio:8.6.0'
+
+    implementation 'io.github.openhtmltopdf:openhtmltopdf-pdfbox:1.1.81'
+    implementation 'io.github.openhtmltopdf:openhtmltopdf-svg-support:1.1.81'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
-

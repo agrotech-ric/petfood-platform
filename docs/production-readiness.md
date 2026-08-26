@@ -87,6 +87,22 @@ work:
 - maintain incident-response, privacy, retention, and credential-rotation
   runbooks.
 
+## Public sharing and report controls
+
+Pet profiles and fully calculated recipes may be exposed through explicit,
+owner-managed live bearer links. Production must set the canonical URL to
+`https://agrotech.astanait.edu.kz/petfood`, keep `SHARE_TOKEN_SECRET` separate
+from every session, JWT, rate-limit, and storage credential, and retain the
+dedicated anonymous rate limit. Operators can revoke one link through the owner
+UI/API; rotating the signing secret is an emergency global revocation and must
+be coordinated because every existing link becomes unusable.
+
+Before releasing this capability, validate refreshed `/shared/pet` and
+`/shared/recipe` routes under `/petfood`, anonymous/private route separation,
+privacy exclusions, log redaction, report bounds, Inter font availability,
+and owner-only PDF authorization. Rollback can remove the exact public gateway
+routes while private pet, recipe, and PDF ownership rules remain intact.
+
 ## Release ownership
 
 The release owner approved autonomous execution with escalation only for a
