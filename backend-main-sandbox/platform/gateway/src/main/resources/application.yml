@@ -28,6 +28,10 @@ app:
     public-paths:
       - /ping
       - /.well-known/jwks.json
+      - /api/v1/public/shares/pet
+      - /api/v1/public/shares/recipe
+      - /api/v1/public/shares/pet/photo
+      - /api/v1/public/shares/recipe/pet-photo
 
       - /api/v1/account/register
       - /api/v1/account/register/confirm
@@ -42,3 +46,7 @@ app:
     replenish-rate: ${AUTH_RATE_REPLENISH_RATE:2}
     burst-capacity: ${AUTH_RATE_BURST_CAPACITY:10}
     requested-tokens: ${AUTH_RATE_REQUESTED_TOKENS:1}
+  share-rate-limit:
+    replenish-rate: ${SHARE_RATE_REPLENISH_RATE:5}
+    burst-capacity: ${SHARE_RATE_BURST_CAPACITY:20}
+    requested-tokens: ${SHARE_RATE_REQUESTED_TOKENS:1}

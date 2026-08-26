@@ -77,6 +77,17 @@ Public paths are configured in the gateway. A route must only be public when its
 controller and service do not require authenticated JWT data. Pets and account
 services also enforce authorization independently.
 
+Pet and calculated-recipe sharing is the only anonymous domain-data boundary.
+An owner creates or rotates one active share record per resource. The public URL
+keeps a versioned HMAC bearer token in the fragment; the SPA sends it only in
+`X-Share-Token`, so it is not part of HTTP URLs, access logs, or referrers. The
+gateway bypasses SID exchange only for the four exact public GET aggregates and
+photo subresources and applies a separate client-IP rate limit. Pets-service
+checks the active record and current recipe eligibility on every request and
+returns a uniform not-found response for invalid, revoked, mismatched, deleted,
+or temporarily ineligible links. Public responses are `no-store`, no-referrer,
+and excluded from indexing.
+
 Production is served below `/petfood/`: application APIs use `/petfood/api` and
 recommender calls use `/petfood/recommender`. The gateway removes the deployment
 prefix before routing. Local development remains root-based.
@@ -102,6 +113,19 @@ favorites, photo keys, ingredients, and recipes.
   ingredients and the creator's pets.
 - The service stores recipe inputs and an optional calculation snapshot; it does
   not implement the calculation algorithm.
+- The service owns pet/recipe share lifecycle and anonymous read-only aggregate
+  DTOs. Public pet DTOs omit passport and owner/storage identifiers; public
+  recipe DTOs expose only saved calculations and never invoke digestibility.
+- The service renders owner-only pet and fully calculated recipe PDF reports on
+  the server using OpenHTMLToPDF/PDFBox, inline SVG, bounded local photos, and an
+  embedded Inter font. PDF export never creates or changes a share.
+
+PDF dependencies are pinned at build time. OpenHTMLToPDF is distributed under
+LGPL-2.1-or-later, its Apache PDFBox and Batik stack under Apache-2.0, and the
+runtime Inter font under the SIL Open Font License shipped by Debian's
+`fonts-inter-variable` package. `fonts-dejavu-core` remains installed as a
+renderer fallback. Keep this review current when changing the renderer, SVG
+implementation, or font package.
 
 The service uses its own Flyway schema history. Schema changes always require a
 new migration with the next available version.
@@ -132,6 +156,7 @@ the root `.env`.
 | Sessions and JWT exchange state | Account/Auth | Redis |
 | Pets, health, ingredients, recipes | Pets service | PostgreSQL `pets` schema |
 | Pet images | Pets service | MinIO or configured filesystem storage |
+| Public pet/recipe share records | Pets service | PostgreSQL `pets.resource_shares` |
 | Calculation reference data | Recommender | files under `nutrient-recommender-main/data` |
 | Email commands | Producers/Notifications | RabbitMQ queues |
 

@@ -146,6 +146,27 @@ and removes a temporary account and photo:
 bash scripts/security-boundary-smoke.sh
 ```
 
+For share/export changes, also verify an owner can create, reuse, replace, and
+revoke a pet link; a recipe link is available only while the recipe has status,
+result, and calculation timestamp; anonymous aggregate/photo reads work without
+`sid`; every unusable token returns the same 404 shape; and excessive anonymous
+requests return 429. Download all three PDF locales, open the files, and inspect
+long text, missing/present photos, charts, and Kazakh glyphs. Search gateway and
+pets logs for the exact temporary token and confirm there is no match before
+removing the temporary resources.
+
+Focused automated commands are:
+
+```bash
+cd backend-main-sandbox
+bash ./gradlew :services:pets:test :platform:gateway:test
+
+cd ../frontend-next
+npm run lint
+npm run build
+VITE_PUBLIC_BASE=/petfood/ npm run build
+```
+
 ## Recommender
 
 Install the Python dependencies in an isolated environment, then run:

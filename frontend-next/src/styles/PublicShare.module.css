@@ -1,0 +1,841 @@
+.page {
+  min-height: 100vh;
+  padding: 24px 0 48px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+}
+
+.publicContent {
+  width: 100%;
+  max-width: 1176px;
+  margin: 0 auto;
+  padding: 0 44px;
+  flex: 1;
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.pageHeader {
+  min-height: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px var(--color-shadow);
+  box-sizing: border-box;
+}
+
+.headerTitle {
+  margin: 0;
+  color: var(--color-accent-alt);
+  font-size: 20px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.languages {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--color-bg-muted);
+  gap: 3px;
+}
+
+.language {
+  min-width: 32px;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-speed), color var(--transition-speed);
+}
+
+.language:hover {
+  color: var(--color-text);
+}
+
+.languageActive {
+  background: var(--color-surface);
+  color: var(--color-accent-alt);
+  box-shadow: 0 1px 3px var(--color-shadow);
+}
+
+.loginBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 16px;
+  border-radius: 8px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition-speed);
+  white-space: nowrap;
+}
+
+.loginBtn:hover {
+  background: var(--color-accent-alt-hover);
+}
+
+/* ── Status States ─────────────────────────────────────── */
+.stateCard {
+  width: min(520px, 100%);
+  margin: 60px auto;
+  padding: 40px 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 6px var(--color-shadow);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.stateIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-alt);
+}
+
+.stateIcon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.stateCard h1 {
+  margin: 0 0 10px;
+  color: var(--color-accent-alt);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.stateCard p {
+  margin: 0 0 20px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.stateBackBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 24px;
+  border-radius: 8px;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition-speed);
+}
+
+.stateBackBtn:hover {
+  background: var(--color-accent-alt-hover);
+}
+
+/* ── Common Cards ──────────────────────────────────────── */
+.petCard,
+.tabsCard,
+.recipeCard,
+.chartCard,
+.metricCard {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px var(--color-shadow);
+  box-sizing: border-box;
+}
+
+/* ── Pet Card ──────────────────────────────────────────── */
+.petCard {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 24px 28px;
+}
+
+.petPhoto,
+.petPhotoPlaceholder {
+  width: 200px;
+  height: 200px;
+  flex: 0 0 200px;
+  border-radius: 12px;
+  background: var(--color-bg-muted);
+  object-fit: cover;
+}
+
+.petPhotoPlaceholder,
+.linkedPetPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-icon-muted);
+}
+
+.placeholderIcon {
+  width: 56px;
+  height: 56px;
+  opacity: 0.65;
+  fill: currentColor;
+}
+
+.petInfoMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 32px;
+}
+
+.petInfoLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.petInfoRight {
+  flex: 1;
+  min-width: 0;
+  padding-top: 26px;
+  display: flex;
+  flex-direction: column;
+}
+
+.publicBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent-alt);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badgeIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.calculatedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 16px;
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent-alt);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.petName {
+  margin: 0 0 4px;
+  color: var(--color-text-heading);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.petSubline {
+  margin: 0 0 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.petFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldRow {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.fieldLabel {
+  min-width: 155px;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.fieldValue {
+  min-width: 0;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.descriptionLabel {
+  margin: 0 0 6px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.descriptionText {
+  margin: 0 0 16px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.updatedText {
+  margin: auto 0 0;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+/* ── Modern Tabs ───────────────────────────────────────── */
+.tabsCard {
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.tabsRow {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-muted);
+  padding: 6px 12px;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: 1 0 auto;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-speed) ease;
+}
+
+.tab:hover {
+  color: var(--color-text-heading);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.tabActive {
+  background: var(--color-surface);
+  color: var(--color-accent-alt);
+  box-shadow: 0 1px 4px var(--color-shadow);
+}
+
+.tabActive:hover {
+  color: var(--color-accent-alt);
+  background: var(--color-surface);
+}
+
+.tabContent {
+  min-height: 260px;
+  padding: 24px 28px;
+  background: var(--color-surface);
+}
+
+.sectionTitle,
+.chartSectionTitle,
+.chartTitle {
+  margin: 0 0 16px;
+  color: var(--color-accent-alt);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.emptyText {
+  margin: 8px 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.conditionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  padding: 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Tables ────────────────────────────────────────────── */
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-heading);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  background: var(--color-bg-muted);
+}
+
+.table th:first-child {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.table th:last-child {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.tableDescription {
+  display: block;
+  max-width: 350px;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* ── SVG Charts ────────────────────────────────────────── */
+.chartLayout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.lineChartWrap {
+  position: relative;
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 8px;
+}
+
+.lineChart {
+  width: 100%;
+  height: 210px;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--color-border);
+  stroke-dasharray: 3 3;
+  stroke-width: 1;
+}
+
+.axisText {
+  fill: var(--color-text-secondary);
+  font-size: 9px;
+  font-family: inherit;
+}
+
+.historyPoint {
+  cursor: pointer;
+  transition: r 0.15s ease, stroke-width 0.15s ease;
+}
+
+.historyPoint:hover {
+  r: 6.5;
+}
+
+.chartTooltip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, -100%);
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface-elevated);
+  box-shadow: 0 3px 10px var(--color-shadow-strong);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Recipe Card ───────────────────────────────────────── */
+.recipeCard {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 24px 28px;
+}
+
+.profileCard {
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.recipeTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.recipeName {
+  margin: 0;
+  color: var(--color-accent-alt);
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.recipeMeta {
+  width: min(90%, 880px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.recipeMeta .fieldRow,
+.parameterGrid .fieldRow,
+.linkedPetFields .fieldRow {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recipeMeta .fieldLabel,
+.parameterGrid .fieldLabel,
+.linkedPetFields .fieldLabel {
+  min-width: 0;
+}
+
+.linkedPetCard {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.linkedPetPhoto,
+.linkedPetPlaceholder {
+  width: 110px;
+  height: 110px;
+  flex: 0 0 110px;
+  border-radius: 12px;
+  background: var(--color-bg-muted);
+  object-fit: cover;
+}
+
+.linkedPetPlaceholder .placeholderIcon {
+  width: 44px;
+  height: 44px;
+}
+
+.linkedPetInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.linkedPetInfo .sectionTitle {
+  margin-bottom: 4px;
+}
+
+.linkedPetName {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.linkedPetFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 220px));
+  gap: 20px;
+}
+
+.parameterGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 18px 24px;
+}
+
+.tagColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Metrics Row ───────────────────────────────────────── */
+.metricsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.metricCard {
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 20px;
+  text-align: center;
+}
+
+.metricValue {
+  margin: 0;
+  color: var(--color-accent-alt);
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.metricLabel {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Charts Row ────────────────────────────────────────── */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.chartCard {
+  min-width: 0;
+  padding: 24px 28px;
+}
+
+.donutWrapper {
+  width: 100%;
+  max-width: 380px;
+  height: 260px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donutWrapper svg {
+  overflow: visible;
+}
+
+.legendName {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.legendHeading {
+  margin: 8px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.donutLegend {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.donutLegendRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.nutritionSummary {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Nutrients Card ────────────────────────────────────── */
+.nutrientsCard {
+  padding: 24px 28px;
+}
+
+.nutrientsGrid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(4, min-content);
+  grid-auto-columns: minmax(0, 1fr);
+  column-gap: 36px;
+}
+
+.nutrientRow {
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.nutrientRow span {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.balanceCharts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 48px;
+  margin-top: 24px;
+  padding: 0 16px;
+}
+
+/* ── Digestion Card ────────────────────────────────────── */
+.digestionCard {
+  padding: 24px 28px;
+}
+
+.digestionCharts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* ── Public Footer ─────────────────────────────────────── */
+.publicFooter {
+  width: 100%;
+  margin-top: 36px;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.footerContent {
+  width: 100%;
+  max-width: 1176px;
+  margin: 0 auto;
+  padding: 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.footerNote {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .publicContent { padding: 0 24px; }
+  .footerContent { padding: 0 24px; }
+  .petInfoMain { flex-direction: column; gap: 16px; }
+  .petInfoRight { padding-top: 0; }
+  .recipeMeta, .parameterGrid { grid-template-columns: repeat(2, minmax(120px, 1fr)); width: 100%; }
+  .balanceCharts { grid-template-columns: 1fr; gap: 24px; padding: 0; }
+  .digestionCharts { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .page { padding-top: 12px; }
+  .publicContent { padding: 0 12px; }
+  .pageHeader { padding: 12px 16px; }
+  .headerTitle { font-size: 17px; }
+  .petCard { flex-direction: column; padding: 20px; }
+  .petPhoto, .petPhotoPlaceholder { width: 140px; height: 140px; flex-basis: 140px; }
+  .conditionGrid, .chartLayout, .chartsRow, .tagColumns { grid-template-columns: 1fr; }
+  .metricsRow { grid-template-columns: 1fr; gap: 12px; }
+  .tabContent, .recipeCard, .chartCard { padding: 20px; }
+  .linkedPetCard { align-items: flex-start; }
+  .nutrientsGrid { display: block; }
+}
+
+@media (max-width: 460px) {
+  .fieldRow { flex-direction: column; gap: 2px; }
+  .fieldLabel { min-width: 0; }
+  .recipeMeta, .parameterGrid, .linkedPetFields { grid-template-columns: 1fr; gap: 12px; }
+  .recipeTopRow, .linkedPetCard { flex-direction: column; }
+  .metricValue { font-size: 24px; }
+  .donutWrapper { height: 230px; }
+}

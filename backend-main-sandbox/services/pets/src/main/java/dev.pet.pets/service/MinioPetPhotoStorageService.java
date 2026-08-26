@@ -2,6 +2,8 @@ package dev.pet.pets.service;
 
 import dev.pet.pets.config.MinioProperties;
 import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.GetObjectArgs;
+import io.minio.StatObjectArgs;
 import io.minio.MinioClient;
 import io.minio.http.Method;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -67,6 +69,27 @@ public class MinioPetPhotoStorageService implements PetPhotoStorage {
             );
         } catch (Exception e) {
             throw new IllegalStateException("Failed to generate download URL for pet photo", e);
+        }
+    }
+
+    @Override
+    public StoredPhoto read(String objectKey) {
+        try {
+            var stat = minioClient.statObject(
+                StatObjectArgs.builder().bucket(props.getBucket()).object(objectKey).build()
+            );
+            if (stat.size() > 10L * 1024 * 1024) {
+                throw new IllegalStateException("Pet photo is too large");
+            }
+            try (var input = minioClient.getObject(
+                GetObjectArgs.builder().bucket(props.getBucket()).object(objectKey).build()
+            )) {
+                return new StoredPhoto(input.readAllBytes(), stat.contentType());
+            }
+        } catch (IllegalStateException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IllegalStateException("Pet photo is unavailable", ex);
         }
     }
 }

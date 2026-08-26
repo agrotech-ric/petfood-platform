@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from '../../context/LanguageContext'
 import {
@@ -16,6 +16,7 @@ import EditIcon from '../assets/icons/edit.svg?react'
 import ShareIcon from '../assets/icons/share.svg?react'
 import DownloadIcon from '../assets/icons/download.svg?react'
 import { NutrientBalanceChart } from '../components/recipes/NutrientBalanceChart'
+import { ShareDialog } from '../components/sharing/ShareDialog'
 import {
   RecipeDonutChart,
   RECIPE_CHART_COLORS,
@@ -367,7 +368,7 @@ export function RecipeProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const recipeId = Number(id)
   const origin = (location.state as { from?: string } | null)?.from
   const originPetId = (location.state as { petId?: string } | null)?.petId
@@ -376,6 +377,8 @@ export function RecipeProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'protein' | 'fat' | 'carbs'>('protein')
+  const [shareOpen, setShareOpen] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -421,29 +424,26 @@ export function RecipeProfilePage() {
     }
   }
 
-  const handleShare = async () => {
-    if (!recipe) return
+  const loadShare = useCallback(() => recipeService.getShare(recipeId), [recipeId])
+  const createShare = useCallback(() => recipeService.createShare(recipeId), [recipeId])
+  const rotateShare = useCallback(() => recipeService.rotateShare(recipeId), [recipeId])
+  const revokeShare = useCallback(() => recipeService.revokeShare(recipeId), [recipeId])
+  const handleDownload = async () => {
+    if (!recipe || downloadingPdf) return
+    setDownloadingPdf(true)
     try {
-      if (navigator.share) {
-        await navigator.share({ title: recipe.name, url: window.location.href })
-      } else {
-        await navigator.clipboard.writeText(window.location.href)
-      }
-    } catch (errorValue) {
-      if (errorValue instanceof DOMException && errorValue.name === 'AbortError') return
-      window.alert('Не удалось поделиться ссылкой')
+      const file = await recipeService.downloadPdf(recipe.id, locale)
+      const url = URL.createObjectURL(file.blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = file.filename || `recipe-${recipe.id}.pdf`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (value) {
+      window.alert(value instanceof Error ? value.message : t('export.error'))
+    } finally {
+      setDownloadingPdf(false)
     }
-  }
-
-  const handleDownload = () => {
-    if (!recipe) return
-    const blob = new Blob([JSON.stringify(recipe, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `recipe-${recipe.id}.json`
-    link.click()
-    URL.revokeObjectURL(url)
   }
 
   if (loading) {
@@ -463,6 +463,7 @@ export function RecipeProfilePage() {
   }
 
   const calculationResult = recipe.calculationResult
+  const isFullyCalculated = recipe.status === 'calculated' && Boolean(calculationResult) && Boolean(recipe.calculatedAt)
 
   return (
     <div className={styles.page}>
@@ -489,15 +490,16 @@ export function RecipeProfilePage() {
       <div className={`${styles.card} ${styles.profileCard}`}>
         <div className={styles.recipeTopRow}>
           <h2 className={styles.recipeName}>{recipe.name.trim() || t('recipes.untitled')}</h2>
-          <div className={styles.shareActions}>
-            <button className={styles.iconBtn} title="Поделиться" onClick={handleShare}>
+          {isFullyCalculated && <div className={styles.shareActions}>
+            <button className={styles.iconBtn} title={t('export.share')} onClick={() => setShareOpen(true)}>
               <ShareIcon width="30" height="30" />
             </button>
-            <button className={styles.iconBtn} title="Скачать" onClick={handleDownload}>
-              <DownloadIcon width="30" height="30" />
+            <button className={styles.iconBtn} title={downloadingPdf ? t('export.downloading') : t('export.download')} aria-busy={downloadingPdf} disabled={downloadingPdf} onClick={() => void handleDownload()}>
+              {downloadingPdf ? <span aria-hidden="true">…</span> : <DownloadIcon width="30" height="30" />}
             </button>
-          </div>
+          </div>}
         </div>
+        <ShareDialog open={shareOpen} resourceName={recipe.name} onClose={() => setShareOpen(false)} load={loadShare} create={createShare} rotate={rotateShare} revoke={revokeShare} />
         <div className={styles.recipeMeta}>
           {[
             { label: 'Возраст', value: RECIPE_AGE_LABELS[recipe.ageCategory] },

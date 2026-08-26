@@ -1,0 +1,103 @@
+package dev.pet.pets.service;
+
+import dev.pet.pets.error.BadRequestException;
+import java.util.Locale;
+import java.util.Map;
+
+final class ReportMessages {
+    private static final Map<String, Map<String, String>> VALUES = Map.of(
+        "en", Map.ofEntries(
+            Map.entry("petTitle", "Pet profile"), Map.entry("recipeTitle", "Recipe report"),
+            Map.entry("pet", "Pet"), Map.entry("profile", "Profile"), Map.entry("health", "Health history"),
+            Map.entry("contra", "Contraindications"), Map.entry("recipes", "Calculated recipes"),
+            Map.entry("ingredients", "Ingredients"), Map.entry("constraints", "Nutrient constraints"),
+            Map.entry("calculation", "Calculation result"), Map.entry("charts", "Charts"),
+            Map.entry("name", "Name"), Map.entry("species", "Species"), Map.entry("breed", "Breed"),
+            Map.entry("gender", "Gender"), Map.entry("color", "Color"), Map.entry("birthDate", "Birth date"),
+            Map.entry("weight", "Weight"), Map.entry("passport", "Passport"), Map.entry("comments", "Description"),
+            Map.entry("reproductive", "Reproductive status"), Map.entry("date", "Date"),
+            Map.entry("condition", "Condition"), Map.entry("activity", "Activity"), Map.entry("symptoms", "Symptoms"),
+            Map.entry("notes", "Notes"), Map.entry("none", "Not specified"), Map.entry("calculatedAt", "Calculated at"),
+            Map.entry("description", "Description"), Map.entry("category", "Category"), Map.entry("quantity", "Quantity"),
+            Map.entry("minimum", "Minimum"), Map.entry("maximum", "Maximum"), Map.entry("value", "Value"),
+            Map.entry("parameter", "Parameter"),
+            Map.entry("reproductiveDetail", "Reproductive detail"), Map.entry("puppies", "Number of puppies"),
+            Map.entry("ageMonths", "Age, months"), Map.entry("energy", "Target energy"),
+            Map.entry("maximize", "Maximized nutrients"), Map.entry("version", "Calculation version"),
+            Map.entry("composition", "Recipe composition"), Map.entry("nutrition", "Nutrition value"),
+            Map.entry("nutrients", "Nutrient content"), Map.entry("minerals", "Minerals"),
+            Map.entry("vitamins", "Vitamins"), Map.entry("energyValue", "Energy value"),
+            Map.entry("dailyPortion", "Daily recipe portion"), Map.entry("dailyCalories", "Daily calorie target"),
+            Map.entry("norm", "Target"), Map.entry("hours", "h"), Map.entry("protein", "Protein"),
+            Map.entry("fat", "Fat"), Map.entry("carbs", "Carbohydrates")
+        ),
+        "ru", Map.ofEntries(
+            Map.entry("petTitle", "Профиль питомца"), Map.entry("recipeTitle", "Отчёт по рецепту"),
+            Map.entry("pet", "Питомец"), Map.entry("profile", "Профиль"), Map.entry("health", "История здоровья"),
+            Map.entry("contra", "Противопоказания"), Map.entry("recipes", "Рассчитанные рецепты"),
+            Map.entry("ingredients", "Ингредиенты"), Map.entry("constraints", "Ограничения нутриентов"),
+            Map.entry("calculation", "Результат расчёта"), Map.entry("charts", "Графики"),
+            Map.entry("name", "Имя"), Map.entry("species", "Вид"), Map.entry("breed", "Порода"),
+            Map.entry("gender", "Пол"), Map.entry("color", "Окрас"), Map.entry("birthDate", "Дата рождения"),
+            Map.entry("weight", "Вес"), Map.entry("passport", "Паспорт"), Map.entry("comments", "Описание"),
+            Map.entry("reproductive", "Репродуктивный статус"), Map.entry("date", "Дата"),
+            Map.entry("condition", "Состояние"), Map.entry("activity", "Активность"), Map.entry("symptoms", "Симптомы"),
+            Map.entry("notes", "Заметки"), Map.entry("none", "Не указано"), Map.entry("calculatedAt", "Дата расчёта"),
+            Map.entry("description", "Описание"), Map.entry("category", "Категория"), Map.entry("quantity", "Количество"),
+            Map.entry("minimum", "Минимум"), Map.entry("maximum", "Максимум"), Map.entry("value", "Значение"),
+            Map.entry("parameter", "Параметр"),
+            Map.entry("reproductiveDetail", "Уточнение репродуктивного статуса"), Map.entry("puppies", "Количество щенков"),
+            Map.entry("ageMonths", "Возраст, месяцев"), Map.entry("energy", "Целевая энергия"),
+            Map.entry("maximize", "Максимизируемые нутриенты"), Map.entry("version", "Версия расчёта"),
+            Map.entry("composition", "Состав рациона"), Map.entry("nutrition", "Питательная ценность"),
+            Map.entry("nutrients", "Содержание нутриентов"), Map.entry("minerals", "Минералы"),
+            Map.entry("vitamins", "Витамины"), Map.entry("energyValue", "Энергетическая ценность"),
+            Map.entry("dailyPortion", "Суточная норма рецепта"), Map.entry("dailyCalories", "Суточная норма калорий"),
+            Map.entry("norm", "Норма"), Map.entry("hours", "ч"), Map.entry("protein", "Белки"),
+            Map.entry("fat", "Жиры"), Map.entry("carbs", "Углеводы")
+        ),
+        "kz", Map.ofEntries(
+            Map.entry("petTitle", "Үй жануарының профилі"), Map.entry("recipeTitle", "Рецепт есебі"),
+            Map.entry("pet", "Үй жануары"), Map.entry("profile", "Профиль"), Map.entry("health", "Денсаулық тарихы"),
+            Map.entry("contra", "Қарсы көрсетілімдер"), Map.entry("recipes", "Есептелген рецепттер"),
+            Map.entry("ingredients", "Ингредиенттер"), Map.entry("constraints", "Нутриент шектеулері"),
+            Map.entry("calculation", "Есептеу нәтижесі"), Map.entry("charts", "Графиктер"),
+            Map.entry("name", "Аты"), Map.entry("species", "Түрі"), Map.entry("breed", "Тұқымы"),
+            Map.entry("gender", "Жынысы"), Map.entry("color", "Түсі"), Map.entry("birthDate", "Туған күні"),
+            Map.entry("weight", "Салмағы"), Map.entry("passport", "Паспорт"), Map.entry("comments", "Сипаттама"),
+            Map.entry("reproductive", "Репродуктивтік мәртебе"), Map.entry("date", "Күні"),
+            Map.entry("condition", "Жағдайы"), Map.entry("activity", "Белсенділік"), Map.entry("symptoms", "Белгілер"),
+            Map.entry("notes", "Ескертпелер"), Map.entry("none", "Көрсетілмеген"), Map.entry("calculatedAt", "Есептеу күні"),
+            Map.entry("description", "Сипаттама"), Map.entry("category", "Санат"), Map.entry("quantity", "Мөлшері"),
+            Map.entry("minimum", "Минимум"), Map.entry("maximum", "Максимум"), Map.entry("value", "Мәні"),
+            Map.entry("parameter", "Параметр"),
+            Map.entry("reproductiveDetail", "Репродуктивтік мәртебе нақтылауы"), Map.entry("puppies", "Күшіктер саны"),
+            Map.entry("ageMonths", "Жасы, ай"), Map.entry("energy", "Мақсатты энергия"),
+            Map.entry("maximize", "Максималданатын нутриенттер"), Map.entry("version", "Есептеу нұсқасы"),
+            Map.entry("composition", "Рацион құрамы"), Map.entry("nutrition", "Тағамдық құндылық"),
+            Map.entry("nutrients", "Нутриенттер мөлшері"), Map.entry("minerals", "Минералдар"),
+            Map.entry("vitamins", "Дәрумендер"), Map.entry("energyValue", "Энергетикалық құндылық"),
+            Map.entry("dailyPortion", "Рецепттің тәуліктік мөлшері"), Map.entry("dailyCalories", "Тәуліктік калория мөлшері"),
+            Map.entry("norm", "Норма"), Map.entry("hours", "сағ"), Map.entry("protein", "Ақуыздар"),
+            Map.entry("fat", "Майлар"), Map.entry("carbs", "Көмірсулар")
+        )
+    );
+
+    private final String locale;
+    private final Map<String, String> messages;
+
+    private ReportMessages(String locale) {
+        this.locale = locale;
+        this.messages = VALUES.get(locale);
+    }
+
+    static ReportMessages forLocale(String value) {
+        String locale = value == null ? "ru" : value.trim().toLowerCase(Locale.ROOT);
+        if (!VALUES.containsKey(locale)) throw new BadRequestException("Unsupported report locale");
+        return new ReportMessages(locale);
+    }
+
+    String get(String key) { return messages.getOrDefault(key, key); }
+    String locale() { return locale; }
+    String empty(Object value) { return value == null || value.toString().isBlank() ? get("none") : value.toString(); }
+}

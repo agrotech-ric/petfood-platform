@@ -28,6 +28,8 @@ import { EditContraindicationsPage } from './pages/EditContraindicationsPage'
 import { EditCurrentConditionPage } from './pages/EditCurrentConditionPage'
 import { EditDiseaseHistoryPage } from './pages/EditDiseaseHistoryPage'
 import { EditPetProfilePage } from './pages/EditPetProfilePage'
+import { PublicPetPage } from './pages/PublicPetPage'
+import { PublicRecipePage } from './pages/PublicRecipePage'
 
 export function App() {
   return (
@@ -60,6 +62,9 @@ export function App() {
             </div>
           }
         />
+
+        <Route path="/shared/pet" element={<PublicPetPage />} />
+        <Route path="/shared/recipe" element={<PublicRecipePage />} />
 
         <Route element={<PrivateLayoutRoute allowedRoles={['USER']} />}>
           <Route path="/dashboard" element={<PetsListPage />} />

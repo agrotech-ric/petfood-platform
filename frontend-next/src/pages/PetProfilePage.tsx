@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from '../../context/LanguageContext'
 import { petService, type HealthRecord, type PetContraindications, type PetProfileData } from '../../services/petService'
@@ -13,6 +13,7 @@ import DownloadIcon from '../assets/icons/download.svg?react'
 import heartOrange from '../assets/figma/pets-list/heart-orange.svg'
 import heartWhite from '../assets/figma/pets-list/heart-white.svg'
 import ReloadIcon from '../assets/icons/reload.svg?react'
+import { ShareDialog } from '../components/sharing/ShareDialog'
 
 type Tab = 'food' | 'condition' | 'history' | 'contra' | 'weight' | 'activity'
 
@@ -647,6 +648,7 @@ export function PetProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t, locale } = useTranslation()
   const locationState = location.state as {
     tab?: Tab
     fromTab?: Tab
@@ -675,6 +677,8 @@ export function PetProfilePage() {
   const [savingRecordId, setSavingRecordId] = useState<string>()
   const [savingFavorite, setSavingFavorite] = useState(false)
   const [deletingPet, setDeletingPet] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const goBack = () => {
     if (locationState?.from === 'recipe-profile' && locationState.recipeId) {
@@ -908,23 +912,28 @@ export function PetProfilePage() {
     }
   }
 
-  const sharePet = async () => {
-    if (!pet) return
-    const url = window.location.href
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: pet.name, text: 'Профиль питомца', url })
-      } else {
-        await navigator.clipboard.writeText(url)
-      }
-    } catch {
-      // User cancelled native share dialog.
-    }
-  }
+  const loadShare = useCallback(() => petService.getShare(id!), [id])
+  const createShare = useCallback(() => petService.createShare(id!), [id])
+  const rotateShare = useCallback(() => petService.rotateShare(id!), [id])
+  const revokeShare = useCallback(() => petService.revokeShare(id!), [id])
 
-  const downloadPhoto = () => {
-    if (!pet?.photoUrl) return
-    window.open(pet.photoUrl, '_blank', 'noopener,noreferrer')
+  const downloadPdf = async () => {
+    if (!id || downloadingPdf) return
+    setDownloadingPdf(true)
+    setActionError('')
+    try {
+      const file = await petService.downloadPdf(id, locale)
+      const url = URL.createObjectURL(file.blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = file.filename || `pet-${id}.pdf`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (value) {
+      setActionError(value instanceof Error ? value.message : t('export.error'))
+    } finally {
+      setDownloadingPdf(false)
+    }
   }
 
   const tabs: { key: Tab; label: string }[] = [
@@ -1014,11 +1023,11 @@ export function PetProfilePage() {
               >
                 <img alt="" src={liked ? heartOrange : heartWhite} className={styles.heartIcon} />
               </button>
-              <button className={styles.iconBtn} title="Поделиться" disabled={!petData} onClick={() => void sharePet()}>
+              <button className={styles.iconBtn} title={t('export.share')} disabled={!petData} onClick={() => setShareOpen(true)}>
                 <ShareIcon width={30} height={30} />
               </button>
-              <button className={styles.iconBtn} title="Скачать" disabled={!pet?.photoUrl} onClick={downloadPhoto}>
-                <DownloadIcon width={30} height={30} />
+              <button className={styles.iconBtn} title={downloadingPdf ? t('export.downloading') : t('export.download')} aria-busy={downloadingPdf} disabled={!petData || downloadingPdf} onClick={() => void downloadPdf()}>
+                {downloadingPdf ? <span aria-hidden="true">…</span> : <DownloadIcon width={30} height={30} />}
               </button>
             </div>
             <p className={styles.descriptionLabel}>Описание</p>
@@ -1026,6 +1035,16 @@ export function PetProfilePage() {
           </div>
         </div>
       </div>
+
+      <ShareDialog
+        open={shareOpen}
+        resourceName={pet?.name ?? ''}
+        onClose={() => setShareOpen(false)}
+        load={loadShare}
+        create={createShare}
+        rotate={rotateShare}
+        revoke={revokeShare}
+      />
 
       {/* Tabs */}
       <div className={styles.tabsCard}>

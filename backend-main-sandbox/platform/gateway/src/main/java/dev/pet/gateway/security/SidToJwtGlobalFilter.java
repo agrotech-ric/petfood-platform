@@ -55,7 +55,7 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        if (isPublic(path)) {
+        if (isPublic(path, req.getMethod())) {
             log.debug("[SidToJwt] Skip public {}", path);
             return chain.filter(exchange);
         }
@@ -119,11 +119,13 @@ public class SidToJwtGlobalFilter implements GlobalFilter, Ordered {
         return -100;
     }
 
-    private boolean isPublic(String path) {
+    private boolean isPublic(String path, HttpMethod method) {
         if (publicPaths == null || publicPaths.isEmpty()) return false;
         String candidate = path.startsWith("/petfood/") ? path.substring("/petfood".length()) : path;
         for (String p : publicPaths) {
-            if (matcher.match(p, candidate)) return true;
+            if (matcher.match(p, candidate)) {
+                return !p.startsWith("/api/v1/public/shares/") || method == HttpMethod.GET;
+            }
         }
         return false;
     }

@@ -86,6 +86,11 @@ changing Flyway files. Never edit a migration that may already have run.
   `POSTGRES_PASSWORD`, `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD`,
   `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `PETS_MINIO_ACCESS_KEY`,
   `PETS_MINIO_SECRET_KEY`, `PETS_MINIO_BUCKET`, and `RATE_LIMIT_PEPPER`.
+  Sharing/export overrides are `PETFOOD_PUBLIC_URL`, `SHARE_TOKEN_SECRET`,
+  `SHARE_RATE_REPLENISH_RATE`, `SHARE_RATE_BURST_CAPACITY`,
+  `SHARE_RATE_REQUESTED_TOKENS`, and the `PDF_MAX_*` bounds. Use a dedicated
+  development signing value of at least 32 characters; changing it invalidates
+  all existing public links without deleting their database history.
   Sandbox fallbacks exist only for disposable local development. Do not copy a
   protected production file into the checkout or use it for routine local
   work.
@@ -107,6 +112,20 @@ docker compose -f docker-compose.sandbox.yml exec gateway-service-sandbox \
 Do not temporarily expose an internal service on all interfaces. If direct
 debugging is unavoidable, use a local override bound to `127.0.0.1` and remove
 it after the session.
+
+## Sharing and PDF diagnostics
+
+Public links generated in the sandbox use `PETFOOD_PUBLIC_URL` and end in a
+fragment such as `/shared/pet#v1...`. Never put the fragment token in a query
+parameter, environment file, issue, or log. A public aggregate or photo is
+called through the gateway with `X-Share-Token`; all management and PDF routes
+still require the owner's `sid` cookie.
+
+The pets image installs the redistributable `fonts-inter-variable` package and
+embeds Inter into each report for RU/EN/KZ glyphs; `fonts-dejavu-core` remains
+available as a renderer fallback. If PDF startup or rendering fails, verify
+`PDF_FONT_PATH`, the configured limits, and pets-service logs, then rebuild the
+pets container after dependency changes.
 
 ## Resetting sandbox data
 

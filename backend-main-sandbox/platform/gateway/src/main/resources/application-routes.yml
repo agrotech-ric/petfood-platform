@@ -14,6 +14,33 @@ spring:
             strategy: RETAIN_FIRST
 
       routes:
+        - id: pets-shares-public-prefixed
+          uri: ${PETS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/petfood/api/v1/public/shares/pet,/petfood/api/v1/public/shares/recipe,/petfood/api/v1/public/shares/pet/photo,/petfood/api/v1/public/shares/recipe/pet-photo
+            - Method=GET
+          filters:
+            - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@clientIpKeyResolver}"
+                redis-rate-limiter.replenishRate: ${SHARE_RATE_REPLENISH_RATE:5}
+                redis-rate-limiter.burstCapacity: ${SHARE_RATE_BURST_CAPACITY:20}
+                redis-rate-limiter.requestedTokens: ${SHARE_RATE_REQUESTED_TOKENS:1}
+
+        - id: pets-shares-public
+          uri: ${PETS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/public/shares/pet,/api/v1/public/shares/recipe,/api/v1/public/shares/pet/photo,/api/v1/public/shares/recipe/pet-photo
+            - Method=GET
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@clientIpKeyResolver}"
+                redis-rate-limiter.replenishRate: ${SHARE_RATE_REPLENISH_RATE:5}
+                redis-rate-limiter.burstCapacity: ${SHARE_RATE_BURST_CAPACITY:20}
+                redis-rate-limiter.requestedTokens: ${SHARE_RATE_REQUESTED_TOKENS:1}
+
         - id: account-auth-public-prefixed
           uri: ${ACCOUNT_SERVICE_URL:http://localhost:8081}
           predicates:
