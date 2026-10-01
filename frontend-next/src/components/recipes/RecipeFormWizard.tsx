@@ -532,13 +532,41 @@ function toPayload(
 
 const RESULT_COLORS = RECIPE_CHART_COLORS
 
-function EditCalculationResult({ result }: { result: RecipeCalculationResult }) {
+
+function EditCalculationResult({
+  result,
+  activeTab,
+  onTabChange,
+}: {
+  result: RecipeCalculationResult
+  activeTab: 'protein' | 'fat' | 'carbs'
+  onTabChange: (tab: 'protein' | 'fat' | 'carbs') => void
+}) {
   const { t } = useTranslation()
   const composition = result.composition ?? []
   const nutrition = result.nutrition ?? []
   const nutrients = result.nutrients ?? []
   const minerals = result.minerals ?? []
   const vitamins = result.vitamins ?? []
+  const digestion = result.digestion
+  const tabData = digestion ? {
+    protein: {
+      curve: digestion.protein ?? [],
+      absorption: digestion.proteinAbsorption,
+      forecast: digestion.proteinForecast ?? [],
+    },
+    fat: {
+      curve: digestion.fat ?? [],
+      absorption: digestion.fatAbsorption,
+      forecast: digestion.fatForecast ?? [],
+    },
+    carbs: {
+      curve: digestion.carbs ?? [],
+      absorption: digestion.carbsAbsorption,
+      forecast: digestion.carbsForecast ?? [],
+    },
+  } : null
+  const current = tabData?.[activeTab]
 
   return (
     <div id="recipe-result" className={styles.editResult}>
@@ -647,6 +675,60 @@ function EditCalculationResult({ result }: { result: RecipeCalculationResult }) 
           )}
         </div>
       )}
+
+
+      {current && current.curve.length > 0 && (
+              <div className={styles.digestionCard}>
+                <p className={styles.digestionTitle}>Анализ переваривания</p>
+                <p className={styles.digestionSubtitle}>Модель Михаэлиса-Ментен</p>
+                <div className={styles.tabs}>
+                  {(['protein', 'fat', 'carbs'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
+                      onClick={() => onTabChange(tab)}
+                    >
+                      {tab === 'protein' ? 'Белки' : tab === 'fat' ? 'Жиры' : 'Углеводы'}
+                    </button>
+                  ))}
+                </div>
+                <div className={styles.digestionContent}>
+                  <div>
+                    <p className={styles.chartLabel}>
+                      Кривая переваривания S(t) — остаток во времени
+                    </p>
+                    <LineChart data={current.curve} />
+                  </div>
+                  <div>
+                    <p className={styles.absorptionLabel}>Усвояемость D(t)</p>
+                    <div className={styles.absorptionBarTrack}>
+                      <div
+                        className={styles.absorptionBarFill}
+                        style={{ width: `${Math.min(Math.max(current.absorption ?? 0, 0), 100)}%` }}
+                      >
+                        {current.absorption ?? 0}%
+                      </div>
+                    </div>
+                    <p className={styles.forecastTitle}>Прогноз переваривания</p>
+                    <table className={styles.forecastTable}>
+                      <tbody>
+                        {current.forecast.map(item => (
+                          <tr key={item.hour}>
+                            <td>{item.hour} ч:</td>
+                            <td>
+                              <span className={`${styles.forecastPercent} ${forecastPercentClass(item.percent)}`}>
+                                {item.percent.toFixed(1)}%
+                              </span>
+                            </td>
+                            <td>{item.grams} г</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}    
     </div>
   )
 }
