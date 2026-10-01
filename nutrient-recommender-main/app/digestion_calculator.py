@@ -5,7 +5,8 @@ Simulates protein, fat, and carbohydrate digestion over 6 hours.
 
 from typing import List, Tuple
 from app.models import DigestionPoint, DigestionForecastPoint, DigestionData
-
+import numpy as np
+from scipy.optimize import brentq
 
 
 def simulate_mm(S0, Vmax, Km, T=6, dt=0.01):
