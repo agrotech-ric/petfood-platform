@@ -172,6 +172,29 @@ class RecipeComposition(BaseModel):
     grams_per_100g: float = Field(..., description="Grams per 100g of recipe")
 
 
+class DigestionPoint(BaseModel):
+    time: float = Field(..., description="Time in hours")
+    remaining: float = Field(..., description="Remaining mass in grams")
+
+
+class DigestionForecastPoint(BaseModel):
+    hour: int = Field(..., description="Hour")
+    percent: float = Field(..., description="Absorption percentage")
+    grams: float = Field(..., description="Grams absorbed")
+
+
+class DigestionData(BaseModel):
+    protein: List[DigestionPoint] = Field(..., description="Protein digestion curve")
+    fat: List[DigestionPoint] = Field(..., description="Fat digestion curve")
+    carbs: List[DigestionPoint] = Field(..., description="Carbohydrate digestion curve")
+    proteinAbsorption: float = Field(..., description="Protein absorption percentage")
+    fatAbsorption: float = Field(..., description="Fat absorption percentage")
+    carbsAbsorption: float = Field(..., description="Carbohydrate absorption percentage")
+    proteinForecast: List[DigestionForecastPoint] = Field(..., description="Protein digestion forecast")
+    fatForecast: List[DigestionForecastPoint] = Field(..., description="Fat digestion forecast")
+    carbsForecast: List[DigestionForecastPoint] = Field(..., description="Carbohydrate digestion forecast")
+
+
 class OptimizedRecipeResponse(BaseModel):
     success: bool = Field(..., description="Whether optimization succeeded")
     composition: List[RecipeComposition] = Field(..., description="Recipe composition per 100g")
@@ -182,6 +205,7 @@ class OptimizedRecipeResponse(BaseModel):
     nutritional_value_total: List[NutritionalValue] = Field(..., description="Total nutrients in daily portion")
     nutrient_deficiencies: Dict[str, str] = Field(..., description="Nutrients below requirements")
     method: str = Field(..., description="Optimization method used (linear_programming or brute_force)")
+    digestion: Optional[DigestionData] = Field(None, description="Digestion kinetics data")
 
 
 class BreedInfo(BaseModel):

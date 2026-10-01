@@ -24,6 +24,7 @@ from app.kcal_calculate import (
 )
 
 from app.calc_recipe_method_2 import (calc_recipe)
+from app.digestion_calculator import DigestionSimulator
 
 app = FastAPI(
     title="Dog Food Calculator API",
@@ -699,6 +700,13 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 for name, weight in result.items()
             }
 
+            # Calculate digestion data
+            digestion_data = DigestionSimulator.calculate_digestion(
+                count_nutr_cont_all.get('protein_per', 0),
+                count_nutr_cont_all.get('fats_per', 0),
+                count_nutr_cont_all.get('carbohydrate_per', 0)
+            )
+
             return OptimizedRecipeResponse(
                 success=True,
                 composition=composition,
@@ -708,7 +716,8 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 ingredients_required=ingredients_required_ru,
                 nutritional_value_total=nutritional_total,
                 nutrient_deficiencies=nutrient_deficiencies,
-                method="optimization"
+                method="optimization",
+                digestion=digestion_data
             )
         else:
             if res.status == 2:
@@ -785,6 +794,13 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 for name, weight in values.items()
             }
 
+            # Calculate digestion data
+            digestion_data = DigestionSimulator.calculate_digestion(
+                count_nutr_cont_all.get('protein_per', 0),
+                count_nutr_cont_all.get('fats_per', 0),
+                count_nutr_cont_all.get('carbohydrate_per', 0)
+            )
+
             return OptimizedRecipeResponse(
                 success=True,
                 composition=composition,
@@ -794,7 +810,8 @@ def _optimize_recipe_impl(request: OptimizeRecipeRequest) -> OptimizedRecipeResp
                 ingredients_required=ingredients_required_ru,
                 nutritional_value_total=nutritional_total,
                 nutrient_deficiencies=nutrient_deficiencies,
-                method=fallback_method
+                method=fallback_method,
+                digestion=digestion_data
             )
     except HTTPException:
         raise
