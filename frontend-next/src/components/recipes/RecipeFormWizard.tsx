@@ -452,6 +452,7 @@ function toCalculationResult(
     minerals,
     vitamins,
     optimizationMethod: optimized.method,
+    digestion: optimized.digestion,
   }
 }
 
