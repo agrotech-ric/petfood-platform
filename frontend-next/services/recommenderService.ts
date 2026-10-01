@@ -100,6 +100,17 @@ export type RecipeOptimizationResult = {
   }>
   nutrient_deficiencies: Record<string, string>
   method: string
+  digestion?: {
+    protein: Array<{ time: number; remaining: number }>
+    fat: Array<{ time: number; remaining: number }>
+    carbs: Array<{ time: number; remaining: number }>
+    proteinAbsorption: number
+    fatAbsorption: number
+    carbsAbsorption: number
+    proteinForecast: Array<{ hour: number; percent: number; grams: number }>
+    fatForecast: Array<{ hour: number; percent: number; grams: number }>
+    carbsForecast: Array<{ hour: number; percent: number; grams: number }>
+  }
 }
 
 export const RECOMMENDER_NUTRIENT_NAMES: Record<string, string> = {
