@@ -7,258 +7,279 @@ from typing import List, Tuple
 from app.models import DigestionPoint, DigestionForecastPoint, DigestionData
 
 
+
+def simulate_mm(S0, Vmax, Km, T=6, dt=0.01):
+    S = S0
+    time = 0
+    times = [0]
+    remaining = [S0]
+    absorbed = [0]
+    while time < T:
+        v = Vmax * S / (Km + S)
+        dS = min(v * dt, S)
+        S -= dS
+        time += dt
+        times.append(time)
+        remaining.append(S)
+        absorbed.append(S0 - S)
+    return np.array(times), np.array(remaining), np.array(absorbed)
+
+def simulate_fat(L0, ke, Vmax, Km, T=6, dt=0.01):
+    L = L0
+    E = 0.0
+    time = 0.0
+    times = [0.0]
+    remaining = [L]
+    intermediate = [E]
+    absorbed = [0.0]
+    while time < T:
+        dEdt = ke * (L - E)
+        if E <= 1e-9:
+            rate = 0.0
+        else:
+            rate = Vmax * E / (Km + E)
+        dLdt = -rate
+        E = E + dEdt * dt
+        if E < 0:
+            E = 0
+        if E > L:
+            E = L
+        L = L + dLdt * dt
+        if L < 0:
+            L = 0
+        time += dt
+        times.append(time)
+        remaining.append(L)
+        intermediate.append(E)
+        absorbed.append(L0 - L)
+
+    return (
+        np.array(times),
+        np.array(remaining),
+        np.array(intermediate),
+        np.array(absorbed))
+
+def simulate_carbs(S0, k1, k2, T=6, dt=0.01):
+    S = S0
+    M = 0.0
+    G = 0.0
+    time = 0.0
+    times = [0.0]
+    remaining = [S]
+    intermediate = [M]
+    absorbed = [G]
+
+    while time < T:
+        dSdt = -k1 * S
+        dMdt = k1 * S - k2 * M
+        dGdt = k2 * M
+        S = S + dSdt * dt
+        M = M + dMdt * dt
+        G = G + dGdt * dt
+
+        if S < 0:
+            S = 0
+        if M < 0:
+            M = 0
+        if G < 0:
+            G = 0
+        time += dt
+        times.append(time)
+        remaining.append(S)
+        intermediate.append(M)
+        absorbed.append(G)
+
+    return (
+        np.array(times),
+        np.array(remaining),
+        np.array(intermediate),
+        np.array(absorbed)
+    )
+
 class DigestionSimulator:
-    """Simulates macronutrient digestion using kinetic models."""
-    
-    # Michaelis-Menten parameters for protein
-    PROTEIN_VMAX = 0.50
-    PROTEIN_KM = 0.20
-    
-    # Two-phase kinetic parameters for fat
-    FAT_KE = 1.0
-    FAT_VMAX = 0.50
-    FAT_KM = 0.20
-    
-    # Two-compartment model parameters for carbs
-    CARB_K1 = 1.0
-    CARB_K2 = 2.0
-    
-    # Simulation parameters
-    INTERNAL_DT = 0.01  # Internal time step (hours)
-    OUTPUT_DT = 1.0     # Output time step (hours)
-    TMAX = 6.0          # Maximum simulation time (hours)
+    T = 6
     
     @staticmethod
     def simulate_protein(protein_grams: float) -> Tuple[List[DigestionPoint], float, List[DigestionForecastPoint]]:
-        """
-        Simulate protein digestion using Michaelis-Menten kinetics.
-        
-        dS/dt = -Vmax * S / (Km + S)
-        where S = amount remaining, Vmax = max velocity, Km = Michaelis constant
-        """
+
         if protein_grams <= 0:
-            return [], 0.0, []
-        
-        s0 = protein_grams
-        vmax = DigestionSimulator.PROTEIN_VMAX * s0
-        km = DigestionSimulator.PROTEIN_KM * s0
+            return [], 0.0, []       
+             
+        Km_values = np.linspace(0.1, 50, 300)
+        Vmax_values = []
+
+        S0 = protein_grams
+        target_absorbed = 0.916 * S0  
+
+        for Km in Km_values:
+            def objective(Vmax):
+                time, remaining, absorbed = simulate_mm(S0, Vmax, Km, T)
+                return absorbed[-1] - target_absorbed
+            Vmax = brentq(objective, 0.001, 100)
+            Vmax_values.append(Vmax)
+
+        Vmax_values = np.array(Vmax_values)
+        plt.figure(figsize=(10, 6))
+        indices = np.linspace(0, len(Km_values) - 1, 20).astype(int)
+        all_curves = []
+        for Km, Vmax in zip(Km_values, Vmax_values):
+            time, remaining, absorbed = simulate_mm(S0, Vmax, Km, T)
+            remaining_1 = S0 - absorbed
+            all_curves.append(remaining_1)
+        all_curves = np.array(all_curves)
+        lower = np.min(all_curves, axis=0)
+        upper = np.max(all_curves, axis=0)
+        mean = np.mean(all_curves, axis=0)
+        hour_times = np.arange(1, 7)
+        mean_remaining_by_hour = np.interp(hour_times,time,mean)
         
         points: List[DigestionPoint] = []
+        output_times = np.arange(0,T + 1,DigestionSimulator.OUTPUT_DT)
+        mean_remaining_by_output = np.interp(output_times, time, mean)
+        for t, s in zip(output_times, mean_remaining_by_output):
+            points.append(DigestionPoint(time=round(float(t), 2),remaining=round(float(s), 2)))
+        final_remaining = mean[-1]
+        absorbed_grams = S0 - final_remaining
+        absorption = ( absorbed_grams / S0 * 100 if S0 > 0 else 0)
+        absorption = max(0, min(100, absorption))
+
         forecast: List[DigestionForecastPoint] = []
-        
-        steps = int(round(DigestionSimulator.TMAX / DigestionSimulator.INTERNAL_DT))
-        output_stride = int(round(DigestionSimulator.OUTPUT_DT / DigestionSimulator.INTERNAL_DT))
-        
-        s = s0
-        t = 0.0
-        absorption = 0.0
-        
-        points.append(DigestionPoint(time=0.0, remaining=s0))
-        
-        for i in range(1, steps + 1):
-            ds_dt = -vmax * s / (km + s)
-            s = s + ds_dt * DigestionSimulator.INTERNAL_DT
-            if s < 0:
-                s = 0
-            
-            t = i * DigestionSimulator.INTERNAL_DT
-            if t > DigestionSimulator.TMAX:
-                t = DigestionSimulator.TMAX
-            
-            if i % output_stride == 0 or i == steps:
-                absorbed = (s0 - s) / s0 if s0 > 0 else 0
-                absorption = max(0, min(100, absorbed * 100))
-                points.append(DigestionPoint(time=round(t, 2), remaining=round(s, 2)))
-        
-        # Calculate forecast at hourly intervals
-        s = s0
-        for hour in range(1, 7):
-            hour_steps = int(round(hour / DigestionSimulator.INTERNAL_DT))
-            for _ in range(hour_steps):
-                ds_dt = -vmax * s / (km + s)
-                s = s + ds_dt * DigestionSimulator.INTERNAL_DT
-                if s < 0:
-                    s = 0
-            
-            absorbed_grams = s0 - s
-            absorbed_percent = (absorbed_grams / s0 * 100) if s0 > 0 else 0
-            forecast.append(DigestionForecastPoint(
-                hour=hour,
-                percent=round(min(100, absorbed_percent), 1),
-                grams=round(absorbed_grams, 2)
-            ))
+        hour_times = np.arange(1, 7)
+        mean_remaining_by_hour = np.interp(  hour_times, time, mean)
+
+        for hour, remaining_at_hour in zip( range(1, 7), mean_remaining_by_hour):
+            absorbed_grams = S0 - remaining_at_hour
+            absorbed_percent = ( absorbed_grams / S0 * 100 if S0 > 0 else 0 )
+            forecast.append( DigestionForecastPoint(hour=hour,
+                                                    percent=round(min(100, absorbed_percent), 1),
+                                                    grams=round(absorbed_grams,2)))
         
         return points, round(absorption, 2), forecast
     
     @staticmethod
     def simulate_fat(fat_grams: float) -> Tuple[List[DigestionPoint], float, List[DigestionForecastPoint]]:
-        """
-        Simulate fat digestion with two-phase kinetics.
         
-        Phase 1: Emulsification (dE/dt = Ke * (L - E))
-        Phase 2: Absorption (dL/dt = -Vmax * E / (Km + E))
-        where L = lipid amount, E = emulsified lipid
-        """
         if fat_grams <= 0:
             return [], 0.0, []
         
-        l0 = fat_grams
-        ke = DigestionSimulator.FAT_KE
-        vmax = DigestionSimulator.FAT_VMAX * l0
-        km = DigestionSimulator.FAT_KM * l0
-        
+        FAT_KE = 1.0
+        L0 = fat_grams
+        TARGET = 0.968
+        target_absorbed = TARGET * L0
+        ke = 1.0
+        Km_values_fat = np.linspace(0.01, 50, 300)
+        Vmax_values_fat = []
+
+        for Km in Km_values_fat:
+            def objective(Vmax):
+                time, remaining, E, absorbed = simulate_fat(L0, ke, Vmax, Km, T)
+                return absorbed[-1] - target_absorbed
+            Vmax = brentq(objective,0.001,100 )
+            Vmax_values_fat.append(Vmax)
+
+        Vmax_values_fat = np.array(Vmax_values_fat)
+
+        all_curves_fat = []
+        for Km, Vmax in zip(Km_values_fat,Vmax_values_fat):
+            time, remaining, E, absorbed = simulate_fat(L0, ke, Vmax,Km, T)
+            remaining_1 = L0 - absorbed
+            all_curves_fat.append(remaining_1)
+        all_curves_fat = np.array(all_curves_fat)
+        lower_fat = np.min(all_curves_fat, axis=0)
+        upper_fat = np.max(all_curves_fat, axis=0)
+        mean_fat = np.mean(all_curves_fat, axis=0)
+
         points: List[DigestionPoint] = []
+        output_times = np.arange( 0, T + 1, DigestionSimulator.OUTPUT_DT)
+        mean_absorbed_by_output = np.interp( output_times, time, mean_fat)
+
+        for t, absorbed_grams in zip( output_times, mean_absorbed_by_output):
+            remaining = L0 - absorbed_grams
+            points.append(DigestionPoint( time=round(float(t), 2), remaining=round(float(remaining), 2)))
+
+        final_absorbed = mean_fat[-1]
+        absorption = ( final_absorbed / L0 * 100 if L0 > 0 else 0)
+        absorption = max( 0, min(100, absorption))
+
         forecast: List[DigestionForecastPoint] = []
-        
-        steps = int(round(DigestionSimulator.TMAX / DigestionSimulator.INTERNAL_DT))
-        output_stride = int(round(DigestionSimulator.OUTPUT_DT / DigestionSimulator.INTERNAL_DT))
-        
-        l = l0
-        e = 0.0
-        t = 0.0
-        absorption = 0.0
-        
-        points.append(DigestionPoint(time=0.0, remaining=l0))
-        
-        for i in range(1, steps + 1):
-            de_dt = ke * (l - e)
-            rate = vmax * e / (km + e) if e > 1e-9 else 0.0
-            dl_dt = -rate
-            
-            e = e + de_dt * DigestionSimulator.INTERNAL_DT
-            if e < 0:
-                e = 0
-            if e > l:
-                e = l
-            
-            l = l + dl_dt * DigestionSimulator.INTERNAL_DT
-            if l < 0:
-                l = 0
-            
-            t = i * DigestionSimulator.INTERNAL_DT
-            if t > DigestionSimulator.TMAX:
-                t = DigestionSimulator.TMAX
-            
-            if i % output_stride == 0 or i == steps:
-                absorbed = (l0 - l) / l0 if l0 > 0 else 0
-                absorption = max(0, min(100, absorbed * 100))
-                points.append(DigestionPoint(time=round(t, 2), remaining=round(l, 2)))
-        
-        # Calculate forecast at hourly intervals
-        l = l0
-        e = 0.0
-        for hour in range(1, 7):
-            hour_steps = int(round(hour / DigestionSimulator.INTERNAL_DT))
-            for _ in range(hour_steps):
-                de_dt = ke * (l - e)
-                rate = vmax * e / (km + e) if e > 1e-9 else 0.0
-                dl_dt = -rate
-                
-                e = e + de_dt * DigestionSimulator.INTERNAL_DT
-                l = l + dl_dt * DigestionSimulator.INTERNAL_DT
-                if e < 0:
-                    e = 0
-                if l < 0:
-                    l = 0
-                if e > l:
-                    e = l
-            
-            absorbed_grams = l0 - l
-            absorbed_percent = (absorbed_grams / l0 * 100) if l0 > 0 else 0
-            forecast.append(DigestionForecastPoint(
-                hour=hour,
-                percent=round(min(100, absorbed_percent), 1),
-                grams=round(absorbed_grams, 2)
-            ))
-        
+        hour_times = np.arange(1, 7)
+        mean_absorbed_by_hour = np.interp( hour_times, time, mean_fat)
+
+        for hour, absorbed_grams in zip( range(1, 7), mean_absorbed_by_hour):
+            absorbed_percent = ( absorbed_grams / L0 * 100 if L0 > 0 else 0)
+            forecast.append( DigestionForecastPoint( hour=hour, 
+                                                     percent=round( min(100, absorbed_percent),1),
+                                                     grams=round(float(absorbed_grams),2)))
         return points, round(absorption, 2), forecast
+
     
     @staticmethod
     def simulate_carbs(carbs_grams: float) -> Tuple[List[DigestionPoint], float, List[DigestionForecastPoint]]:
-        """
-        Simulate carbohydrate digestion using two-compartment model.
         
-        dS/dt = -K1 * S (Substrate breakdown)
-        dM/dt = K1 * S - K2 * M (Monosaccharide formation)
-        dG/dt = K2 * M (Glucose absorption)
-        """
         if carbs_grams <= 0:
             return [], 0.0, []
-        
-        s0 = carbs_grams
-        k1 = DigestionSimulator.CARB_K1
-        k2 = DigestionSimulator.CARB_K2
-        
-        points: List[DigestionPoint] = []
-        forecast: List[DigestionForecastPoint] = []
-        
-        steps = int(round(DigestionSimulator.TMAX / DigestionSimulator.INTERNAL_DT))
-        output_stride = int(round(DigestionSimulator.OUTPUT_DT / DigestionSimulator.INTERNAL_DT))
-        
-        s = s0
-        m = 0.0
-        g = 0.0
-        t = 0.0
-        absorption = 0.0
-        
-        points.append(DigestionPoint(time=0.0, remaining=s0))
-        
-        for i in range(1, steps + 1):
-            ds_dt = -k1 * s
-            dm_dt = k1 * s - k2 * m
-            dg_dt = k2 * m
-            
-            s = s + ds_dt * DigestionSimulator.INTERNAL_DT
-            if s < 0:
-                s = 0
-            
-            m = m + dm_dt * DigestionSimulator.INTERNAL_DT
-            if m < 0:
-                m = 0
-            
-            g = g + dg_dt * DigestionSimulator.INTERNAL_DT
-            if g < 0:
-                g = 0
-            
-            t = i * DigestionSimulator.INTERNAL_DT
-            if t > DigestionSimulator.TMAX:
-                t = DigestionSimulator.TMAX
-            
-            if i % output_stride == 0 or i == steps:
-                absorbed = g / s0 if s0 > 0 else 0
-                absorption = max(0, min(100, absorbed * 100))
-                points.append(DigestionPoint(time=round(t, 2), remaining=round(s0 - g, 2)))
-        
-        # Calculate forecast at hourly intervals
-        s = s0
-        m = 0.0
-        g = 0.0
-        for hour in range(1, 7):
-            hour_steps = int(round(hour / DigestionSimulator.INTERNAL_DT))
-            for _ in range(hour_steps):
-                ds_dt = -k1 * s
-                dm_dt = k1 * s - k2 * m
-                dg_dt = k2 * m
                 
-                s = s + ds_dt * DigestionSimulator.INTERNAL_DT
-                m = m + dm_dt * DigestionSimulator.INTERNAL_DT
-                g = g + dg_dt * DigestionSimulator.INTERNAL_DT
-                if s < 0:
-                    s = 0
-                if m < 0:
-                    m = 0
-                if g < 0:
-                    g = 0
-            
-            absorbed_grams = g
-            absorbed_percent = (absorbed_grams / s0 * 100) if s0 > 0 else 0
-            forecast.append(DigestionForecastPoint(
-                hour=hour,
-                percent=round(min(100, absorbed_percent), 1),
-                grams=round(absorbed_grams, 2)
-            ))
-        
+        S0 = carbs_grams
+        TARGET = 0.895
+        target_absorbed = TARGET * S0
+        k1_values = np.linspace(0.001, 5, 300)
+        k2_values = []
+        valid_k1_values = []
+        for k1 in k1_values:
+            def objective(k2):
+                time, S, M, G = simulate_carbs(S0, k1,k2,T)
+                return G[-1] - target_absorbed
+            f_low = objective(0.001)
+            f_high = objective(20)
+            if f_low * f_high < 0:
+                k2 = brentq(objective, 0.001, 20)
+                valid_k1_values.append(k1)
+                k2_values.append(k2)
+
+        k1_values = np.array(valid_k1_values)
+        k2_values = np.array(k2_values)
+        k2_values = []
+
+        for k1 in k1_values:
+            def objective(k2):
+                time, S, M, G = simulate_carbs(S0,k1, k2, T)
+                return G[-1] - target_absorbed
+            k2 = brentq(objective,0.001,20)
+            k2_values.append(k2)
+        k2_values = np.array(k2_values)
+        all_curves_carb = []
+        for k1, k2 in zip(k1_values,k2_values):
+            time, S, M, G = simulate_carbs(S0, k1, k2,T)
+            remaining_1 = S0 - G
+            all_curves_carb.append(remaining_1)
+        all_curves_carb = np.array(all_curves_carb)
+        lower_carb = np.min(all_curves_carb, axis=0)
+        upper_carb = np.max(all_curves_carb, axis=0)
+        mean_carb = np.mean(all_curves_carb, axis=0)
+
+        points: List[DigestionPoint] = []
+        output_times = np.arange( 0, T + 1, DigestionSimulator.OUTPUT_DT)
+        mean_absorbed_by_output = np.interp( output_times, time, mean_carb)
+
+        for t, absorbed_grams in zip( output_times, mean_absorbed_by_output):
+            remaining = S0 - absorbed_grams
+            points.append(DigestionPoint( time=round(float(t), 2), remaining=round(float(remaining), 2)))
+
+        final_absorbed = mean_carb[-1]
+        absorption = ( final_absorbed / S0 * 100 if S0 > 0 else 0)
+        absorption = max( 0, min(100, absorption))
+
+        forecast: List[DigestionForecastPoint] = []
+        hour_times = np.arange(1, 7)
+        mean_absorbed_by_hour = np.interp( hour_times, time, mean_carb)
+
+        for hour, absorbed_grams in zip( range(1, 7), mean_absorbed_by_hour):
+            absorbed_percent = ( absorbed_grams / S0 * 100 if S0 > 0 else 0)
+            forecast.append( DigestionForecastPoint( hour=hour, 
+                                                     percent=round( min(100, absorbed_percent),1),
+                                                     grams=round(float(absorbed_grams),2)))
         return points, round(absorption, 2), forecast
+
     
     @staticmethod
     def calculate_digestion(

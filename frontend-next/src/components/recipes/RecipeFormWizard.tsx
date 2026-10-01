@@ -535,12 +535,12 @@ const RESULT_COLORS = RECIPE_CHART_COLORS
 
 function EditCalculationResult({
   result,
-  activeTab,
-  onTabChange,
+  activeDigestionTab = 'protein',
+  onDigestionTabChange,
 }: {
   result: RecipeCalculationResult
-  activeTab: 'protein' | 'fat' | 'carbs'
-  onTabChange: (tab: 'protein' | 'fat' | 'carbs') => void
+  activeDigestionTab?: 'protein' | 'fat' | 'carbs'
+  onDigestionTabChange?: (tab: 'protein' | 'fat' | 'carbs') => void
 }) {
   const { t } = useTranslation()
   const composition = result.composition ?? []
@@ -566,7 +566,7 @@ function EditCalculationResult({
       forecast: digestion.carbsForecast ?? [],
     },
   } : null
-  const current = tabData?.[activeTab]
+  const current = tabData?.[activeDigestionTab]
 
   return (
     <div id="recipe-result" className={styles.editResult}>
@@ -685,8 +685,8 @@ function EditCalculationResult({
                   {(['protein', 'fat', 'carbs'] as const).map(tab => (
                     <button
                       key={tab}
-                      className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
-                      onClick={() => onTabChange(tab)}
+                      className={`${styles.tab} ${activeDigestionTab === tab ? styles.tabActive : ''}`}
+                      onClick={() => onDigestionTabChange?.(tab)}
                     >
                       {tab === 'protein' ? 'Белки' : tab === 'fat' ? 'Жиры' : 'Углеводы'}
                     </button>
@@ -767,6 +767,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [calorieCalculation, setCalorieCalculation] = useState<CalorieCalculation | null>(null)
   const [availableDisorders, setAvailableDisorders] = useState<string[]>([])
   const [loadingDisorders, setLoadingDisorders] = useState(false)
+  const [activeDigestionTab, setActiveDigestionTab] = useState<'protein' | 'fat' | 'carbs'>('protein')
   const calculationInputRevision = useRef(0)
   const revisionRef = useRef(0)
   const persistedRevisionRef = useRef(0)
@@ -1967,7 +1968,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           </div>
       </div>
 
-      {calculationResult && <EditCalculationResult result={calculationResult} />}
+      {calculationResult && (
+        <EditCalculationResult 
+          result={calculationResult}
+          activeDigestionTab={activeDigestionTab}
+          onDigestionTabChange={setActiveDigestionTab}
+        />
+      )}
     </div>
   )
 }
