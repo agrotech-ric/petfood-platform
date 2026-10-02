@@ -533,6 +533,43 @@ function toPayload(
 const RESULT_COLORS = RECIPE_CHART_COLORS
 
 
+function LineChart({ data }: { data: { time: number; remaining: number }[] }) {
+  const width = 300
+  const height = 160
+  const padLeft = 40
+  const padBottom = 30
+  const padTop = 16
+  const padRight = 16
+  if (data.length === 0) return null
+  const maxY = Math.max(1, ...data.map(item => item.remaining))
+  const maxX = Math.max(1, ...data.map(item => item.time))
+  const toX = (time: number) => padLeft + (time / maxX) * (width - padLeft - padRight)
+  const toY = (value: number) => padTop + (1 - value / maxY) * (height - padTop - padBottom)
+  const points = data.map(item => `${toX(item.time)},${toY(item.remaining)}`).join(' ')
+  const middle = data[Math.floor(data.length / 2)]
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className={styles.svgChart} role="img" aria-label="Кривая переваривания">
+      {[0, maxY * 0.25, maxY * 0.5, maxY * 0.75, maxY].map((value, index) => (
+        <line key={index} x1={padLeft} y1={toY(value)} x2={width - padRight} y2={toY(value)} stroke="var(--color-border)" strokeWidth="1" />
+      ))}
+      {data.map(item => <text key={item.time} x={toX(item.time)} y={height - 6} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">{item.time}</text>)}
+      <polyline points={points} fill="none" stroke="#e53e3e" strokeWidth="2" />
+      <circle cx={toX(middle.time)} cy={toY(middle.remaining)} r={5} fill="#e53e3e" />
+    </svg>
+  )
+}
+
+function descendingCurve(curve: { time: number; remaining: number }[]) {
+  if (curve.length < 2 || curve[curve.length - 1].remaining <= curve[0].remaining) return curve
+  const first = curve[0].remaining
+  const last = curve[curve.length - 1].remaining
+  return curve.map(point => ({ ...point, remaining: Math.max(0, first + last - point.remaining) }))
+}
+
+function forecastPercentClass(percent: number) {
+  return percent === 0 ? '' : percent < 50 ? styles.forecastPercentLow : styles.forecastPercentMid
+}
+
 function EditCalculationResult({
   result,
   activeDigestionTab = 'protein',
@@ -556,17 +593,21 @@ function EditCalculationResult({
       forecast: digestion.proteinForecast ?? [],
     },
     fat: {
-      curve: digestion.fat ?? [],
+      curve: descendingCurve(digestion.fat ?? []),
       absorption: digestion.fatAbsorption,
       forecast: digestion.fatForecast ?? [],
     },
     carbs: {
-      curve: digestion.carbs ?? [],
+      curve: descendingCurve(digestion.carbs ?? []),
       absorption: digestion.carbsAbsorption,
       forecast: digestion.carbsForecast ?? [],
     },
   } : null
-  const current = tabData?.[activeDigestionTab]
+  const current = tabData
+    ? (tabData[activeDigestionTab].curve.length > 0
+      ? tabData[activeDigestionTab]
+      : Object.values(tabData).find(item => item.curve.length > 0))
+    : undefined
 
   return (
     <div id="recipe-result" className={styles.editResult}>
@@ -677,7 +718,7 @@ function EditCalculationResult({
       )}
 
 
-      {current && current.curve.length > 0 && (
+      {tabData && (tabData.protein.curve.length > 0 || tabData.fat.curve.length > 0 || tabData.carbs.curve.length > 0) && (
               <div className={styles.digestionCard}>
                 <p className={styles.digestionTitle}>Анализ переваривания</p>
                 <p className={styles.digestionSubtitle}>Модель Михаэлиса-Ментен</p>
@@ -697,7 +738,7 @@ function EditCalculationResult({
                     <p className={styles.chartLabel}>
                       Кривая переваривания S(t) — остаток во времени
                     </p>
-                    <LineChart data={current.curve} />
+                {current && current.curve.length > 0 && <LineChart data={current.curve} />}
                   </div>
                   <div>
                     <p className={styles.absorptionLabel}>Усвояемость D(t)</p>

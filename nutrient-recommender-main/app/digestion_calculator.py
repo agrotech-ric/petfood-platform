@@ -191,21 +191,22 @@ class DigestionSimulator:
 
         points: List[DigestionPoint] = []
         output_times = np.arange(0, DigestionSimulator.T + 1, DigestionSimulator.OUTPUT_DT)
-        mean_absorbed_by_output = np.interp(output_times, times_local, mean_fat)
+        mean_remaining_by_output = np.interp(output_times, times_local, mean_fat)
 
-        for t, absorbed_grams in zip(output_times, mean_absorbed_by_output):
-            remaining = L0 - absorbed_grams
-            points.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining), 2)))
+        for t, remaining_grams in zip(output_times, mean_remaining_by_output):
+            points.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
 
-        final_absorbed = mean_fat[-1]
+        final_remaining = mean_fat[-1]
+        final_absorbed = L0 - final_remaining
         absorption = (final_absorbed / L0 * 100 if L0 > 0 else 0)
         absorption = max(0, min(100, absorption))
 
         forecast: List[DigestionForecastPoint] = []
         hour_times = np.arange(1, 7)
-        mean_absorbed_by_hour = np.interp(hour_times, times_local, mean_fat)
+        mean_remaining_by_hour = np.interp(hour_times, times_local, mean_fat)
 
-        for hour, absorbed_grams in zip(range(1, 7), mean_absorbed_by_hour):
+        for hour, remaining_grams in zip(range(1, 7), mean_remaining_by_hour):
+            absorbed_grams = L0 - remaining_grams
             absorbed_percent = (absorbed_grams / L0 * 100 if L0 > 0 else 0)
             forecast.append(DigestionForecastPoint(hour=hour, 
                                                      percent=round(min(100, absorbed_percent), 1),
@@ -256,19 +257,19 @@ class DigestionSimulator:
 
         points: List[DigestionPoint] = []
         output_times = np.arange(0, DigestionSimulator.T + 1, DigestionSimulator.OUTPUT_DT)
-        mean_absorbed_by_output = np.interp(output_times, times_local, mean_carb)
+        mean_remaining_by_output = np.interp(output_times, times_local, mean_carb)
 
-        for t, absorbed_grams in zip(output_times, mean_absorbed_by_output):
-            remaining = S0 - absorbed_grams
-            points.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining), 2)))
+        for t, remaining_grams in zip(output_times, mean_remaining_by_output):
+            points.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
 
-        final_absorbed = mean_carb[-1]
+        final_remaining = mean_carb[-1]
+        final_absorbed = S0 - final_remaining
         absorption = (final_absorbed / S0 * 100 if S0 > 0 else 0)
         absorption = max(0, min(100, absorption))
 
         forecast: List[DigestionForecastPoint] = []
         hour_times = np.arange(1, 7)
-        mean_absorbed_by_hour = np.interp(hour_times, times_local, mean_carb)
+        mean_remaining_by_hour = np.interp(hour_times, times_local, mean_carb)
 
         for hour, absorbed_grams in zip(range(1, 7), mean_absorbed_by_hour):
             absorbed_percent = (absorbed_grams / S0 * 100 if S0 > 0 else 0)
