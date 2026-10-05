@@ -131,12 +131,24 @@ class DigestionSimulator:
             all_curves.append(remaining_1)
         all_curves = np.array(all_curves)
         mean = np.mean(all_curves, axis=0)
-        
+        lower = np.min(all_curves, axis=0)
+        upper = np.max(all_curves, axis=0)
+                
         points: List[DigestionPoint] = []
         output_times = np.arange(0, DigestionSimulator.T + 1, DigestionSimulator.OUTPUT_DT)
         mean_remaining_by_output = np.interp(output_times, times_local, mean)
         for t, s in zip(output_times, mean_remaining_by_output):
             points.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(s), 2)))
+        
+        points_min: List[DigestionPoint] = []
+        lower_remaining_by_output = np.interp(output_times, times_local, lower)
+        for t, s in zip(output_times, lower_remaining_by_output):
+            points_min.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(s), 2)))
+        
+        points_max: List[DigestionPoint] = []
+        upper_remaining_by_output = np.interp(output_times, times_local, upper)
+        for t, s in zip(output_times, upper_remaining_by_output):
+            points_max.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(s), 2)))
         
         final_remaining = mean[-1]
         absorbed_grams = S0 - final_remaining
@@ -154,7 +166,7 @@ class DigestionSimulator:
                                                     percent=round(min(100, absorbed_percent), 1),
                                                     grams=round(absorbed_grams, 2)))
         
-        return points, round(absorption, 2), forecast
+        return points, points_min, points_max, round(absorption, 2), forecast
     
     @staticmethod
     def simulate_fat(fat_grams: float) -> Tuple[List[DigestionPoint], float, List[DigestionForecastPoint]]:
@@ -188,13 +200,24 @@ class DigestionSimulator:
             all_curves_fat.append(remaining_1)
         all_curves_fat = np.array(all_curves_fat)
         mean_fat = np.mean(all_curves_fat, axis=0)
+        lower_fat = np.min(all_curves_fat, axis=0)
+        upper_fat = np.max(all_curves_fat, axis=0)
 
         points: List[DigestionPoint] = []
         output_times = np.arange(0, DigestionSimulator.T + 1, DigestionSimulator.OUTPUT_DT)
         mean_remaining_by_output = np.interp(output_times, times_local, mean_fat)
-
         for t, remaining_grams in zip(output_times, mean_remaining_by_output):
             points.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
+
+        points_min: List[DigestionPoint] = []
+        min_remaining_by_output = np.interp(output_times, times_local, lower_fat)
+        for t, remaining_grams in zip(output_times, min_remaining_by_output):
+            points_min.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
+
+        points_max: List[DigestionPoint] = []
+        max_remaining_by_output = np.interp(output_times, times_local, upper_fat)
+        for t, remaining_grams in zip(output_times, max_remaining_by_output):
+            points_max.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
 
         final_remaining = mean_fat[-1]
         final_absorbed = L0 - final_remaining
@@ -211,7 +234,7 @@ class DigestionSimulator:
             forecast.append(DigestionForecastPoint(hour=hour, 
                                                      percent=round(min(100, absorbed_percent), 1),
                                                      grams=round(float(absorbed_grams), 2)))
-        return points, round(absorption, 2), forecast
+        return points, points_min, points_max, round(absorption, 2), forecast
 
     
     @staticmethod
@@ -253,20 +276,30 @@ class DigestionSimulator:
             remaining_1 = S0 - G
             all_curves_carb.append(remaining_1)
         all_curves_carb = np.array(all_curves_carb)
+        lower = np.min(all_curves_carb, axis=0)
+        upper = np.max(all_curves_carb, axis=0)
         mean_carb = np.mean(all_curves_carb, axis=0)
 
         points: List[DigestionPoint] = []
         output_times = np.arange(0, DigestionSimulator.T + 1, DigestionSimulator.OUTPUT_DT)
         mean_remaining_by_output = np.interp(output_times, times_local, mean_carb)
-
         for t, remaining_grams in zip(output_times, mean_remaining_by_output):
             points.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
+
+        points_min: List[DigestionPoint] = []
+        min_remaining_by_output = np.interp(output_times, times_local, lower)
+        for t, remaining_grams in zip(output_times, min_remaining_by_output):
+            points_min.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
+
+        points_max: List[DigestionPoint] = []
+        max_remaining_by_output = np.interp(output_times, times_local, upper)
+        for t, remaining_grams in zip(output_times, max_remaining_by_output):
+            points_max.append(DigestionPoint(time=round(float(t), 2), remaining=round(float(remaining_grams), 2)))
 
         final_remaining = mean_carb[-1]
         final_absorbed = S0 - final_remaining
         absorption = (final_absorbed / S0 * 100 if S0 > 0 else 0)
         absorption = max(0, min(100, absorption))
-
 
         forecast: List[DigestionForecastPoint] = []
         hour_times = np.arange(1, 7)
@@ -280,7 +313,7 @@ class DigestionSimulator:
                                         percent=round(min(100, absorbed_percent), 1),
                                         grams=round(float(absorbed_grams), 2) ))
 
-        return points, round(absorption, 2), forecast
+        return points,points_min,points_max, round(absorption, 2), forecast
 
     
     @staticmethod
@@ -291,14 +324,20 @@ class DigestionSimulator:
     ) -> DigestionData:
         """Calculate complete digestion data for all macronutrients."""
         
-        protein_curve, protein_absorption, protein_forecast = DigestionSimulator.simulate_protein(protein_grams)
-        fat_curve, fat_absorption, fat_forecast = DigestionSimulator.simulate_fat(fat_grams)
-        carbs_curve, carbs_absorption, carbs_forecast = DigestionSimulator.simulate_carbs(carbs_grams)
+        protein_curve, protein_curve_min,protein_curve_max, protein_absorption, protein_forecast = DigestionSimulator.simulate_protein(protein_grams)
+        fat_curve, fat_curve_min,fat_curve_max,  fat_absorption, fat_forecast = DigestionSimulator.simulate_fat(fat_grams)
+        carbs_curve, carbs_curve_min,carbs_curve_max, carbs_absorption, carbs_forecast = DigestionSimulator.simulate_carbs(carbs_grams)
         
         return DigestionData(
             protein=protein_curve,
             fat=fat_curve,
             carbs=carbs_curve,
+            protein_min=protein_curve_min,
+            fat_min=fat_curve_min,
+            carbs_min=carbs_curve_min,
+            protein_max=protein_curve_max,
+            fat_max=fat_curve_max,
+            carbs_max=carbs_curve_max,
             proteinAbsorption=protein_absorption,
             fatAbsorption=fat_absorption,
             carbsAbsorption=carbs_absorption,
