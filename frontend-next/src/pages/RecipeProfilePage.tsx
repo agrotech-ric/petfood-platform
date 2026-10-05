@@ -24,7 +24,15 @@ import {
 
 const CHART_COLORS = RECIPE_CHART_COLORS
 
-function LineChart({ data }: { data: { time: number; remaining: number }[] }) {
+function LineChart({
+  data,
+  lower,
+  upper,
+}: {
+  data: { time: number; remaining: number }[]
+  lower?: { time: number; remaining: number }[]
+  upper?: { time: number; remaining: number }[]
+}) {
   const width = 300
   const height = 160
   const padLeft = 40
@@ -34,75 +42,30 @@ function LineChart({ data }: { data: { time: number; remaining: number }[] }) {
 
   if (data.length === 0) return null
 
-  const maxY = Math.max(1, ...data.map(item => item.remaining))
-  const maxX = Math.max(1, ...data.map(item => item.time))
+  const bandValues = [...(lower ?? []), ...(upper ?? [])]
+  const maxY = Math.max(1, ...data.map(item => item.remaining), ...bandValues.map(item => item.remaining))
+  const maxX = Math.max(1, ...data.map(item => item.time), ...bandValues.map(item => item.time))
   const toX = (time: number) => padLeft + (time / maxX) * (width - padLeft - padRight)
-  const toY = (value: number) =>
-    padTop + (1 - value / maxY) * (height - padTop - padBottom)
+  const toY = (value: number) => padTop + (1 - value / maxY) * (height - padTop - padBottom)
   const points = data.map(item => `${toX(item.time)},${toY(item.remaining)}`).join(' ')
+  const bandPoints = lower && upper
+    ? [...upper.map(item => `${toX(item.time)},${toY(item.remaining)}`), ...[...lower].reverse().map(item => `${toX(item.time)},${toY(item.remaining)}`)].join(' ')
+    : ''
   const middle = data[Math.floor(data.length / 2)]
   const yTicks = [0, maxY * 0.25, maxY * 0.5, maxY * 0.75, maxY]
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className={styles.svgChart}>
-      {yTicks.map((value, index) => (
-        <g key={index}>
-          <line
-            x1={padLeft}
-            y1={toY(value)}
-            x2={width - padRight}
-            y2={toY(value)}
-            stroke="var(--color-border)"
-            strokeWidth="1"
-          />
-          <text
-            x={padLeft - 4}
-            y={toY(value) + 3}
-            fontSize="9"
-            fill="var(--color-text-muted)"
-            textAnchor="end"
-          >
-            {value.toFixed(2)}
-          </text>
-        </g>
-      ))}
-      {data.map(item => (
-        <text
-          key={item.time}
-          x={toX(item.time)}
-          y={height - 6}
-          fontSize="9"
-          fill="var(--color-text-muted)"
-          textAnchor="middle"
-        >
-          {item.time}
-        </text>
-      ))}
+      {yTicks.map((value, index) => <g key={index}><line x1={padLeft} y1={toY(value)} x2={width - padRight} y2={toY(value)} stroke="var(--color-border)" strokeWidth="1" /><text x={padLeft - 4} y={toY(value) + 3} fontSize="9" fill="var(--color-text-muted)" textAnchor="end">{value.toFixed(2)}</text></g>)}
+      {data.map(item => <text key={item.time} x={toX(item.time)} y={height - 6} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">{item.time}</text>)}
+      {bandPoints && <polygon points={bandPoints} fill="#e53e3e" fillOpacity="0.25" stroke="none" />}
       <polyline points={points} fill="none" stroke="#e53e3e" strokeWidth="2" />
       <circle cx={toX(middle.time)} cy={toY(middle.remaining)} r={5} fill="#e53e3e" />
-      <text
-        x={padLeft - 28}
-        y={height / 2}
-        fontSize="9"
-        fill="var(--color-text-muted)"
-        textAnchor="middle"
-        transform={`rotate(-90, ${padLeft - 28}, ${height / 2})`}
-      >
-        Остаток (г)
-      </text>
-      <text
-        x={(width + padLeft) / 2}
-        y={height - 1}
-        fontSize="9"
-        fill="var(--color-text-muted)"
-        textAnchor="middle"
-      >
-        Время (часы)
-      </text>
+      <text x={padLeft - 28} y={height / 2} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${padLeft - 28}, ${height / 2})`}>������� (�)</text>
+      <text x={(width + padLeft) / 2} y={height - 1} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">����� (����)</text>
     </svg>
   )
 }
-
 function formatAge(months?: number | null) {
   if (months == null) return 'Не указан'
   if (months < 12) return `${months} мес.`
@@ -334,9 +297,7 @@ function CalculationSections({
               <p className={styles.chartLabel}>
                 Кривая переваривания S(t) — остаток во времени
               </p>
-              <LineChart data={current.curve} />
-              <LineChart data={current.curve_min} />
-              <LineChart data={current.curve_max} />
+              <LineChart data={current.curve} lower={current.curve_min} upper={current.curve_max} />
             </div>
             <div>
               <p className={styles.absorptionLabel}>Усвояемость D(t)</p>
