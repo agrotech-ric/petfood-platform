@@ -61,8 +61,8 @@ function LineChart({
       {bandPoints && <polygon points={bandPoints} fill="#e53e3e" fillOpacity="0.25" stroke="none" />}
       <polyline points={points} fill="none" stroke="#e53e3e" strokeWidth="2" />
       <circle cx={toX(middle.time)} cy={toY(middle.remaining)} r={5} fill="#e53e3e" />
-      <text x={padLeft - 28} y={height / 2} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${padLeft - 28}, ${height / 2})`}>Остаток (г)</text>
-      <text x={(width + padLeft) / 2} y={height - 1} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">Время (часы)</text>
+      <text x={padLeft - 28} y={height / 2} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${padLeft - 28}, ${height / 2})`}>РћСЃС‚Р°С‚РѕРє (Рі)</text>
+      <text x={(width + padLeft) / 2} y={height - 1} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">Р’СЂРµРјСЏ (С‡Р°СЃС‹)</text>
     </svg>
   )
 }
