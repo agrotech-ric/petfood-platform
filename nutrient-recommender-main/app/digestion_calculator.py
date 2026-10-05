@@ -105,7 +105,7 @@ class DigestionSimulator:
     def simulate_protein(protein_grams: float) -> Tuple[List[DigestionPoint], float, List[DigestionForecastPoint]]:
 
         if protein_grams <= 0:
-            return [], 0.0, []       
+            return [],[],[], 0.0, []       
              
         Km_values = np.linspace(0.1, 50, 300)
         Vmax_values = []
@@ -172,7 +172,7 @@ class DigestionSimulator:
     def simulate_fat(fat_grams: float) -> Tuple[List[DigestionPoint], float, List[DigestionForecastPoint]]:
         
         if fat_grams <= 0:
-            return [], 0.0, []
+            return [],[],[], 0.0, []
         
         L0 = fat_grams
         TARGET = 0.968
@@ -241,7 +241,7 @@ class DigestionSimulator:
     def simulate_carbs(carbs_grams: float) -> Tuple[List[DigestionPoint], float, List[DigestionForecastPoint]]:
         
         if carbs_grams <= 0:
-            return [], 0.0, []
+            return [],[],[], 0.0, []
                 
         S0 = carbs_grams
         TARGET = 0.895
@@ -326,7 +326,7 @@ class DigestionSimulator:
         
         protein_curve, protein_curve_min,protein_curve_max, protein_absorption, protein_forecast = DigestionSimulator.simulate_protein(protein_grams)
         fat_curve, fat_curve_min,fat_curve_max,  fat_absorption, fat_forecast = DigestionSimulator.simulate_fat(fat_grams)
-        carbs_curve, carbs_curve_min,carbs_curve_max, carbs_absorption, carbs_forecast = DigestionSimulator.simulate_carbs(carbs_grams)
+        carbs_curve, carbs_curve_min, carbs_curve_max, carbs_absorption, carbs_forecast = DigestionSimulator.simulate_carbs(carbs_grams)
         
         return DigestionData(
             protein=protein_curve,
