@@ -267,15 +267,19 @@ class DigestionSimulator:
         absorption = (final_absorbed / S0 * 100 if S0 > 0 else 0)
         absorption = max(0, min(100, absorption))
 
+
         forecast: List[DigestionForecastPoint] = []
         hour_times = np.arange(1, 7)
-        mean_remaining_by_hour = np.interp(hour_times, times_local, mean_carb)
+        mean_remaining_by_hour = np.interp(hour_times,times_local,mean_carb)
 
-        for hour, absorbed_grams in zip(range(1, 7), mean_absorbed_by_hour):
+        for hour, remaining_grams in zip(range(1, 7), mean_remaining_by_hour):
+            absorbed_grams = S0 - remaining_grams
             absorbed_percent = (absorbed_grams / S0 * 100 if S0 > 0 else 0)
-            forecast.append(DigestionForecastPoint(hour=hour, 
-                                                     percent=round(min(100, absorbed_percent), 1),
-                                                     grams=round(float(absorbed_grams), 2)))
+
+            forecast.append( DigestionForecastPoint( hour=hour,
+                                        percent=round(min(100, absorbed_percent), 1),
+                                        grams=round(float(absorbed_grams), 2) ))
+
         return points, round(absorption, 2), forecast
 
     
