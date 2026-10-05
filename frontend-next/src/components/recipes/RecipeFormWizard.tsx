@@ -589,16 +589,22 @@ function EditCalculationResult({
   const tabData = digestion ? {
     protein: {
       curve: digestion.protein ?? [],
+      curve_min: digestion.protein_min ?? [],
+      curve_max: digestion.protein_max ?? [],
       absorption: digestion.proteinAbsorption,
       forecast: digestion.proteinForecast ?? [],
     },
     fat: {
       curve: descendingCurve(digestion.fat ?? []),
+      curve_min: digestion.fat_min ?? [],
+      curve_max: digestion.fat_max ?? [],
       absorption: digestion.fatAbsorption,
       forecast: digestion.fatForecast ?? [],
     },
     carbs: {
       curve: descendingCurve(digestion.carbs ?? []),
+      curve_min: digestion.carbs_min ?? [],
+      curve_max: digestion.carbs_max ?? [],
       absorption: digestion.carbsAbsorption,
       forecast: digestion.carbsForecast ?? [],
     },
@@ -739,6 +745,8 @@ function EditCalculationResult({
                       Кривая переваривания S(t) — остаток во времени
                     </p>
                 {current && current.curve.length > 0 && <LineChart data={current.curve} />}
+                {current && current.curve_min.length > 0 && <LineChart data={current.curve_min} />}
+                {current && current.curve_max.length > 0 && <LineChart data={current.curve_max} />}
                   </div>
                   <div>
                     <p className={styles.absorptionLabel}>Усвояемость D(t)</p>

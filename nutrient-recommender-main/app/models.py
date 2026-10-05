@@ -187,6 +187,14 @@ class DigestionData(BaseModel):
     protein: List[DigestionPoint] = Field(..., description="Protein digestion curve")
     fat: List[DigestionPoint] = Field(..., description="Fat digestion curve")
     carbs: List[DigestionPoint] = Field(..., description="Carbohydrate digestion curve")
+    
+    protein_min: List[DigestionPoint] = Field(..., description="Protein digestion curve")
+    fat_min: List[DigestionPoint] = Field(..., description="Fat digestion curve")
+    carbs_min: List[DigestionPoint] = Field(..., description="Carbohydrate digestion curve")
+    protein_max: List[DigestionPoint] = Field(..., description="Protein digestion curve")
+    fat_max: List[DigestionPoint] = Field(..., description="Fat digestion curve")
+    carbs_max: List[DigestionPoint] = Field(..., description="Carbohydrate digestion curve")
+
     proteinAbsorption: float = Field(..., description="Protein absorption percentage")
     fatAbsorption: float = Field(..., description="Fat absorption percentage")
     carbsAbsorption: float = Field(..., description="Carbohydrate absorption percentage")

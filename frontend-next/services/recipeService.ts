@@ -66,6 +66,12 @@ export type RecipeCalculationResult = {
     protein: Array<{ time: number; remaining: number }>
     fat: Array<{ time: number; remaining: number }>
     carbs: Array<{ time: number; remaining: number }>
+    protein_min: Array<{ time: number; remaining: number }>
+    fat_min: Array<{ time: number; remaining: number }>
+    carbs_min: Array<{ time: number; remaining: number }>
+    protein_max: Array<{ time: number; remaining: number }>
+    fat_max: Array<{ time: number; remaining: number }>
+    carbs_max: Array<{ time: number; remaining: number }>
     proteinAbsorption: number
     fatAbsorption: number
     carbsAbsorption: number
