@@ -650,15 +650,12 @@
 .digestionCard {
   width: 100%;
   min-height: 380px;
-  padding: 22px 18px 24px;
+  padding: 22px 30px 24px;
   margin-bottom: 16px;
   border-color: var(--color-border);
   border-radius: 8px;
   box-shadow: 0 2px 5px var(--color-shadow);
 }
-
-
-
 
 .digestionTitle { margin: 0 0 8px; color: var(--color-accent-alt); font-size: 17px; font-weight: 700; text-align: center; }
 .digestionSubtitle { margin: 0 0 18px; color: var(--color-text-muted); font-size: 13px; text-align: center; }
