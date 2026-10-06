@@ -543,7 +543,7 @@ function LineChart({
   upper?: { time: number; remaining: number }[]
 }) {
   const width = 300
-  const height = 160
+  const height = 190
   const padLeft = 50
   const padBottom = 45
   const padTop = 16
@@ -569,14 +569,14 @@ function LineChart({
        <g key={index}><line x1={padLeft} y1={toY(value)} x2={width - padRight} y2={toY(value)} stroke="var(--color-border)" strokeWidth="1" />
        <text x={padLeft - 4} y={toY(value) + 3} fontSize="12" fill="var(--color-text-muted)" textAnchor="end">{value.toFixed(2)}
         </text></g>)}
-      {data.map(item => <text key={item.time} x={toX(item.time)} y={height - 6} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle">
+      {data.map(item => <text key={item.time} x={toX(item.time)} y={height - 25} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle">
         {item.time}</text>)}
       {bandPoints && <polygon points={bandPoints} fill="var(--color-accent-alt)" fillOpacity="0.25" stroke="none" />}
       <polyline points={points} fill="none" stroke="var(--color-accent-alt)" strokeWidth="2" />
       <circle cx={toX(middle.time)} cy={toY(middle.remaining)} r={5} fill="var(--color-accent-alt)" />
-      <text x={padLeft - 40} y={height / 2} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${padLeft - 40}, ${height / 2})`}>
+      <text x={12} y={height / 2} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${12}, ${height / 2})`}>
       Остаток (г)</text>
-      <text x={(width + padLeft) / 2} y={height + 12} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle">
+      <text x={(width + padLeft) / 2} y={height -8} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle">
       Время (часы)</text>
     </svg>
   )
