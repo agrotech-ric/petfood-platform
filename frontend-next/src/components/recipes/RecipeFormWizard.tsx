@@ -544,8 +544,8 @@ function LineChart({
 }) {
   const width = 300
   const height = 160
-  const padLeft = 40
-  const padBottom = 30
+  const padLeft = 50
+  const padBottom = 45
   const padTop = 16
   const padRight = 16
 
@@ -576,7 +576,7 @@ function LineChart({
       <circle cx={toX(middle.time)} cy={toY(middle.remaining)} r={5} fill="var(--color-accent-alt)" />
       <text x={padLeft - 40} y={height / 2} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${padLeft - 40}, ${height / 2})`}>
       Остаток (г)</text>
-      <text x={(width + padLeft) / 2} y={height +12} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle">
+      <text x={(width + padLeft) / 2} y={height + 12} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle">
       Время (часы)</text>
     </svg>
   )
