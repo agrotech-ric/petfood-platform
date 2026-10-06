@@ -565,13 +565,19 @@ function LineChart({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className={styles.svgChart}>
-      {yTicks.map((value, index) => <g key={index}><line x1={padLeft} y1={toY(value)} x2={width - padRight} y2={toY(value)} stroke="var(--color-border)" strokeWidth="1" /><text x={padLeft - 4} y={toY(value) + 3} fontSize="9" fill="var(--color-text-muted)" textAnchor="end">{value.toFixed(2)}</text></g>)}
-      {data.map(item => <text key={item.time} x={toX(item.time)} y={height - 6} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">{item.time}</text>)}
+      {yTicks.map((value, index) => 
+       <g key={index}><line x1={padLeft} y1={toY(value)} x2={width - padRight} y2={toY(value)} stroke="var(--color-border)" strokeWidth="1" />
+       <text x={padLeft - 4} y={toY(value) + 3} fontSize="9" fill="var(--color-text-muted)" textAnchor="end">{value.toFixed(2)}
+        </text></g>)}
+      {data.map(item => <text key={item.time} x={toX(item.time)} y={height - 6} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">
+        {item.time}</text>)}
       {bandPoints && <polygon points={bandPoints} fill="#e53e3e" fillOpacity="0.25" stroke="none" />}
       <polyline points={points} fill="none" stroke="#e53e3e" strokeWidth="2" />
       <circle cx={toX(middle.time)} cy={toY(middle.remaining)} r={5} fill="#e53e3e" />
-      <text x={padLeft - 28} y={height / 2} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${padLeft - 28}, ${height / 2})`}>Остаток (г)</text>
-      <text x={(width + padLeft) / 2} y={height - 1} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">Время (часы)</text>
+      <text x={padLeft - 28} y={height / 2} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${padLeft - 28}, ${height / 2})`}>
+      Остаток (г)</text>
+      <text x={(width + padLeft) / 2} y={height - 1} fontSize="9" fill="var(--color-text-muted)" textAnchor="middle">
+      Время (часы)</text>
     </svg>
   )
 }
