@@ -542,8 +542,8 @@ function LineChart({
   lower?: { time: number; remaining: number }[]
   upper?: { time: number; remaining: number }[]
 }) {
-  const width = 300
-  const height = 190
+  const width = 350
+  const height = 210
   const padLeft = 50
   const padBottom = 45
   const padTop = 16
@@ -574,7 +574,7 @@ function LineChart({
       {bandPoints && <polygon points={bandPoints} fill="var(--color-accent-alt)" fillOpacity="0.25" stroke="none" />}
       <polyline points={points} fill="none" stroke="var(--color-accent-alt)" strokeWidth="2" />
       <circle cx={toX(middle.time)} cy={toY(middle.remaining)} r={5} fill="var(--color-accent-alt)" />
-      <text x={12} y={height / 2} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${12}, ${height / 2})`}>
+      <text x={18} y={height / 2} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle" transform={`rotate(-90, ${18}, ${height / 2})`}>
       Остаток (г)</text>
       <text x={(width + padLeft) / 2} y={height -8} fontSize="12" fill="var(--color-text-muted)" textAnchor="middle">
       Время (часы)</text>
