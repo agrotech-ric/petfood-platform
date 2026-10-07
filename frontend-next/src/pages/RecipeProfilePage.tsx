@@ -411,7 +411,7 @@ function CalculationSections({
 
       {ingredientContributions.length > 0 && (
         <div className={styles.ingredientContributions}>
-          <p className={styles..chartLabel} >
+          <p className={styles.chartLabel} >
             Вклад ингредиентов в{' '}
             {activeTab === 'protein'
               ? 'белок'
