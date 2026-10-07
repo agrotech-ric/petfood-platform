@@ -337,7 +337,7 @@ function CalculationSections({
         </div>
       )}
 
-
+ {(nutrients.length > 0 || minerals.length > 0 || vitamins.length > 0) && (
         <div className={`${styles.card} ${styles.nutrientsCard}`}>
           <p className={styles.sectionTitle}>Содержание нутриентов</p>
           {nutrients.length > 0 && (
