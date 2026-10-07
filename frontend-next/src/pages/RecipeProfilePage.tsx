@@ -191,6 +191,23 @@ function CalculationSections({
   const vitamins = result.vitamins ?? []
   const digestion = result.digestion
   const ingredientContributions = buildIngredientContributions(result, ingredients)
+  const sortedIngredientContributions = ingredientContributions
+  .map(item => {
+    const value = item.values.find(
+      nutrient => nutrient.key === activeTab
+    )
+
+    if (!value || value.amount <= 0) {
+      return null
+    }
+
+    return {
+      item,
+      value,
+    }
+  })
+  .filter(entry => entry !== null)
+  .sort((a, b) => b.value.amount - a.value.amount)
   const tabData = digestion ? {
     protein: {
       curve: digestion.protein ?? [],
@@ -341,6 +358,7 @@ function CalculationSections({
 
       {current && current.curve.length > 0 && (
         <div className={styles.digestionCard}>
+
           <p className={styles.digestionTitle}>Анализ переваривания</p>
           <p className={styles.digestionSubtitle}>Модель Михаэлиса-Ментен</p>
           <div className={styles.tabs}>
@@ -389,12 +407,11 @@ function CalculationSections({
               </table>
             </div>
           </div>
-        </div>
-      )}
+
 
       {ingredientContributions.length > 0 && (
         <div className={styles.ingredientContributions}>
-          <p className={styles.digestionTitle}>
+          <p className={styles..chartLabel} >
             Вклад ингредиентов в{' '}
             {activeTab === 'protein'
               ? 'белок'
@@ -404,35 +421,32 @@ function CalculationSections({
           </p>
 
           <div className={styles.ingredientContributionGrid}>
-            {ingredientContributions.map(item => {
-              const value = item.values.find(
-                nutrient => nutrient.key === activeTab
-              )
 
-              if (!value) return null
+            {sortedIngredientContributions.map(({ item, value }) => (
+              <div
+                key={item.ingredientId}
+                className={styles.ingredientContributionCard}
+              >
+                <p className={styles.ingredientContributionName}>
+                  {item.name}
+                </p>
 
-              return (
-                <div
-                  key={item.ingredientId}
-                  className={styles.ingredientContributionCard}
-                >
-                  <p className={styles.ingredientContributionName}>
-                    {item.name}
-                  </p>
+                <p className={styles.ingredientContributionAmount}>
+                  {value.amount.toFixed(2)} {value.unit}
+                </p>
 
-                  <p className={styles.ingredientContributionAmount}>
-                    {value.amount.toFixed(2)} {value.unit}
-                  </p>
-
-                  <p className={styles.ingredientContributionPercent}>
-                    {value.percent.toFixed(1)}%
-                  </p>
-                </div>
-              )
-            })}
+                <p className={styles.ingredientContributionPercent}>
+                  {value.percent.toFixed(1)}%
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+        </div>
+      )}
+
 
     </>
   )
