@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from '../../context/LanguageContext'
 import { ingredientService, type Ingredient } from '../../services/ingredientService'
+
 import {
   recipeService,
   type Recipe,
@@ -24,6 +25,7 @@ import {
 } from '../components/recipes/RecipeDonutChart'
 
 const CHART_COLORS = RECIPE_CHART_COLORS
+
 type MainNutrientKey = 'protein' | 'fat' | 'carbs'
 
 type IngredientContribution = {
@@ -73,7 +75,6 @@ function buildIngredientContributions(
     }]
   })
 }
-
 function LineChart({
   data,
   lower,
@@ -188,8 +189,8 @@ function CalculationSections({
   const nutrients = result.nutrients ?? []
   const minerals = result.minerals ?? []
   const vitamins = result.vitamins ?? []
-  const ingredientContributions = buildIngredientContributions(result, ingredients)
   const digestion = result.digestion
+  const ingredientContributions = buildIngredientContributions(result, ingredients)
   const tabData = digestion ? {
     protein: {
       curve: digestion.protein ?? [],
@@ -314,30 +315,7 @@ function CalculationSections({
         </div>
       )}
 
-      {(ingredientContributions.length > 0) && (
-        <div className={styles.ingredientContributions}>
-          <p className={styles.sectionTitle}>Вклад ингредиентов в нутриенты</p>
-          {ingredientContributions.map(item => (
-            <div key={item.ingredientId} className={styles.ingredientContributionBlock}>
-              <p className={styles.ingredientContributionName}>{item.name}</p>
-              <p className={styles.ingredientContributionServing}>
-                Суточная порция: {item.servingGrams.toFixed(2)} г
-              </p>
-              <div className={styles.ingredientContributionValues}>
-                {item.values.map(value => (
-                  <div key={value.key} className={styles.ingredientContributionValue}>
-                    <span>{value.label}</span>
-                    <span>{value.amount.toFixed(2)} {value.unit}</span>
-                    <span>{value.percent.toFixed(1)}% от общего количества</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
- {(nutrients.length > 0 || minerals.length > 0 || vitamins.length > 0) && (
+      {(nutrients.length > 0 || minerals.length > 0 || vitamins.length > 0) && (
         <div className={`${styles.card} ${styles.nutrientsCard}`}>
           <p className={styles.sectionTitle}>Содержание нутриентов</p>
           {nutrients.length > 0 && (
@@ -413,6 +391,49 @@ function CalculationSections({
           </div>
         </div>
       )}
+
+      {ingredientContributions.length > 0 && (
+        <div className={styles.ingredientContributions}>
+          <p className={styles.digestionTitle}>
+            Вклад ингредиентов в{' '}
+            {activeTab === 'protein'
+              ? 'белок'
+              : activeTab === 'fat'
+                ? 'жиры'
+                : 'углеводы'}
+          </p>
+
+          <div className={styles.ingredientContributionGrid}>
+            {ingredientContributions.map(item => {
+              const value = item.values.find(
+                nutrient => nutrient.key === activeTab
+              )
+
+              if (!value) return null
+
+              return (
+                <div
+                  key={item.ingredientId}
+                  className={styles.ingredientContributionCard}
+                >
+                  <p className={styles.ingredientContributionName}>
+                    {item.name}
+                  </p>
+
+                  <p className={styles.ingredientContributionAmount}>
+                    {value.amount.toFixed(2)} {value.unit}
+                  </p>
+
+                  <p className={styles.ingredientContributionPercent}>
+                    {value.percent.toFixed(1)}%
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
     </>
   )
 }
@@ -428,6 +449,7 @@ export function RecipeProfilePage() {
   const fromTab = (location.state as { fromTab?: string } | null)?.fromTab
   const [recipe, setRecipe] = useState<Recipe | null>(null)
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'protein' | 'fat' | 'carbs'>('protein')
@@ -445,6 +467,7 @@ export function RecipeProfilePage() {
     setLoading(true)
     setError('')
     ingredientService.list().then(setIngredients).catch(() => setIngredients([]))
+    
     recipeService.get(recipeId)
       .then(data => {
         if (!cancelled) setRecipe(data)
@@ -644,8 +667,8 @@ export function RecipeProfilePage() {
         <CalculationSections
           result={calculationResult}
           activeTab={activeTab}
-          ingredients={ingredients}
           onTabChange={setActiveTab}
+          ingredients={ingredients}
         />
       ) : (
         <DraftComposition recipe={recipe} />
