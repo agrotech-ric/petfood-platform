@@ -93,6 +93,14 @@
 .card,
 .chartCard,
 .metricCard,
+.digestionCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  box-shadow: 0 2px 5px var(--color-shadow);
+  box-sizing: border-box;
+}
+
 .ingredientContributions {
   width: 100%;
   margin: 0 0 32px;
@@ -146,14 +154,6 @@
 .ingredientContributionValue span:first-child {
   color: var(--color-text);
   font-weight: 700;
-}
-
-
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 7px;
-  box-shadow: 0 2px 5px var(--color-shadow);
-  box-sizing: border-box;
 }
 
 .card {
