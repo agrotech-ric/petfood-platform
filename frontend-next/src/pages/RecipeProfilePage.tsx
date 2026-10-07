@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from '../../context/LanguageContext'
+import { ingredientService, type Ingredient } from '../../services/ingredientService'
 import {
   recipeService,
   type Recipe,
@@ -23,6 +24,55 @@ import {
 } from '../components/recipes/RecipeDonutChart'
 
 const CHART_COLORS = RECIPE_CHART_COLORS
+type MainNutrientKey = 'protein' | 'fat' | 'carbs'
+
+type IngredientContribution = {
+  ingredientId: number
+  name: string
+  servingGrams: number
+  values: Array<{ key: MainNutrientKey; label: string; amount: number; percent: number; unit: string }>
+}
+
+function buildIngredientContributions(
+  result: RecipeCalculationResult,
+  ingredients: Ingredient[],
+): IngredientContribution[] {
+  const ingredientsById = new Map(ingredients.map(item => [item.id, item]))
+  const dailyNorm = Number(result.dailyNorm ?? 0)
+  const totals = {
+    protein: Number(result.nutritionPer100?.protein ?? 0) * dailyNorm / 100,
+    fat: Number(result.nutritionPer100?.fat ?? 0) * dailyNorm / 100,
+    carbs: Number(result.nutritionPer100?.carbs ?? 0) * dailyNorm / 100,
+  }
+  const definitions: Array<{ key: MainNutrientKey; label: string; field: 'protein' | 'fat' | 'carbs' }> = [
+    { key: 'protein', label: 'Белки', field: 'protein' },
+    { key: 'fat', label: 'Жиры', field: 'fat' },
+    { key: 'carbs', label: 'Углеводы', field: 'carbs' },
+  ]
+
+  return (result.composition ?? []).flatMap(item => {
+    if (item.ingredientId == null) return []
+    const ingredient = ingredientsById.get(item.ingredientId)
+    if (!ingredient) return []
+    const servingGrams = Number(item.grams ?? 0)
+    return [{
+      ingredientId: ingredient.id,
+      name: ingredient.subtype ? `${ingredient.name}, ${ingredient.subtype}` : ingredient.name,
+      servingGrams,
+      values: definitions.map(definition => {
+        const amount = servingGrams * Number(ingredient[definition.field] ?? 0) / 100
+        const total = totals[definition.key]
+        return {
+          key: definition.key,
+          label: definition.label,
+          amount,
+          percent: total > 0 ? amount / total * 100 : 0,
+          unit: 'г',
+        }
+      }),
+    }]
+  })
+}
 
 function LineChart({
   data,
@@ -125,10 +175,12 @@ function CalculationSections({
   result,
   activeTab,
   onTabChange,
+  ingredients,
 }: {
   result: RecipeCalculationResult
   activeTab: 'protein' | 'fat' | 'carbs'
   onTabChange: (tab: 'protein' | 'fat' | 'carbs') => void
+  ingredients: Ingredient[]
 }) {
   const { t } = useTranslation()
   const composition = result.composition ?? []
@@ -136,6 +188,7 @@ function CalculationSections({
   const nutrients = result.nutrients ?? []
   const minerals = result.minerals ?? []
   const vitamins = result.vitamins ?? []
+  const ingredientContributions = buildIngredientContributions(result, ingredients)
   const digestion = result.digestion
   const tabData = digestion ? {
     protein: {
@@ -261,7 +314,30 @@ function CalculationSections({
         </div>
       )}
 
-      {(nutrients.length > 0 || minerals.length > 0 || vitamins.length > 0) && (
+      {(ingredientContributions.length > 0) && (
+        <div className={styles.ingredientContributions}>
+          <p className={styles.sectionTitle}>Вклад ингредиентов в нутриенты</p>
+          {ingredientContributions.map(item => (
+            <div key={item.ingredientId} className={styles.ingredientContributionBlock}>
+              <p className={styles.ingredientContributionName}>{item.name}</p>
+              <p className={styles.ingredientContributionServing}>
+                Суточная порция: {item.servingGrams.toFixed(2)} г
+              </p>
+              <div className={styles.ingredientContributionValues}>
+                {item.values.map(value => (
+                  <div key={value.key} className={styles.ingredientContributionValue}>
+                    <span>{value.label}</span>
+                    <span>{value.amount.toFixed(2)} {value.unit}</span>
+                    <span>{value.percent.toFixed(1)}% от общего количества</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+
         <div className={`${styles.card} ${styles.nutrientsCard}`}>
           <p className={styles.sectionTitle}>Содержание нутриентов</p>
           {nutrients.length > 0 && (
@@ -351,6 +427,7 @@ export function RecipeProfilePage() {
   const originPetId = (location.state as { petId?: string } | null)?.petId
   const fromTab = (location.state as { fromTab?: string } | null)?.fromTab
   const [recipe, setRecipe] = useState<Recipe | null>(null)
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'protein' | 'fat' | 'carbs'>('protein')
@@ -367,6 +444,7 @@ export function RecipeProfilePage() {
 
     setLoading(true)
     setError('')
+    ingredientService.list().then(setIngredients).catch(() => setIngredients([]))
     recipeService.get(recipeId)
       .then(data => {
         if (!cancelled) setRecipe(data)
@@ -566,6 +644,7 @@ export function RecipeProfilePage() {
         <CalculationSections
           result={calculationResult}
           activeTab={activeTab}
+          ingredients={ingredients}
           onTabChange={setActiveTab}
         />
       ) : (
