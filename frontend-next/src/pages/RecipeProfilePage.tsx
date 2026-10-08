@@ -197,7 +197,7 @@ function CalculationSections({
       nutrient => nutrient.key === activeTab
     )
 
-    if (!value || value.amount <= 0) {
+    if (!value || value.amount <= 1) {
       return null
     }
 
