@@ -197,7 +197,7 @@ function CalculationSections({
       nutrient => nutrient.key === activeTab
     )
 
-    if (!value || value.amount <= 1) {
+    if (!value || Math.round(value.amount) <= 1) {
       return null
     }
 
@@ -411,7 +411,7 @@ function CalculationSections({
 
       {ingredientContributions.length > 0 && (
         <div className={styles.ingredientContributions}>
-          <p className={styles.chartLabel} >
+          <p className={styles.chartLabel} style={{ fontSize: '18px', color: 'var(--color-accent-alt)' }}>
             Вклад ингредиентов в{' '}
             {activeTab === 'protein'
               ? 'белок'
