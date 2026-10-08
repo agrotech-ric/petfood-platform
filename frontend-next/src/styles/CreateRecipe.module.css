@@ -631,6 +631,20 @@
   flex-wrap: wrap;
 }
 
+.selectedChipContraindicated {
+  border-color: #d93025;
+  background: #d93025;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgb(217 48 37 / 18%);
+}
+
+.contraindicatedIngredientWarning {
+  margin: 8px 0 0;
+  color: #d93025;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .selectedChipRemove {
   background: none;
   border: none;

@@ -60,6 +60,7 @@ export type RecipeOptimizationRequest = {
   age_metric: 'years' | 'months'
   breed: string
   reproductive_status?: 'none' | 'pregnancy' | 'lactation'
+  excluded_ingredients?: string[]
   ingredients: string[]
   ingredient_ranges: Array<{
     ingredient: string
