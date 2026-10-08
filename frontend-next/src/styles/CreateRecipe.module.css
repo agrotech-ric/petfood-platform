@@ -588,18 +588,17 @@
 
 .ingredientTag:hover { border-color: var(--color-accent-alt); }
 
-.ingredientTagActive {
-  background: var(--color-accent-alt);
-  border-color: var(--color-accent-alt);
-  color: #fff;
-}
-
 .ingredientTagContraindicated {
   border-color: var(--color-border);
   background: #e5e5e5;
   color: #777;
 }
 
+.ingredientTagActive {
+  background: var(--color-accent-alt);
+  border-color: var(--color-accent-alt);
+  color: #fff;
+}
 
 /* ── Step 2: selected ingredients ──────────────────── */
 .selectedBox {
