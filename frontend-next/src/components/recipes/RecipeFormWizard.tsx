@@ -660,7 +660,7 @@ function EditCalculationResult({
   const sortedIngredientContributions = ingredientContributions
   .map(item => {
     const value = item.values.find(
-      nutrient => nutrient.key === activeTab
+      nutrient => nutrient.key === activeDigestionTab
     )
 
     if (!value || Math.round(value.amount) <= 1) {
@@ -868,9 +868,9 @@ function EditCalculationResult({
         <div className={styles.ingredientContributions}>
           <p className={styles.chartLabel} style={{ fontSize: '18px', color: 'var(--color-accent-alt)' }}>
             Вклад ингредиентов в{' '}
-            {activeTab === 'protein'
+            {activeDigestionTab === 'protein'
               ? 'белок'
-              : activeTab === 'fat'
+              : activeDigestionTab === 'fat'
                 ? 'жиры'
                 : 'углеводы'}
           </p>
