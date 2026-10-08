@@ -2065,6 +2065,10 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                         <button
                           key={ingredient.id}
                           className={`${styles.ingredientTag} ${
+                            isContraindicatedIngredient(ingredient, excludedIngredients)
+                              ? styles.ingredientTagContraindicated
+                              : ''
+                          } ${
                             form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagActive : ''
                           }`}
                           onClick={() => toggleIngredient(ingredient.id)}
@@ -2103,7 +2107,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 const ingredient = references.ingredients.find(item => item.id === ingredientId)
                 return ingredient != null && isContraindicatedIngredient(ingredient, excludedIngredients)
               }) && (
-                <p className={styles.contraindicatedIngredientWarning}>The list contains a contraindicated ingredient. Please be careful.</p>
+                <p className={styles.contraindicatedIngredientWarning}>В списке есть противопоказанный ингредиент. Пожалуйста, будьте осторожны.</p>
               )}
 
             </div>
