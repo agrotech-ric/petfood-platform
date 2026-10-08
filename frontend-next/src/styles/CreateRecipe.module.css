@@ -994,7 +994,62 @@
 .forecastPercentLow { color: var(--color-accent-alt); }
 .forecastPercentMid { color: #62c554; }
 
-/* ── Responsive ──────────────────────────────────────── */
+.ingredientContributions {
+  width: 100%;
+  margin: 0 0 24px;
+}
+
+.ingredientContributionBlock {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: var(--color-surface);
+}
+
+.ingredientContributionName,
+.ingredientContributionServing {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.ingredientContributionName {
+  color: var(--color-accent-alt);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ingredientContributionServing {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.ingredientContributionValues {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ingredientContributionValue {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.ingredientContributionValue span:first-child {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+
 @media (max-width: 760px) {
   .twoPanel,
   .chartsRow,
