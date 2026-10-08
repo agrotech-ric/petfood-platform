@@ -594,6 +594,13 @@
   color: #fff;
 }
 
+.ingredientTagContraindicated {
+  border-color: var(--color-border);
+  background: #e5e5e5;
+  color: #777;
+}
+
+
 /* ── Step 2: selected ingredients ──────────────────── */
 .selectedBox {
   border: 1px solid var(--color-border);
