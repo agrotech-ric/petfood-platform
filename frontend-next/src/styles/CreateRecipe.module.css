@@ -594,6 +594,19 @@
   color: #777;
 }
 
+.ingredientTagContraindicatedSelected {
+  border-color: #d93025;
+  background: #d93025;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgb(217 48 37 / 18%);
+}
+
+.ingredientTagContraindicatedSelected:hover {
+  border-color: #b3261e;
+  background: #b3261e;
+  color: #fff;
+}
+
 .ingredientTagActive {
   background: var(--color-accent-alt);
   border-color: var(--color-accent-alt);
