@@ -78,7 +78,7 @@ class DisorderRequest(BaseModel):
     weight: float = Field(..., gt=0, description="Dog weight in kg")
     target_kcal: Optional[float] = Field(None, description="Target daily kcal (optional, will be calculated if not provided)")
     reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
-
+    excluded_ingredients: List[str] = Field(default_factory=list, description="Ingredients excluded by pet contraindications")
 
 
 class IngredientRange(BaseModel):
