@@ -107,6 +107,7 @@ class OptimizeRecipeRequest(BaseModel):
     age_metric: AgeMetricType = Field(AgeMetricType.YEARS, description="Age measurement unit")
     breed: str = Field(..., description="Dog breed name")
     reproductive_status: Optional[ReproductiveStatus] = Field(None, description="Reproductive status (female only)")
+    excluded_ingredients: List[str] = Field(default_factory=list, description="Ingredients excluded by pet contraindications")
     ingredients: List[str] = Field(..., min_items=1, description="List of ingredient names")
     ingredient_ranges: List[IngredientRange] = Field(..., description="Constraints for each ingredient")
     nutrient_ranges: List[NutrientRange] = Field(..., description="Nutritional constraints")

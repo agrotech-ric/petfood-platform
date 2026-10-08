@@ -280,6 +280,11 @@ function normalizeLabel(value: string) {
     .trim()
 }
 
+function isContraindicatedIngredient(ingredient: Ingredient, excludedIngredients: string[]) {
+  const names = [ingredientDisplayName(ingredient), ingredient.name].map(normalizeLabel)
+  return excludedIngredients.some(excluded => names.includes(normalizeLabel(excluded)))
+}
+
 const RECOMMENDER_MAXIMIZE_KEYS: Record<string, string> = {
   moisture_per: 'moisture',
   protein_per: 'protein',
@@ -940,6 +945,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [loadingDisorders, setLoadingDisorders] = useState(false)
   const [activeDigestionTab, setActiveDigestionTab] = useState<'protein' | 'fat' | 'carbs'>('protein')
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [excludedIngredients, setExcludedIngredients] = useState<string[]>([])
 
   const calculationInputRevision = useRef(0)
   const revisionRef = useRef(0)
@@ -1008,6 +1014,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           recipe,
           pet,
           records,
+          contraindications,
         ] = await Promise.all([
           safe(ingredientService.list()),
           dogSpecies ? safe(referenceService.fetchBreedsBySpeciesId(dogSpecies.id)) : Promise.resolve([]),
@@ -1021,6 +1028,9 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           originPetId == null
             ? Promise.resolve([])
             : petService.getHealthRecords(originPetId).catch(() => []),
+          originPetId == null
+            ? Promise.resolve({ ingredients: [] as string[] })
+            : petService.getContraindications(originPetId).catch(() => ({ ingredients: [] as string[] })),
         ])
 
         if (cancelled) return
@@ -1035,6 +1045,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           symptoms,
         }
         setReferences(loadedReferences)
+        setExcludedIngredients(contraindications.ingredients ?? [])
 
         let next = recipe ? stateFromRecipe(recipe) : createInitialState()
         if (!recipe && pet) next = prefillFromPet(next, pet, records, loadedReferences)
@@ -1571,6 +1582,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         age_metric: dog.age_metric,
         breed: dog.breed,
         reproductive_status: dog.reproductive_status,
+        excluded_ingredients: excludedIngredients,
         ingredients: selectedIngredients.map(toRecommenderIngredientName),
         ingredient_ranges: selectedIngredients.map(ingredient => {
           const range = form.ingredientRanges[ingredient.id] ?? { min: 0, max: 100 }
@@ -2071,7 +2083,10 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 {form.ingredientIds.map(ingredientId => {
                   const ingredient = references.ingredients.find(item => item.id === ingredientId)
                   return (
-                    <span key={ingredientId} className={styles.selectedChip}>
+                    <span
+                      key={ingredientId}
+                      className={`${styles.selectedChip} ${ingredient && isContraindicatedIngredient(ingredient, excludedIngredients) ? styles.selectedChipContraindicated : ''}`}
+                    >
                       {ingredient ? ingredientDisplayName(ingredient) : `ID ${ingredientId}`}
                       <button className={styles.selectedChipRemove} onClick={() => toggleIngredient(ingredientId)}>×</button>
                     </span>
@@ -2083,6 +2098,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   Очистить все
                 </button>
               )}
+              {form.ingredientIds.some(ingredientId => {
+                const ingredient = references.ingredients.find(item => item.id === ingredientId)
+                return ingredient != null && isContraindicatedIngredient(ingredient, excludedIngredients)
+              }) && (
+                <p className={styles.contraindicatedIngredientWarning}>The list contains a contraindicated ingredient. Please be careful.</p>
+              )}
+
             </div>
           </div>
 
