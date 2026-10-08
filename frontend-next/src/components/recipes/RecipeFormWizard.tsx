@@ -2067,12 +2067,12 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                           
                           className={`${styles.ingredientTag} ${
                             isContraindicatedIngredient(ingredient, excludedIngredients)
-                              ? styles.ingredientTagContraindicated
-                              : ''
-                          } ${
-                            form.ingredientIds.includes(ingredient.id) ||
-                                isContraindicatedIngredient(ingredient, excludedIngredients)
-                                ? styles.ingredientTagActive : ''
+                              ? form.ingredientIds.includes(ingredient.id)
+                                ? styles.ingredientTagContraindicatedSelected
+                                : styles.ingredientTagContraindicated
+                              : form.ingredientIds.includes(ingredient.id)
+                                ? styles.ingredientTagActive
+                                : ''
                           }`}
                           onClick={() => toggleIngredient(ingredient.id)}
                         >
