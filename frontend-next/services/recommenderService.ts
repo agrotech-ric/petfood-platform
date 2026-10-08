@@ -286,6 +286,7 @@ export const recommenderService = {
     weight: number
     target_kcal?: number
     reproductive_status?: 'none' | 'pregnancy' | 'lactation'
+    excluded_ingredients?: string[]
   }) =>
     apiClient.post<DisorderRecommendation>(
       '/recommender/recommendations/disorder',

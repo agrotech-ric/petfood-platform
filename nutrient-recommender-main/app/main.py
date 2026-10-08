@@ -452,12 +452,17 @@ async def get_disorder_recommendations(request: DisorderRequest):
 
         excluded = {str(name).strip().casefold() for name in request.excluded_ingredients if str(name).strip()}
         if excluded:
-            excluded_full_names = set(ingredients_df.loc[ingredients_df['ingredient_format_cat'].astype(str)
-                                                                     .str.strip().str.casefold()
-                                                                     .isin(excluded), 'full_name_ingredient'].astype(str).str.strip().str.casefold())
-            ingredients_df = ingredients_df.loc[~ingredients_df['ingredient_format_cat'].astype(str).str.strip().str.casefold().isin(excluded)].copy()
-            ingredients = [  name for name in ingredients  if str(name).strip().casefold() not in excluded_full_names]
-        
+            excluded_full_names = set(ingredients_df.loc[
+                ingredients_df['ingredient_format_cat'].astype(str).str.strip().str.casefold().isin(excluded),
+                'full_name_ingredient',
+            ].astype(str).str.strip().str.casefold())
+            ingredients_df = ingredients_df.loc[
+                ~ingredients_df['ingredient_format_cat'].astype(str).str.strip().str.casefold().isin(excluded)
+            ].copy()
+            ingredients = [
+                name for name in ingredients
+                if str(name).strip().casefold() not in excluded_full_names
+            ]
         finish_ingr_list, finish_ingr_list_norm_name, maxim_main_nutr = define_ingredients(high_nutrients, low_nutrients, ingredients, ingredients_df, group_results, merge_tab_df)
         
         nutr_ranges = {}

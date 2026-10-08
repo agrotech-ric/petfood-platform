@@ -1447,6 +1447,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             weight: dog.weight,
             target_kcal: targetKcal,
             reproductive_status: dog.reproductive_status ?? 'none',
+            excluded_ingredients: excludedIngredients,
           })
           const rangesByName = new Map(
             Object.entries(recommendation.ingr_ranges).map(([name, range]) => [
