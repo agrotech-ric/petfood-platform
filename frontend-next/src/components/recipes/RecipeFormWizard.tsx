@@ -2064,12 +2064,15 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                       {group.ingredients.map(ingredient => (
                         <button
                           key={ingredient.id}
+                          
                           className={`${styles.ingredientTag} ${
                             isContraindicatedIngredient(ingredient, excludedIngredients)
                               ? styles.ingredientTagContraindicated
                               : ''
                           } ${
-                            form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagActive : ''
+                            form.ingredientIds.includes(ingredient.id) ||
+                                isContraindicatedIngredient(ingredient, excludedIngredients)
+                                ? styles.ingredientTagActive : ''
                           }`}
                           onClick={() => toggleIngredient(ingredient.id)}
                         >
