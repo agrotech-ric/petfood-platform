@@ -994,60 +994,53 @@
 .forecastPercentLow { color: var(--color-accent-alt); }
 .forecastPercentMid { color: #62c554; }
 
+
 .ingredientContributions {
-  width: 100%;
-  margin: 0 0 24px;
+  margin-top: 24px;
 }
 
-.ingredientContributionBlock {
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 16px 20px;
-  box-sizing: border-box;
-  border: 1px solid var(--color-border);
-  border-radius: 7px;
-  background: var(--color-surface);
+.ingredientContributionGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.ingredientContributionName,
-.ingredientContributionServing {
-  margin: 0;
-  color: var(--color-text);
+.ingredientContributionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  justify-content: left;
+  min-height: 90px;
+  padding: 15px 20px 15px;
+  border: 1px solid;
+  border-color: var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  font-size: 14px;
+  box-shadow: 0 2px 5px var(--color-shadow);
 }
 
 .ingredientContributionName {
-  color: var(--color-accent-alt);
   font-size: 14px;
-  font-weight: 700;
+  margin: 0 0 8px;
+  font-weight: 600;
 }
 
-.ingredientContributionServing {
-  margin-top: 4px;
+.ingredientContributionAmount {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color:var(--color-accent-alt);
+}
+
+.ingredientContributionPercent {
+  margin: 0;
+  font-size: 14px;
   color: var(--color-text-muted);
-  font-size: 11px;
 }
 
-.ingredientContributionValues {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.ingredientContributionValue {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding-top: 8px;
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
-.ingredientContributionValue span:first-child {
-  color: var(--color-text);
-  font-weight: 700;
-}
 
 
 @media (max-width: 760px) {

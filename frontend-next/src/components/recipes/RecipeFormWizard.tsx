@@ -531,15 +531,14 @@ function toPayload(
 }
 
 const RESULT_COLORS = RECIPE_CHART_COLORS
-
 type MainNutrientKey = 'protein' | 'fat' | 'carbs'
+
 type IngredientContribution = {
   ingredientId: number
   name: string
   servingGrams: number
   values: Array<{ key: MainNutrientKey; label: string; amount: number; percent: number; unit: string }>
 }
-
 function buildIngredientContributions(
   result: RecipeCalculationResult,
   ingredients: Ingredient[],
@@ -580,9 +579,6 @@ function buildIngredientContributions(
     }]
   })
 }
-
-
-
 function LineChart({
   data,
   lower,
@@ -646,6 +642,7 @@ function EditCalculationResult({
   result,
   activeDigestionTab = 'protein',
   onDigestionTabChange,
+  ingredients,
 }: {
   result: RecipeCalculationResult
   activeDigestionTab?: 'protein' | 'fat' | 'carbs'
@@ -658,8 +655,26 @@ function EditCalculationResult({
   const nutrients = result.nutrients ?? []
   const minerals = result.minerals ?? []
   const vitamins = result.vitamins ?? []
-  const ingredientContributions = buildIngredientContributions(result, ingredients)
   const digestion = result.digestion
+  const ingredientContributions = buildIngredientContributions(result, ingredients)
+  const sortedIngredientContributions = ingredientContributions
+  .map(item => {
+    const value = item.values.find(
+      nutrient => nutrient.key === activeTab
+    )
+
+    if (!value || Math.round(value.amount) <= 1) {
+      return null
+    }
+
+    return {
+      item,
+      value,
+    }
+  })
+  .filter(entry => entry !== null)
+  .sort((a, b) => b.value.amount - a.value.amount)
+
   const tabData = digestion ? {
     protein: {
       curve: digestion.protein ?? [],
@@ -798,27 +813,6 @@ function EditCalculationResult({
       )}
 
 
-      {ingredientContributions.length > 0 && (
-        <div className={styles.ingredientContributions}>
-          <p className={styles.sectionTitle}>Вклад ингредиентов в нутриенты</p>
-          {ingredientContributions.map(item => (
-            <div key={item.ingredientId} className={styles.ingredientContributionBlock}>
-              <p className={styles.ingredientContributionName}>{item.name}</p>
-              <p className={styles.ingredientContributionServing}>Суточная порция: {item.servingGrams.toFixed(2)} г</p>
-              <div className={styles.ingredientContributionValues}>
-                {item.values.map(value => (
-                  <div key={value.key} className={styles.ingredientContributionValue}>
-                    <span>{value.label}</span>
-                    <span>{value.amount.toFixed(2)} {value.unit}</span>
-                    <span>{value.percent.toFixed(1)}% от общего количества</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {tabData && (tabData.protein.curve.length > 0 || tabData.fat.curve.length > 0 || tabData.carbs.curve.length > 0) && (
               <div className={styles.digestionCard}>
                 <p className={styles.digestionTitle}>Анализ переваривания</p>
@@ -869,6 +863,41 @@ function EditCalculationResult({
                     </table>
                   </div>
                 </div>
+
+                {ingredientContributions.length > 0 && (
+        <div className={styles.ingredientContributions}>
+          <p className={styles.chartLabel} style={{ fontSize: '18px', color: 'var(--color-accent-alt)' }}>
+            Вклад ингредиентов в{' '}
+            {activeTab === 'protein'
+              ? 'белок'
+              : activeTab === 'fat'
+                ? 'жиры'
+                : 'углеводы'}
+          </p>
+
+          <div className={styles.ingredientContributionGrid}>
+
+            {sortedIngredientContributions.map(({ item, value }) => (
+              <div
+                key={item.ingredientId}
+                className={styles.ingredientContributionCard}
+              >
+                <p className={styles.ingredientContributionName}>
+                  {item.name}
+                </p>
+
+                <p className={styles.ingredientContributionAmount}>
+                  {value.amount.toFixed(2)} {value.unit}
+                </p>
+
+                <p className={styles.ingredientContributionPercent}>
+                  {value.percent.toFixed(1)}%
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
               </div>
             )}    
     </div>
@@ -910,6 +939,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [availableDisorders, setAvailableDisorders] = useState<string[]>([])
   const [loadingDisorders, setLoadingDisorders] = useState(false)
   const [activeDigestionTab, setActiveDigestionTab] = useState<'protein' | 'fat' | 'carbs'>('protein')
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
+
   const calculationInputRevision = useRef(0)
   const revisionRef = useRef(0)
   const persistedRevisionRef = useRef(0)
@@ -957,6 +988,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     const load = async () => {
       setLoading(true)
       setError('')
+      ingredientService.list().then(setIngredients).catch(() => setIngredients([]))
+    
       try {
         const species = await safe(referenceService.fetchSpecies())
         const dogSpecies = species.find(item => {
@@ -2114,8 +2147,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         <EditCalculationResult 
           result={calculationResult}
           activeDigestionTab={activeDigestionTab}
-          ingredients={references.ingredients}
           onDigestionTabChange={setActiveDigestionTab}
+          ingredients={ingredients}
         />
       )}
     </div>
