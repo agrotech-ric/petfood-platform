@@ -12,6 +12,8 @@ Platform users currently work with pets without a dedicated owner record or a du
 - Show the linked owner on authenticated pet pages and let users select an existing owner or create a new one while creating or editing a pet.
 - Use one canonical `/dashboard` for the single platform-account experience; legacy `USER` and `VET` claims remain compatibility aliases and SHALL NOT produce separate dashboards.
 - Reuse the current pet profile, pet cards, forms, API client, theme, and localization patterns instead of introducing a parallel UI system.
+- Make the owner directory reuse the pet dashboard's header, search, content-card, card-grid, spacing, and responsive visual structure, and align the owner profile's top edge with other profile pages.
+- Accept a Telegram username or a phone-number contact in owner records so existing Telegram-by-number workflows are not rejected.
 - Preserve the existing pet `owner_id` account authorization contract and store the veterinarian-managed owner relationship separately.
 - Non-goals include owner registration or login, account-profile linkage, email/SMS/Telegram delivery, scheduling workers, provider integrations, and redesigning unrelated pet-health or recipe workflows.
 

@@ -3,8 +3,8 @@
   max-width: 1176px;
   min-width: 0;
   margin: 0 auto;
-  padding: 24px;
-  box-sizing: content-box;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .header,
@@ -253,7 +253,7 @@
 .state { padding: 40px; text-align: center; }
 
 @media (max-width: 800px) {
-  .page { padding: 12px; box-sizing: border-box; }
+  .page { padding: 0; }
   .header { grid-template-columns: 1fr; gap: 14px; text-align: center; }
   .header > button { justify-self: center; }
   .actions { justify-content: center; flex-wrap: wrap; }

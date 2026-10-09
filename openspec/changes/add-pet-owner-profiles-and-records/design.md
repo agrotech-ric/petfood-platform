@@ -75,6 +75,10 @@ New owner routes use the authenticated application shell for both standard USER 
 
 The owner page reuses the pet profile header/card/tab layout and extracts the existing pet-card presentation where practical. The owner editor reuses current inputs, photo controls, buttons, confirmations, and responsive form patterns. Record create and edit share one form component; record detail uses the same layout in read-only mode until the missing sixth design is supplied.
 
+The owner directory reuses the pet dashboard's page-width, top-bar, primary action, search control, content card, responsive grid, loading/error/empty states, and card interaction patterns. Owner cards adapt the pet-card metadata area to show owner identity, primary contact, and linked-pet count. The owner profile wrapper must not introduce vertical padding beyond the shared application layout, so its header aligns with the pet profile header.
+
+An owner's Telegram contact may be either an `@username` or a phone number accepted by the owner phone format. The backend remains authoritative and the frontend describes both accepted formats without silently discarding a supplied value.
+
 `ownerService.ts` owns owner and record contracts. `petService.ts` gains `petOwnerId`, owner summary, and association operations. The pet profile shows a compact owner row directly below the description to authenticated platform users. The pet edit page uses a separate owner-information card below the pet fields: selecting an owner populates editable contact fields, clearing the selection supports detachment, and entering details without a selection creates and associates a new owner on save. The pet create flow retains searchable owner selection and its create-owner return route. The owner profile mirrors the pet profile's page width, header, identity-card scale, typography, radii, spacing, controls, tabs, and theme colors. Every visible string is added to `ru`, `en`, and `kz`, and all styling uses existing theme variables.
 
 ### 8. Privacy and authorization are enforced in pets-service
@@ -93,6 +97,7 @@ Every owner and owner-record endpoint requires an authenticated standard USER or
 - [Detaching leaves a pet without a CRM owner] -> Show an unassigned state and keep search/assignment readily available to authenticated platform users.
 - [Owner deletion removes archived notes] -> Require confirmation and block deletion while pets or active notes remain.
 - [Static desktop designs omit mobile/dark/error states] -> Derive them from existing responsive and theme conventions and include manual verification.
+- [Telegram accounts may be identified by username or phone number] -> Validate both explicit formats and reject unrelated free text.
 
 ## Migration Plan
 

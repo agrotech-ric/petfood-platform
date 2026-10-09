@@ -1,0 +1,18 @@
+.createLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.avatarPlaceholder svg {
+  width: 45%;
+  height: 45%;
+  color: var(--color-icon-muted);
+  opacity: 0.72;
+}
+
+.error {
+  color: var(--color-danger);
+}
