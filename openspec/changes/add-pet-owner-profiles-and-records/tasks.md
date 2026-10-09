@@ -52,3 +52,9 @@
 - [x] 7.4 Add or update focused backend/frontend tests for unified role compatibility, canonical routing, owner visibility, and public privacy.
 - [x] 7.5 Run relevant frontend/backend checks, rebuild affected sandbox services, inspect logs, and browser-smoke-test USER and legacy VET login flows plus owner profile visual parity.
 - [x] 7.6 Prevent nullable base pet favorite metadata from being copied into the primitive search-list favorite field, and cover non-empty pet search with a regression test.
+
+## 8. Owner Dashboard Refinement and Telegram Contact Compatibility
+
+- [x] 8.1 Rebuild the owner directory from the existing pet dashboard layout and responsive card patterns, with localized loading, error, empty, search, and create-owner states.
+- [x] 8.2 Remove owner-profile-only top spacing so its header aligns with the pet profile and other application pages.
+- [x] 8.3 Accept and test either an `@username` or a valid phone number as an owner Telegram contact, including creation from pet editing, then run focused production-target checks.

@@ -13,7 +13,12 @@ public class PetOwnerRequest {
     @Size(max = 300) private String address;
     @Size(max = 32) @Pattern(regexp = "^$|^\\+?[1-9]\\d{9,14}$") private String phone;
     @Size(max = 254) @Email private String email;
-    @Size(max = 100) @Pattern(regexp = "^$|^@[A-Za-z0-9_]{5,32}$") private String telegram;
+    @Size(max = 100)
+    @Pattern(
+        regexp = "^$|^(?:@[A-Za-z0-9_]{5,32}|\\+?[1-9]\\d{9,14})$",
+        message = "must be a Telegram @username or phone number"
+    )
+    private String telegram;
     @Size(max = 512) private String avatarObjectKey;
 
     public String getFullName() { return fullName; }

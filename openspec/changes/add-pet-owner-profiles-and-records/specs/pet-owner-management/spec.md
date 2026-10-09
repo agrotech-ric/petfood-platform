@@ -68,6 +68,18 @@ The owner profile SHALL show every associated pet using the existing pet-card in
 - **WHEN** an authenticated user opens an owner with no associated pets
 - **THEN** the pets tab shows a localized empty state and actions to add or attach a pet
 
+#### Scenario: Browse the owner directory
+- **WHEN** an authenticated user opens the owners route
+- **THEN** the page reuses the pet dashboard's header, primary action, search area, content card, responsive grid, spacing, and interactive card presentation
+
+#### Scenario: Owner profile header alignment
+- **WHEN** an authenticated user opens an owner profile
+- **THEN** its page header starts at the same vertical position as the pet profile header without owner-specific top padding
+
+#### Scenario: Store Telegram by phone number
+- **WHEN** an authenticated user creates or updates an owner with a valid phone number in the Telegram field
+- **THEN** the system stores and returns that Telegram contact without validation failure
+
 ### Requirement: Owner presentation on pet screens
 The authenticated pet profile SHALL display the associated owner's identity directly below the pet description inside the pet summary card. The owner row SHALL open the complete owner profile. The authenticated pet edit form SHALL contain a separate owner-information card below the pet fields with searchable owner selection and editable full name, country, city, address, phone, email, and Telegram fields. Saving SHALL create an owner when the entered details do not reference an existing owner, update the selected owner when its details change, and associate, reassign, or detach the pet accordingly. Owner information SHALL NOT appear in anonymous shared-pet responses.
 
