@@ -79,6 +79,15 @@ public class LocalFsPetPhotoStorageService implements PetPhotoStorage {
         }
     }
 
+    @Override
+    public void delete(String objectKey) {
+        try {
+            Files.deleteIfExists(safePath(objectKey));
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to delete pet photo", ex);
+        }
+    }
+
     private Path safePath(String objectKey) {
         if (objectKey == null || objectKey.isBlank()) throw new IllegalStateException("Pet photo is unavailable");
         Path path = rootDir.resolve(objectKey).normalize();

@@ -1,8 +1,11 @@
 import styles from './RegisterPetPage.module.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { referenceService, type Breed, type Color, type ActivityType, type ReproductiveStatus, type Species, type Symptom } from '../../services/referenceService'
 import { petService } from '../../services/petService'
+import { ownerService, type PetOwner } from '../../services/ownerService'
+import { useAuth } from '../../context/AuthContext'
+import { useTranslation } from '../../context/LanguageContext'
 
 function refLabel(item: { name?: string; nameRu?: string; nameEn?: string }) {
   return item.nameRu || item.name || item.nameEn || ''
@@ -24,6 +27,10 @@ type FormErrors = Partial<Record<string, string>>
 
 export function RegisterPetPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAuth()
+  const { t } = useTranslation()
+  const routeState = location.state as { petOwnerId?: string; newOwnerId?: string; returnTo?: string } | null
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [refsLoading, setRefsLoading] = useState(true)
@@ -48,6 +55,9 @@ export function RegisterPetPage() {
   const [reproductiveStatusId, setReproductiveStatusId] = useState('')
   const [activityTypeId, setActivityTypeId] = useState('')
   const [colorId, setColorId] = useState('')
+  const [owners, setOwners] = useState<PetOwner[]>([])
+  const [petOwnerId, setPetOwnerId] = useState(routeState?.petOwnerId || routeState?.newOwnerId || '')
+  const [ownerQuery, setOwnerQuery] = useState('')
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [generalError, setGeneralError] = useState('')
@@ -84,6 +94,10 @@ export function RegisterPetPage() {
     })()
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    if (user?.role === 'USER' || user?.role === 'VET') ownerService.search().then(setOwners).catch(() => setOwners([]))
+  }, [user?.role])
 
   useEffect(() => {
     if (gender !== 'female') {
@@ -167,6 +181,7 @@ export function RegisterPetPage() {
             ? Number(reproductiveStatusId)
             : 1,
         puppiesCount: 0,
+        ...(user?.role === 'USER' || user?.role === 'VET' ? { petOwnerId: petOwnerId || null } : {}),
       }
 
       if (photo) {
@@ -189,7 +204,7 @@ export function RegisterPetPage() {
         })
       }
 
-      navigate('/dashboard')
+      navigate(routeState?.returnTo || '/dashboard')
     } catch (err) {
       setGeneralError(err instanceof Error ? err.message : 'Ошибка сохранения')
     } finally {
@@ -295,6 +310,9 @@ export function RegisterPetPage() {
               </div>
 
               <div className={styles.grid}>
+                {(user?.role === 'USER' || user?.role === 'VET') && <div className={styles.col}>
+                  <div className={styles.field}><label className={styles.label} htmlFor="pet-owner-search">{t('owner.field')}</label><input id="pet-owner-search" className={styles.input} type="search" value={ownerQuery} onChange={e => setOwnerQuery(e.target.value)} placeholder={t('owner.search')} /><select id="pet-owner" className={styles.select} value={petOwnerId} onChange={e => setPetOwnerId(e.target.value)}><option value="">{t('owner.none')}</option>{owners.filter(owner => `${owner.fullName} ${owner.phone || ''} ${owner.email || ''} ${owner.telegram || ''}`.toLowerCase().includes(ownerQuery.toLowerCase())).map(owner => <option key={owner.id} value={owner.id}>{owner.fullName || owner.id}</option>)}</select><Link to="/owners/create" state={{ returnTo: '/register-pet' }}>+ {t('owner.create')}</Link></div>
+                </div>}
                 <div className={styles.col}>
                   <div className={styles.field}>
                     <label className={styles.label} htmlFor="pet-id">ID</label>

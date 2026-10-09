@@ -47,7 +47,19 @@ export type Pet = {
   id: string
   name: string
   breedName?: string
+  petOwnerId?: string
+  petOwner?: PetOwnerSummary
   [key: string]: unknown
+}
+
+export type PetOwnerSummary = {
+  id: string
+  fullName?: string
+  phone?: string
+  email?: string
+  telegram?: string
+  avatarObjectKey?: string
+  placeholder: boolean
 }
 
 export type PetProfileData = {
@@ -73,6 +85,9 @@ export type PetProfileData = {
   updatedAt?: string
   photoObjectKey?: string
   comments?: string
+  petOwnerId?: string
+  petOwner?: PetOwnerSummary
+  favorite?: boolean
 }
 
 export type HealthRecord = {

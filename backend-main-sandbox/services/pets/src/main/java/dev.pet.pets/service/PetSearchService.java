@@ -138,7 +138,9 @@ public class PetSearchService {
 
     private PetListItemResponse toListItem(Pet pet, PetSearchRow row) {
         PetListItemResponse item = new PetListItemResponse();
-        BeanUtils.copyProperties(PetMapper.toDto(pet), item);
+        // PetResponse exposes a nullable Boolean, while the list DTO keeps a primitive boolean.
+        // The search row is the authoritative source for this field, so do not copy a null value.
+        BeanUtils.copyProperties(PetMapper.toDto(pet), item, "favorite");
         if (row != null) {
             item.setFavorite(row.isFavorite());
             item.setHasRecommendation(row.isHasRecommendation());

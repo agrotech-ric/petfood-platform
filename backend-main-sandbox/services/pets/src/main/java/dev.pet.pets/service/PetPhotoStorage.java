@@ -7,4 +7,5 @@ public interface PetPhotoStorage {
     String generateUploadUrl(String objectKey, String contentType);
     String generateDownloadUrl(String objectKey);
     StoredPhoto read(String objectKey);
+    void delete(String objectKey);
 }

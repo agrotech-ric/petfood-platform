@@ -30,6 +30,10 @@ public class Pet {
     @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pet_owner_id", foreignKey = @ForeignKey(name = "pets_pet_owner_id_fkey"))
+    private PetOwner petOwner;
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(
         name = "species_id",
@@ -155,6 +159,8 @@ public class Pet {
 
     public UUID getOwnerId() { return ownerId; }
     public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
+    public PetOwner getPetOwner() { return petOwner; }
+    public void setPetOwner(PetOwner petOwner) { this.petOwner = petOwner; }
 
     public Species getSpecies() { return species; }
     public void setSpecies(Species species) { this.species = species; }

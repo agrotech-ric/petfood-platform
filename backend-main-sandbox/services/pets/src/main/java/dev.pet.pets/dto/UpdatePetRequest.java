@@ -48,6 +48,8 @@ public class UpdatePetRequest {
     @Size(max = 2000)
     private String comments;
 
+    private UUID petOwnerId;
+
 
     public Integer getPuppiesCount() {
         return puppiesCount;
@@ -153,5 +155,8 @@ public class UpdatePetRequest {
     public void setComments(String comments) {
         this.comments = comments;
     }
+
+    public UUID getPetOwnerId() { return petOwnerId; }
+    public void setPetOwnerId(UUID petOwnerId) { this.petOwnerId = petOwnerId; }
 
 }

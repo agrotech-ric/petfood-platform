@@ -250,7 +250,7 @@ public class PetController {
     }
 
     @GetMapping("/bio/owners/{ownerId}/pets")
-    @PreAuthorize("hasRole('VET')")
+    @PreAuthorize("hasAnyRole('USER', 'VET')")
     public java.util.List<PetResponse> listOwnerPetsForVet(@PathVariable UUID ownerId) {
         return service.listOwnerPetsForVet(ownerId);
     }
@@ -274,7 +274,7 @@ public class PetController {
 
 
     @GetMapping("/health-records/all")
-    @PreAuthorize("hasRole('VET')")
+    @PreAuthorize("hasAnyRole('USER', 'VET')")
     public List<HealthRecordResponse> listAllHealthRecordsForVet(
         @AuthenticationPrincipal Jwt jwt
     ) {

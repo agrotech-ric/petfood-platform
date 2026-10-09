@@ -219,6 +219,73 @@
   margin: 0;
 }
 
+.ownerRow {
+  width: 100%;
+  margin-top: auto;
+  padding: 14px 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ownerRow:hover .ownerChevron,
+.ownerRow:focus-visible .ownerChevron {
+  transform: translateX(3px);
+}
+
+.ownerRow:focus-visible {
+  outline: 2px solid var(--color-accent-alt);
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+
+.ownerAvatar {
+  width: 38px;
+  height: 38px;
+  color: var(--color-text-muted);
+  display: grid;
+  place-items: center;
+}
+
+.ownerAvatar svg {
+  width: 36px;
+  height: 36px;
+}
+
+.ownerIdentity {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.ownerIdentity strong {
+  font-size: 13px;
+}
+
+.ownerIdentity span {
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ownerChevron {
+  color: var(--color-accent-alt);
+  font-size: 38px;
+  font-weight: 300;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
 /* ── Tabs card ───────────────────────────────────────── */
 .tabsCard {
   width: 100%;

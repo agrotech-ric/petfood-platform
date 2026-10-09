@@ -14,6 +14,7 @@ import heartOrange from '../assets/figma/pets-list/heart-orange.svg'
 import heartWhite from '../assets/figma/pets-list/heart-white.svg'
 import ReloadIcon from '../assets/icons/reload.svg?react'
 import { ShareDialog } from '../components/sharing/ShareDialog'
+import { useAuth } from '../../context/AuthContext'
 
 type Tab = 'food' | 'condition' | 'history' | 'contra' | 'weight' | 'activity'
 
@@ -649,6 +650,7 @@ export function PetProfilePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t, locale } = useTranslation()
+  const { user } = useAuth()
   const locationState = location.state as {
     tab?: Tab
     fromTab?: Tab
@@ -1032,6 +1034,28 @@ export function PetProfilePage() {
             </div>
             <p className={styles.descriptionLabel}>Описание</p>
             <p className={styles.descriptionText}>{pet?.description ?? 'Описание пока не добавлено'}</p>
+            {(user?.role === 'USER' || user?.role === 'VET') && (
+              <button
+                type="button"
+                className={styles.ownerRow}
+                onClick={() => navigate(petData?.petOwner
+                  ? `/owners/${petData.petOwner.id}`
+                  : `/pet-profile/${id}/edit-profile`)}
+                aria-label={petData?.petOwner ? t('owner.open') : t('owner.assign')}
+              >
+                <span className={styles.ownerAvatar} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="7" r="4" />
+                    <path d="M4 21c0-4.1 3.6-7 8-7s8 2.9 8 7" />
+                  </svg>
+                </span>
+                <span className={styles.ownerIdentity}>
+                  <strong>{t('owner.field')}</strong>
+                  <span>{petData?.petOwner?.fullName || t('owner.none')}</span>
+                </span>
+                <span className={styles.ownerChevron} aria-hidden="true">›</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -62,6 +62,7 @@ public class PetService {
     private final ReproductiveStatusRepository reproductiveStatusRepo;
     private final ReproductiveSubStatusRepository reproductiveSubStatusRepo;
     private final PetPhotoStorage photoStorage;
+    private final PetOwnerRepository petOwnerRepo;
 
     private final PetHealthRecommendationRepository recommendationRepo;
     private final ObjectMapper objectMapper;
@@ -84,6 +85,7 @@ public class PetService {
         ReproductiveStatusRepository reproductiveStatusRepo,
         ReproductiveSubStatusRepository reproductiveSubStatusRepo,
         PetPhotoStorage photoStorageService,
+        PetOwnerRepository petOwnerRepo,
         PetHealthRecommendationRepository recommendationRepo,
         ObjectMapper objectMapper,
         NotificationRepository notificationRepo,
@@ -104,6 +106,7 @@ public class PetService {
         this.reproductiveStatusRepo = reproductiveStatusRepo;
         this.reproductiveSubStatusRepo = reproductiveSubStatusRepo;
         this.photoStorage = photoStorageService;
+        this.petOwnerRepo = petOwnerRepo;
         this.recommendationRepo = recommendationRepo;
         this.objectMapper = objectMapper;
         this.notificationRepo = notificationRepo;
@@ -121,7 +124,13 @@ public class PetService {
             logger.error("JWT is null");
         }
 
-        ensureRoleIsOwner(jwt);
+        boolean platformUser = isPlatformUser(jwt);
+        if (!platformUser) {
+            ensureRoleIsOwner(jwt);
+            if (req.getPetOwnerId() != null) {
+                throw new ForbiddenOperationException("Only veterinarians can assign pet owners");
+            }
+        }
 
         Species species = speciesRepo.findById(req.getSpeciesId())
             .orElseThrow(() -> new NotFoundException("species not found"));
@@ -150,6 +159,12 @@ public class PetService {
 
         Pet pet = new Pet();
         pet.setOwnerId(getSubject(jwt));
+        if (platformUser && req.getPetOwnerId() != null) {
+            pet.setPetOwner(petOwnerRepo.findById(req.getPetOwnerId())
+                .orElseThrow(() -> new NotFoundException("owner not found")));
+        } else if (!platformUser) {
+            petOwnerRepo.findById(getSubject(jwt)).ifPresent(pet::setPetOwner);
+        }
         PetMapper.toEntity(req, pet, species, breed, color, status, subStatus);
 
         Pet saved = pets.save(pet);
@@ -159,7 +174,7 @@ public class PetService {
             "PET_REGISTERED",
             ActivityLogJson.petEvent(saved)
         ));
-        return PetMapper.toDto(saved);
+        return PetMapper.toDto(saved, platformUser);
     }
 
 
@@ -168,7 +183,7 @@ public class PetService {
     public PetResponse getOne(Jwt jwt, UUID id) {
         Pet pet = pets.findById(id).orElseThrow(() -> new NotFoundException("pet not found"));
         if (isAdminOrVet(jwt)) {
-            return PetMapper.toDto(pet);
+            return PetMapper.toDto(pet, isPlatformUser(jwt));
         }
         ensureOwner(jwt, pet.getOwnerId());
         return PetMapper.toDto(pet);
@@ -177,7 +192,13 @@ public class PetService {
     @Transactional
     public PetResponse update(Jwt jwt, UUID id, UpdatePetRequest req) {
         Pet pet = pets.findById(id).orElseThrow(() -> new NotFoundException("pet not found"));
-        ensureOwner(jwt, pet.getOwnerId());
+        boolean platformUser = isPlatformUser(jwt);
+        if (!platformUser) {
+            ensureOwner(jwt, pet.getOwnerId());
+            if (req.getPetOwnerId() != null) {
+                throw new ForbiddenOperationException("Only veterinarians can assign pet owners");
+            }
+        }
 
         Species species = speciesRepo.findById(req.getSpeciesId())
             .orElseThrow(() -> new NotFoundException("species not found"));
@@ -205,6 +226,10 @@ public class PetService {
         }
 
         PetMapper.toEntity(req, pet, species, breed, color, status, subStatus);
+        if (platformUser) {
+            pet.setPetOwner(req.getPetOwnerId() == null ? null : petOwnerRepo.findById(req.getPetOwnerId())
+                .orElseThrow(() -> new NotFoundException("owner not found")));
+        }
         Pet saved = pets.save(pet);
 
         auditClient.writeLog(jwt.getTokenValue(), new dev.pet.pets.dto.CreateAuditLogRequest(
@@ -212,7 +237,7 @@ public class PetService {
             "PET_UPDATED",
             ActivityLogJson.petEvent(saved)
         ));
-        return PetMapper.toDto(saved);
+        return PetMapper.toDto(saved, platformUser);
     }
 
     @Transactional
@@ -358,20 +383,36 @@ public class PetService {
 
         if (roleClaim instanceof String s) {
             String v = s.toLowerCase(Locale.ROOT);
-            return v.contains("admin") || v.contains("vet") || v.contains("veterinarian");
+            return v.contains("admin") || v.contains("user") || v.contains("vet") || v.contains("veterinarian");
         }
 
         if (roleClaim instanceof java.util.Collection<?> c) {
             for (Object o : c) {
                 if (o instanceof String s) {
                     String v = s.toLowerCase(Locale.ROOT);
-                    if (v.contains("admin") || v.contains("vet") || v.contains("veterinarian")) {
+                    if (v.contains("admin") || v.contains("user") || v.contains("vet") || v.contains("veterinarian")) {
                         return true;
                     }
                 }
             }
         }
 
+        return false;
+    }
+
+    private boolean isPlatformUser(Jwt jwt) {
+        Object roleClaim = jwt.getClaims().get("role");
+        if (roleClaim instanceof String s) {
+            String value = s.toLowerCase(Locale.ROOT);
+            return value.contains("user") || value.contains("vet") || value.contains("veterinarian");
+        }
+        if (roleClaim instanceof java.util.Collection<?> roles) {
+            return roles.stream().anyMatch(role -> role instanceof String s && (
+                s.toLowerCase(Locale.ROOT).contains("user") ||
+                    s.toLowerCase(Locale.ROOT).contains("vet") ||
+                    s.toLowerCase(Locale.ROOT).contains("veterinarian")
+            ));
+        }
         return false;
     }
 
@@ -389,9 +430,10 @@ public class PetService {
         Pet pet = pets.findById(petId)
             .orElseThrow(() -> new NotFoundException("Pet not found"));
 
-        if (!pet.getOwnerId().equals(ownerId)) {
+        if (!isAdminOrVet(jwt) && !pet.getOwnerId().equals(ownerId)) {
             throw new ForbiddenOperationException("you can only create health records for your own pets");
         }
+        ownerId = pet.getOwnerId();
 
         ActivityType activityType = activityTypeRepo.findById(req.getActivityTypeId())
             .orElseThrow(() -> new NotFoundException("Activity type not found"));
@@ -445,9 +487,10 @@ public class PetService {
         Pet pet = pets.findById(petId)
             .orElseThrow(() -> new NotFoundException("Pet not found"));
 
-        if (!pet.getOwnerId().equals(ownerId)) {
+        if (!isAdminOrVet(jwt) && !pet.getOwnerId().equals(ownerId)) {
             throw new ForbiddenOperationException("you can only update health records for your own pets");
         }
+        ownerId = pet.getOwnerId();
 
         PetHealthRecord record = healthRepo.findById(healthRecordId)
             .orElseThrow(() -> new NotFoundException("Health record not found"));
@@ -515,9 +558,10 @@ public class PetService {
         Pet pet = pets.findById(petId)
             .orElseThrow(() -> new NotFoundException("Pet not found"));
 
-        if (!pet.getOwnerId().equals(ownerId)) {
+        if (!isAdminOrVet(jwt) && !pet.getOwnerId().equals(ownerId)) {
             throw new ForbiddenOperationException("you can only delete health records for your own pets");
         }
+        ownerId = pet.getOwnerId();
 
         PetHealthRecord record = healthRepo.findById(healthRecordId)
             .orElseThrow(() -> new NotFoundException("Health record not found"));
@@ -605,9 +649,11 @@ public class PetService {
         Pet pet = pets.findById(petId)
             .orElseThrow(() -> new NotFoundException("Pet not found"));
 
-        if (!pet.getOwnerId().equals(ownerId)) {
+        if (!isAdminOrVet(jwt) && !pet.getOwnerId().equals(ownerId)) {
             throw new ForbiddenOperationException("you can only view health records of your own pets");
         }
+
+        ownerId = pet.getOwnerId();
 
         List<PetHealthRecord> records =
             healthRepo.findByPetIdAndOwnerIdWithSymptoms(petId, ownerId);
@@ -734,7 +780,9 @@ public class PetService {
         Jwt jwt,
         CreatePetPhotoUploadUrlRequest req
     ) {
-        ensureRoleIsOwner(jwt);
+        if (!isPlatformUser(jwt)) {
+            ensureRoleIsOwner(jwt);
+        }
 
         UUID ownerId = getSubject(jwt);
         validatePhotoContentType(req.getContentType());
@@ -762,6 +810,9 @@ public class PetService {
     }
 
     private void requireOwnedPhotoKey(Jwt jwt, String objectKey) {
+        if (isPlatformUser(jwt) && objectKey != null && pets.existsByPhotoObjectKey(objectKey)) {
+            return;
+        }
         String ownerPrefix = "pets/" + getSubject(jwt) + "/";
         if (objectKey == null || !objectKey.startsWith(ownerPrefix)) {
             throw new NotFoundException("photo not found");
@@ -798,12 +849,12 @@ public class PetService {
     private void requireVet(Jwt jwt) {
         Object roleClaim = jwt.getClaims().get("role");
         if (roleClaim == null) {
-            throw new ForbiddenOperationException("veterinarian role required");
+            throw new ForbiddenOperationException("authenticated platform role required");
         }
 
         if (roleClaim instanceof String s) {
             String v = s.toLowerCase(Locale.ROOT);
-            if (v.contains("vet") || v.contains("veterinarian")) {
+            if (v.contains("user") || v.contains("vet") || v.contains("veterinarian")) {
                 return;
             }
         }
@@ -812,14 +863,14 @@ public class PetService {
             for (Object o : c) {
                 if (o instanceof String s) {
                     String v = s.toLowerCase(Locale.ROOT);
-                    if (v.contains("vet") || v.contains("veterinarian")) {
+                    if (v.contains("user") || v.contains("vet") || v.contains("veterinarian")) {
                         return;
                     }
                 }
             }
         }
 
-        throw new ForbiddenOperationException("veterinarian role required");
+        throw new ForbiddenOperationException("authenticated platform role required");
     }
 
     @Transactional

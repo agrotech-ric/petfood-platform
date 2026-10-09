@@ -5,6 +5,7 @@ import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.GetObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import io.minio.http.Method;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -90,6 +91,17 @@ public class MinioPetPhotoStorageService implements PetPhotoStorage {
             throw ex;
         } catch (Exception ex) {
             throw new IllegalStateException("Pet photo is unavailable", ex);
+        }
+    }
+
+    @Override
+    public void delete(String objectKey) {
+        try {
+            minioClient.removeObject(
+                RemoveObjectArgs.builder().bucket(props.getBucket()).object(objectKey).build()
+            );
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to delete pet photo", ex);
         }
     }
 }
