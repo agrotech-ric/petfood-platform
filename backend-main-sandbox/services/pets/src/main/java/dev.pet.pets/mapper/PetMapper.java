@@ -65,9 +65,22 @@ public class PetMapper {
 
 
     public static PetResponse toDto(Pet p) {
+        return toDto(p, false);
+    }
+
+    public static PetResponse toDto(Pet p, boolean includePetOwner) {
         PetResponse dto = new PetResponse();
         dto.setId(p.getId());
         dto.setOwnerId(p.getOwnerId());
+
+        if (includePetOwner && p.getPetOwner() != null) {
+            PetOwner owner = p.getPetOwner();
+            dto.setPetOwnerId(owner.getId());
+            dto.setPetOwner(new dev.pet.pets.dto.PetOwnerSummaryResponse(
+                owner.getId(), owner.getFullName(), owner.getPhone(), owner.getEmail(),
+                owner.getTelegram(), owner.getAvatarObjectKey(), owner.isPlaceholder()
+            ));
+        }
 
         if (p.getSpecies() != null) {
             dto.setSpeciesId(p.getSpecies().getId());

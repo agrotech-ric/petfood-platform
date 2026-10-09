@@ -1,0 +1,269 @@
+.page {
+  width: 100%;
+  max-width: 1176px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: content-box;
+}
+
+.header,
+.identity,
+.content {
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--color-shadow);
+}
+
+.header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 16px 28px;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  color: var(--color-accent-alt);
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
+.header > button { justify-self: start; }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 7px 16px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.primary {
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+}
+
+.primary:hover { background: var(--color-accent-alt-hover); }
+.primary:disabled { opacity: 0.5; cursor: default; }
+
+.secondary {
+  background: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.secondary:hover { border-color: var(--color-accent-alt); }
+
+.identity {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) auto;
+  gap: 24px;
+  padding: 24px 28px;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+  overflow: hidden;
+}
+
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatarIcon { width: 55%; height: 55%; opacity: 0.65; }
+.details { min-width: 0; }
+
+.details h2 {
+  color: var(--color-text);
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.details dl { margin: 0; }
+
+.details dl div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.details dt { color: var(--color-text); font-weight: 700; }
+.details dd { color: var(--color-text-muted); margin: 0; overflow-wrap: anywhere; }
+.id { color: var(--color-text-muted); font-size: 12px; }
+
+.tabs {
+  width: 100%;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: relative;
+  z-index: 2;
+}
+
+.tabs::-webkit-scrollbar { display: none; }
+
+.tabs button {
+  flex: 0 0 auto;
+  min-width: 160px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-bottom-color: transparent;
+  border-radius: 12px 12px 0 0;
+  margin-right: -12px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabs button:last-child { margin-right: 0; }
+
+.tabs .activeTab {
+  position: relative;
+  z-index: 3;
+  background: var(--color-accent-alt);
+  color: var(--color-text-inverse);
+  font-weight: 600;
+  box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 300px;
+  margin-top: -7px;
+  padding: 24px 28px;
+  border: 1px solid var(--color-border);
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.toolbar select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.petGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 20px;
+}
+
+.petCard {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px var(--color-shadow);
+}
+
+.petLink { display: block; color: var(--color-text); text-decoration: none; }
+
+.petImageWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 160px;
+  background: var(--color-bg-muted);
+  overflow: hidden;
+}
+
+.petImageWrap > img:first-child { width: 100%; height: 100%; object-fit: cover; }
+.petPlaceholder { font-size: 48px; opacity: 0.6; }
+
+.favoriteIcon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+}
+
+.petMeta { padding: 12px 16px 8px; }
+.petMeta > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.petCard h3 { margin: 0; font-size: 18px; }
+.petMeta span, .petMeta p { color: var(--color-text-muted); font-size: 13px; }
+.petMeta p { margin: 5px 0 0; }
+.petCard > .linkButton { margin: 0 10px 10px; }
+
+.linkButton {
+  border: 0;
+  background: none;
+  color: var(--color-accent-alt);
+  cursor: pointer;
+  padding: 6px;
+  margin-right: 8px;
+  font-size: 13px;
+}
+
+.tableWrap { width: 100%; overflow: auto; margin-bottom: 20px; }
+.tableWrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tableWrap th, .tableWrap td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--color-border); }
+.tableWrap tbody tr { cursor: pointer; }
+
+.tableWrap tbody tr:focus-visible,
+.tabs button:focus-visible,
+.content:focus-visible {
+  outline: 2px solid var(--color-accent-alt);
+  outline-offset: -2px;
+}
+
+.error { color: var(--color-danger); }
+.state { padding: 40px; text-align: center; }
+
+@media (max-width: 800px) {
+  .page { padding: 12px; box-sizing: border-box; }
+  .header { grid-template-columns: 1fr; gap: 14px; text-align: center; }
+  .header > button { justify-self: center; }
+  .actions { justify-content: center; flex-wrap: wrap; }
+  .identity { grid-template-columns: 1fr; padding: 22px; }
+  .avatar { width: 100%; max-width: 220px; height: 220px; justify-self: center; }
+  .details h2 { font-size: 28px; }
+  .details dl div { grid-template-columns: 120px minmax(0, 1fr); }
+  .id { overflow-wrap: anywhere; }
+  .tabs button { min-width: 140px; }
+  .content { padding: 20px; }
+  .tableWrap table { min-width: 680px; }
+  .toolbar { align-items: stretch; flex-direction: column; }
+}

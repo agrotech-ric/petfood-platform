@@ -102,9 +102,26 @@ activity is stored in `audit_logs`; new events should include a readable
 ### Pets service
 
 Owns pet profiles and reference data, health records, contraindications, foods,
-favorites, photo keys, ingredients, and recipes.
+favorites, photo keys, platform-user-managed owner records, ingredients, and
+recipes.
 
 - Pet resources are checked against the JWT subject and role.
+- A pet has two deliberately separate ownership concepts. `pets.owner_id` is
+  the account subject used for authorization and existing resource isolation;
+  nullable `pets.pet_owner_id` links to the platform's CRM-style owner
+  record. The CRM owner is not an account, has no credentials or session, and
+  never grants platform access.
+- Owner profiles, their contact fields, avatars, pet associations, and dated
+  records are available to authenticated platform accounts carrying either the
+  standard USER claim or the legacy VET claim. Record channel selections are
+  stored as planning metadata; creating or editing a record does not publish
+  RabbitMQ messages or send email, SMS, or Telegram notifications.
+- Legacy pets receive placeholder CRM owner rows during migration so existing
+  authorization identifiers remain intact while authenticated users can
+  complete the new profile later.
+- `/dashboard` is the canonical authenticated landing page. The legacy
+  `/vet/dashboard` path redirects there, and USER/VET claims share the same
+  product routes while ADMIN remains an administrative role.
 - Pet photos are private owner resources. Filesystem keys are generated beneath
   the authenticated owner's prefix and photo responses are not publicly cached.
 - System ingredients are global and read-only.
@@ -155,6 +172,7 @@ the root `.env`.
 | Users, profiles, audit logs | Account service | PostgreSQL (default schema) |
 | Sessions and JWT exchange state | Account/Auth | Redis |
 | Pets, health, ingredients, recipes | Pets service | PostgreSQL `pets` schema |
+| Pet owner profiles and contact records | Pets service | PostgreSQL `pets.pet_owners`, `pets.pet_owner_records` |
 | Pet images | Pets service | MinIO or configured filesystem storage |
 | Public pet/recipe share records | Pets service | PostgreSQL `pets.resource_shares` |
 | Calculation reference data | Recommender | files under `nutrient-recommender-main/data` |

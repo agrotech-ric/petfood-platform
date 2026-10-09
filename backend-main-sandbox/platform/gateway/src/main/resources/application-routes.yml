@@ -76,7 +76,7 @@ spring:
         - id: pets-prefixed
           uri: ${PETS_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/petfood/api/v1/pets/**,/petfood/api/v1/ingredients/**,/petfood/api/v1/recipes/**
+            - Path=/petfood/api/v1/pets/**,/petfood/api/v1/pet-owners/**,/petfood/api/v1/ingredients/**,/petfood/api/v1/recipes/**
           filters:
             - StripPrefix=1
 
@@ -102,7 +102,7 @@ spring:
         - id: pets
           uri: ${PETS_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/api/v1/pets/**,/api/v1/ingredients/**,/api/v1/recipes/**
+            - Path=/api/v1/pets/**,/api/v1/pet-owners/**,/api/v1/ingredients/**,/api/v1/recipes/**
 
         - id: auth-jwks
           uri: ${AUTH_SERVICE_URL:http://localhost:8082}

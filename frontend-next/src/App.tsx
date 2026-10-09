@@ -9,7 +9,7 @@ import ResetPassword from './pages/ResetPassword'
 import { PetsListPage } from './pages/PetsListPage'
 import { PetProfilePage } from './pages/PetProfilePage'
 import { AdminStub } from './pages/stubs/AdminStub'
-import { VetStub } from './pages/stubs/VetStub'
+import { OwnersListPage } from './pages/stubs/VetStub'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPetPage } from './pages/RegisterPetPage'
 import { Settings } from './pages/Settings'
@@ -30,6 +30,9 @@ import { EditDiseaseHistoryPage } from './pages/EditDiseaseHistoryPage'
 import { EditPetProfilePage } from './pages/EditPetProfilePage'
 import { PublicPetPage } from './pages/PublicPetPage'
 import { PublicRecipePage } from './pages/PublicRecipePage'
+import { OwnerProfilePage } from './pages/OwnerProfilePage'
+import { OwnerEditPage } from './pages/OwnerEditPage'
+import { OwnerRecordPage } from './pages/OwnerRecordPage'
 
 export function App() {
   return (
@@ -66,7 +69,7 @@ export function App() {
         <Route path="/shared/pet" element={<PublicPetPage />} />
         <Route path="/shared/recipe" element={<PublicRecipePage />} />
 
-        <Route element={<PrivateLayoutRoute allowedRoles={['USER']} />}>
+        <Route element={<PrivateLayoutRoute allowedRoles={['USER', 'VET']} />}>
           <Route path="/dashboard" element={<PetsListPage />} />
         </Route>
 
@@ -105,7 +108,7 @@ export function App() {
         <Route
           path="/register-pet"
           element={
-            <PrivateRoute allowedRoles={['USER']}>
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
               <RegisterPetPage />
             </PrivateRoute>
           }
@@ -113,7 +116,7 @@ export function App() {
         <Route
           path="/pet-profile/:id"
           element={
-            <PrivateRoute allowedRoles={['USER']}>
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
               <PetProfilePage />
             </PrivateRoute>
           }
@@ -121,7 +124,7 @@ export function App() {
         <Route
           path="/pet-profile/:id/edit-profile"
           element={
-            <PrivateRoute allowedRoles={['USER']}>
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
               <EditPetProfilePage />
             </PrivateRoute>
           }
@@ -129,7 +132,7 @@ export function App() {
         <Route
           path="/pet-profile/:id/edit-current-condition"
           element={
-            <PrivateRoute allowedRoles={['USER']}>
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
               <EditCurrentConditionPage />
             </PrivateRoute>
           }
@@ -137,7 +140,7 @@ export function App() {
         <Route
           path="/pet-profile/:id/edit-contraindications"
           element={
-            <PrivateRoute allowedRoles={['USER']}>
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
               <EditContraindicationsPage />
             </PrivateRoute>
           }
@@ -145,7 +148,7 @@ export function App() {
         <Route
           path="/pet-profile/:id/history/:historyId"
           element={
-            <PrivateRoute allowedRoles={['USER']}>
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
               <EditDiseaseHistoryPage />
             </PrivateRoute>
           }
@@ -171,11 +174,20 @@ export function App() {
         <Route
           path="/vet/dashboard"
           element={
-            <PrivateRoute allowedRoles={['VET']}>
-              <VetStub />
+            <PrivateRoute allowedRoles={['USER', 'VET']}>
+              <Navigate to="/dashboard" replace />
             </PrivateRoute>
           }
         />
+        <Route element={<PrivateLayoutRoute allowedRoles={['USER', 'VET']} />}>
+          <Route path="/owners" element={<OwnersListPage />} />
+          <Route path="/owners/create" element={<OwnerEditPage />} />
+          <Route path="/owners/:ownerId" element={<OwnerProfilePage />} />
+          <Route path="/owners/:ownerId/edit" element={<OwnerEditPage />} />
+          <Route path="/owners/:ownerId/records/new" element={<OwnerRecordPage mode="create" />} />
+          <Route path="/owners/:ownerId/records/:recordId" element={<OwnerRecordPage mode="view" />} />
+          <Route path="/owners/:ownerId/records/:recordId/edit" element={<OwnerRecordPage mode="edit" />} />
+        </Route>
         <Route
           path="/admin/users"
           element={

@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.io.InputStream;
 import java.nio.file.*;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/pets/photos")
@@ -67,7 +68,7 @@ public class PetPhotoController {
         @AuthenticationPrincipal Jwt jwt
     ) {
         try {
-            Path target = resolveOwned(objectKey, jwt);
+            Path target = resolveReadable(objectKey, jwt);
             if (!Files.exists(target) || !Files.isRegularFile(target)) {
                 throw new NotFoundException("photo not found");
             }
@@ -102,15 +103,44 @@ public class PetPhotoController {
     }
 
     private Path resolveOwned(String objectKey, Jwt jwt) {
-        if (jwt == null || objectKey == null || !objectKey.startsWith("pets/" + jwt.getSubject() + "/")) {
+        if (jwt == null || objectKey == null) {
             throw new NotFoundException("photo not found");
         }
         Path resolved = resolveSafe(objectKey);
+        if (!objectKey.startsWith("pets/" + jwt.getSubject() + "/")) {
+            throw new NotFoundException("photo not found");
+        }
         Path ownerDir = rootDir.resolve("pets").resolve(jwt.getSubject()).normalize();
         if (!resolved.startsWith(ownerDir)) {
             throw new NotFoundException("photo not found");
         }
         return resolved;
+    }
+
+    private Path resolveReadable(String objectKey, Jwt jwt) {
+        if (jwt != null && objectKey != null && isVet(jwt) && objectKey.matches(
+            "^pets/[^/]+/(?:owners/[^/]+/)?[^/]+$"
+        )) {
+            return resolveSafe(objectKey);
+        }
+        return resolveOwned(objectKey, jwt);
+    }
+
+    private boolean isVet(Jwt jwt) {
+        Object role = jwt.getClaims().get("role");
+        if (role instanceof String value) {
+            String normalized = value.toLowerCase(Locale.ROOT);
+            return normalized.contains("user") || normalized.contains("vet");
+        }
+        if (role instanceof java.util.Collection<?> values) {
+            return values.stream().anyMatch(value ->
+                value instanceof String text && (
+                    text.toLowerCase(Locale.ROOT).contains("user") ||
+                        text.toLowerCase(Locale.ROOT).contains("vet")
+                )
+            );
+        }
+        return false;
     }
 
     private boolean isAcceptedContentType(String contentType) {

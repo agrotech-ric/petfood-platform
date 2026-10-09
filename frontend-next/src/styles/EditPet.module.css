@@ -209,6 +209,139 @@
   gap: 16px;
 }
 
+.ownerCard {
+  width: 100%;
+  max-width: 1176px;
+  box-sizing: border-box;
+  margin: 0 auto 16px;
+  padding: 28px 32px 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px var(--color-shadow);
+}
+
+.ownerCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.ownerCardHeader h2 {
+  margin: 0;
+  color: var(--color-accent-alt);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ownerCardActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ownerActionBtn,
+.ownerDetachBtn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ownerActionBtn:hover,
+.ownerActionBtn:focus-visible {
+  border-color: var(--color-accent-alt);
+  color: var(--color-accent-alt);
+}
+
+.ownerDetachBtn {
+  color: var(--color-danger);
+}
+
+.ownerDetachBtn:hover,
+.ownerDetachBtn:focus-visible {
+  border-color: var(--color-danger);
+}
+
+.ownerCombobox {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.ownerCombobox .fieldLabel {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.ownerOptions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  box-shadow: 0 8px 24px var(--color-shadow);
+}
+
+.ownerOption {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ownerOption:hover,
+.ownerOption:focus-visible,
+.ownerOption[aria-selected='true'] {
+  background: var(--color-accent-soft-bg);
+}
+
+.ownerOption span {
+  min-width: 0;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ownerOptionsEmpty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.ownerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 48px;
+}
+
+.fieldError {
+  color: var(--color-error);
+  font-size: 12px;
+}
+
 /* ── Symptoms ───────────────────────────────────────── */
 .symptomsGrid {
   display: grid;
@@ -351,7 +484,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
-  margin-top: 8px;
+  margin: 8px max(0px, calc((100% - 1176px) / 2)) 0;
 }
 
 .saveBtn:hover { background: var(--color-accent-alt-hover); }
@@ -360,7 +493,8 @@
 @media (max-width: 900px) {
   .twoPanel,
   .symptomsGrid,
-  .formGrid2 {
+  .formGrid2,
+  .ownerGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -380,6 +514,30 @@
   }
 
   .card { padding: 16px; }
+
+  .ownerCard {
+    padding: 20px 16px;
+  }
+
+  .ownerCardHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ownerCardActions {
+    width: 100%;
+  }
+
+  .ownerActionBtn,
+  .ownerDetachBtn {
+    flex: 1;
+  }
+
+  .ownerOption {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
 
   .petEditLayout {
     flex-direction: column;

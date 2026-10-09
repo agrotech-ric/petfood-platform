@@ -5,8 +5,56 @@ import { petService, type HealthRecord, type PetProfileData } from '../../servic
 import styles from '../styles/EditPet.module.css'
 import DeleteIcon from '../assets/icons/delete.svg?react'
 import Edit1Icon from '../assets/icons/edit1.svg?react'
+import { ownerService, type PetOwner, type PetOwnerInput } from '../../services/ownerService'
+import { useAuth } from '../../context/AuthContext'
+import { useTranslation } from '../../context/LanguageContext'
 
 type FormErrors = Partial<Record<string, string>>
+
+const emptyOwner: PetOwnerInput = {
+  fullName: '',
+  country: '',
+  city: '',
+  address: '',
+  phone: '',
+  email: '',
+  telegram: '',
+  avatarObjectKey: '',
+}
+
+function ownerToInput(owner: PetOwner): PetOwnerInput {
+  return {
+    fullName: owner.fullName || '',
+    country: owner.country || '',
+    city: owner.city || '',
+    address: owner.address || '',
+    phone: owner.phone || '',
+    email: owner.email || '',
+    telegram: owner.telegram || '',
+    avatarObjectKey: owner.avatarObjectKey || '',
+  }
+}
+
+function normalizeOwnerInput(owner: PetOwnerInput): PetOwnerInput {
+  return {
+    fullName: owner.fullName.trim(),
+    country: owner.country?.trim() || '',
+    city: owner.city?.trim() || '',
+    address: owner.address?.trim() || '',
+    phone: owner.phone?.trim() || '',
+    email: owner.email?.trim() || '',
+    telegram: owner.telegram?.trim() || '',
+    avatarObjectKey: owner.avatarObjectKey || '',
+  }
+}
+
+function hasOwnerDetails(owner: PetOwnerInput) {
+  return Boolean(owner.fullName.trim() || owner.country?.trim() || owner.city?.trim() || owner.address?.trim() || owner.phone?.trim() || owner.email?.trim() || owner.telegram?.trim())
+}
+
+function sameOwnerDetails(left: PetOwnerInput, right: PetOwnerInput) {
+  return JSON.stringify(normalizeOwnerInput(left)) === JSON.stringify(normalizeOwnerInput(right))
+}
 
 function refLabel(item: { name?: string; nameRu?: string; nameEn?: string }) {
   return item.nameRu || item.name || item.nameEn || ''
@@ -57,6 +105,8 @@ export function EditPetProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useAuth()
+  const { t } = useTranslation()
   const returnTab = ((location.state as { fromTab?: string } | null)?.fromTab) ?? 'food'
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -87,8 +137,19 @@ export function EditPetProfilePage() {
   const [photoUrl, setPhotoUrl] = useState<string | undefined>()
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | undefined>()
+  const [owners, setOwners] = useState<PetOwner[]>([])
+  const [petOwnerId, setPetOwnerId] = useState('')
+  const [ownerQuery, setOwnerQuery] = useState('')
+  const [ownerForm, setOwnerForm] = useState<PetOwnerInput>(emptyOwner)
+  const [originalOwnerForm, setOriginalOwnerForm] = useState<PetOwnerInput>(emptyOwner)
+  const [ownerOptionsOpen, setOwnerOptionsOpen] = useState(false)
 
   const latestRecord = useMemo(() => sortRecordsDesc(healthRecords)[0], [healthRecords])
+  const filteredOwners = useMemo(() => {
+    const query = ownerQuery.trim().toLowerCase()
+    if (!query || owners.some(owner => owner.id === petOwnerId && owner.fullName === ownerQuery)) return owners
+    return owners.filter(owner => `${owner.fullName} ${owner.phone || ''} ${owner.email || ''} ${owner.telegram || ''}`.toLowerCase().includes(query))
+  }, [ownerQuery, owners, petOwnerId])
 
   useEffect(() => {
     if (!id) {
@@ -104,18 +165,27 @@ export function EditPetProfilePage() {
       setGeneralError('')
 
       try {
-        const [loadedPet, records, loadedSpecies, loadedColors, loadedActivities, loadedSymptoms] = await Promise.all([
+        const [loadedPet, records, loadedSpecies, loadedColors, loadedActivities, loadedSymptoms, loadedOwners] = await Promise.all([
           petService.getPet(id),
           petService.getHealthRecords(id),
           referenceService.fetchSpecies(),
           referenceService.fetchColors(),
           referenceService.fetchActivityTypes(),
           referenceService.fetchSymptoms(),
+          user?.role === 'USER' || user?.role === 'VET' ? ownerService.search().catch(() => []) : Promise.resolve([]),
         ])
 
         if (cancelled) return
 
         setPet(loadedPet)
+        const selectedOwnerId = ((location.state as { newOwnerId?: string } | null)?.newOwnerId) || loadedPet.petOwnerId || ''
+        const selectedOwner = loadedOwners.find(owner => owner.id === selectedOwnerId)
+        const selectedOwnerForm = selectedOwner ? ownerToInput(selectedOwner) : emptyOwner
+        setOwners(loadedOwners)
+        setPetOwnerId(selectedOwnerId)
+        setOwnerQuery(selectedOwner?.fullName || '')
+        setOwnerForm(selectedOwnerForm)
+        setOriginalOwnerForm(selectedOwnerForm)
         setHealthRecords(records)
         setSpecies(loadedSpecies)
         setColors(loadedColors)
@@ -172,7 +242,7 @@ export function EditPetProfilePage() {
       cancelled = true
       if (photoPreview) URL.revokeObjectURL(photoPreview)
     }
-  }, [id])
+  }, [id, user?.role])
 
   useEffect(() => {
     let cancelled = false
@@ -200,6 +270,34 @@ export function EditPetProfilePage() {
 
   const goBack = () => {
     navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })
+  }
+
+  const selectOwner = (owner: PetOwner) => {
+    const form = ownerToInput(owner)
+    setPetOwnerId(owner.id)
+    setOwnerQuery(owner.fullName || owner.id)
+    setOwnerForm(form)
+    setOriginalOwnerForm(form)
+    setOwnerOptionsOpen(false)
+    setErrors(current => ({ ...current, ownerFullName: undefined }))
+  }
+
+  const startNewOwner = () => {
+    setPetOwnerId('')
+    setOwnerQuery('')
+    setOwnerForm(emptyOwner)
+    setOriginalOwnerForm(emptyOwner)
+    setOwnerOptionsOpen(false)
+    setErrors(current => ({ ...current, ownerFullName: undefined }))
+  }
+
+  const detachOwner = () => {
+    startNewOwner()
+  }
+
+  const updateOwnerField = (field: keyof PetOwnerInput, value: string) => {
+    setOwnerForm(current => ({ ...current, [field]: value }))
+    if (field === 'fullName') setErrors(current => ({ ...current, ownerFullName: undefined }))
   }
 
   const handlePhotoFile = useCallback((file: File) => {
@@ -238,6 +336,10 @@ export function EditPetProfilePage() {
     if (!colorId) next.color = 'Выберите окрас'
     const parsedWeight = Number(weight)
     if (!weight || Number.isNaN(parsedWeight) || parsedWeight <= 0) next.weight = 'Укажите вес'
+    const ownerWasEdited = petOwnerId && !sameOwnerDetails(ownerForm, originalOwnerForm)
+    if ((user?.role === 'USER' || user?.role === 'VET') && (ownerWasEdited || (!petOwnerId && hasOwnerDetails(ownerForm))) && !ownerForm.fullName.trim()) {
+      next.ownerFullName = t('owner.validation.name')
+    }
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -258,6 +360,17 @@ export function EditPetProfilePage() {
     setSaving(true)
 
     try {
+      let nextPetOwnerId = petOwnerId || null
+      if (user?.role === 'USER' || user?.role === 'VET') {
+        const normalizedOwner = normalizeOwnerInput(ownerForm)
+        if (petOwnerId && !sameOwnerDetails(normalizedOwner, originalOwnerForm)) {
+          await ownerService.update(petOwnerId, normalizedOwner)
+        } else if (!petOwnerId && hasOwnerDetails(normalizedOwner)) {
+          const createdOwner = await ownerService.create(normalizedOwner)
+          nextPetOwnerId = createdOwner.id
+        }
+      }
+
       const nextPhotoObjectKey = photoFile ? await uploadPhoto(photoFile) : photoObjectKey
       const speciesId = resolveDogSpeciesId(species, pet.speciesId)
       const parsedWeight = Number(weight)
@@ -274,6 +387,7 @@ export function EditPetProfilePage() {
         reproductiveSubStatusId: pet.reproductiveSubStatusId,
         puppiesCount: pet.puppiesCount ?? 0,
         comments: description.trim(),
+        ...(user?.role === 'USER' || user?.role === 'VET' ? { petOwnerId: nextPetOwnerId } : {}),
       }
 
       if (nextPhotoObjectKey) {
@@ -483,16 +597,120 @@ export function EditPetProfilePage() {
               </div>
             </div>
 
-            <button
-              className={styles.saveBtn}
-              disabled={saving}
-              onClick={() => void handleSubmit()}
-            >
-              {saving ? 'Сохранение...' : 'Сохранить изменения'}
-            </button>
           </>
         )}
       </div>
+
+      {!loading && (user?.role === 'USER' || user?.role === 'VET') && (
+        <section className={styles.ownerCard} aria-labelledby="pet-owner-heading">
+          <div className={styles.ownerCardHeader}>
+            <h2 id="pet-owner-heading">{t('owner.information')}</h2>
+            <div className={styles.ownerCardActions}>
+              <button type="button" className={styles.ownerActionBtn} onClick={startNewOwner}>
+                {t('owner.createNew')}
+              </button>
+              {petOwnerId && (
+                <button type="button" className={styles.ownerDetachBtn} onClick={detachOwner}>
+                  {t('owner.detach')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.ownerCombobox}>
+            <label className={styles.fieldLabel} htmlFor="pet-owner-search">{t('owner.selectExisting')}</label>
+            <input
+              id="pet-owner-search"
+              className={styles.fieldInput}
+              type="search"
+              role="combobox"
+              aria-expanded={ownerOptionsOpen}
+              aria-controls="pet-owner-options"
+              aria-autocomplete="list"
+              value={ownerQuery}
+              onFocus={() => setOwnerOptionsOpen(true)}
+              onBlur={() => window.setTimeout(() => setOwnerOptionsOpen(false), 120)}
+              onChange={event => {
+                setOwnerQuery(event.target.value)
+                setOwnerOptionsOpen(true)
+              }}
+              placeholder={t('owner.search')}
+            />
+            {ownerOptionsOpen && (
+              <div id="pet-owner-options" className={styles.ownerOptions} role="listbox">
+                {filteredOwners.length > 0 ? filteredOwners.map(owner => (
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={owner.id === petOwnerId}
+                    className={styles.ownerOption}
+                    key={owner.id}
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={() => selectOwner(owner)}
+                  >
+                    <strong>{owner.fullName || t('owner.placeholder')}</strong>
+                    <span>{owner.phone || owner.email || owner.telegram || t('owner.contacts.empty')}</span>
+                  </button>
+                )) : <p className={styles.ownerOptionsEmpty}>{t('owner.search.empty')}</p>}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.ownerGrid}>
+            <OwnerField field="fullName" label={t('owner.fullName')} value={ownerForm.fullName} onChange={updateOwnerField} error={errors.ownerFullName} />
+            <OwnerField field="country" label={t('owner.country')} value={ownerForm.country || ''} onChange={updateOwnerField} />
+            <OwnerField field="address" label={t('owner.address')} value={ownerForm.address || ''} onChange={updateOwnerField} />
+            <OwnerField field="city" label={t('owner.city')} value={ownerForm.city || ''} onChange={updateOwnerField} />
+            <OwnerField field="phone" label={t('owner.phone')} value={ownerForm.phone || ''} onChange={updateOwnerField} type="tel" />
+            <OwnerField field="email" label={t('owner.email')} value={ownerForm.email || ''} onChange={updateOwnerField} type="email" />
+            <OwnerField field="telegram" label={t('owner.telegram')} value={ownerForm.telegram || ''} onChange={updateOwnerField} />
+          </div>
+        </section>
+      )}
+
+      {!loading && (
+        <button
+          className={styles.saveBtn}
+          disabled={saving}
+          aria-busy={saving}
+          onClick={() => void handleSubmit()}
+        >
+          {saving ? t('common.saving') : t('pet.saveChanges')}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function OwnerField({
+  field,
+  label,
+  value,
+  type = 'text',
+  error,
+  onChange,
+}: {
+  field: keyof PetOwnerInput
+  label: string
+  value: string
+  type?: string
+  error?: string
+  onChange: (field: keyof PetOwnerInput, value: string) => void
+}) {
+  const inputId = `pet-owner-${field}`
+  return (
+    <div className={styles.fieldGroup}>
+      <label className={styles.fieldLabel} htmlFor={inputId}>{label}</label>
+      <input
+        id={inputId}
+        className={styles.fieldInput}
+        type={type}
+        value={value}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${inputId}-error` : undefined}
+        onChange={event => onChange(field, event.target.value)}
+      />
+      {error && <span id={`${inputId}-error`} className={styles.fieldError}>{error}</span>}
     </div>
   )
 }

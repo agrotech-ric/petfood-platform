@@ -123,9 +123,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userData);
         setIsAuthenticated(true);
 
-        if (userData.role === 'VET') {
-          navigate("/vet/dashboard");
-        } else if (userData.role === 'ADMIN') {
+        if (userData.role === 'ADMIN') {
           navigate("/admin/users");
         } else {
           navigate("/dashboard");

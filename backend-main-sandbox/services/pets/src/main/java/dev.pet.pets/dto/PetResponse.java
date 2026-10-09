@@ -8,6 +8,8 @@ public class PetResponse {
 
     private UUID id;
     private UUID ownerId;
+    private UUID petOwnerId;
+    private PetOwnerSummaryResponse petOwner;
 
     private Long speciesId;
     private String speciesName;
@@ -39,6 +41,7 @@ public class PetResponse {
 
     private String photoObjectKey;
     private String comments;
+    private Boolean favorite;
 
 
 
@@ -47,6 +50,10 @@ public class PetResponse {
 
     public UUID getOwnerId() { return ownerId; }
     public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
+    public UUID getPetOwnerId() { return petOwnerId; }
+    public void setPetOwnerId(UUID petOwnerId) { this.petOwnerId = petOwnerId; }
+    public PetOwnerSummaryResponse getPetOwner() { return petOwner; }
+    public void setPetOwner(PetOwnerSummaryResponse petOwner) { this.petOwner = petOwner; }
 
     public Long getSpeciesId() { return speciesId; }
     public void setSpeciesId(Long speciesId) { this.speciesId = speciesId; }
@@ -112,5 +119,7 @@ public class PetResponse {
 
     public String getComments() { return comments; }
     public void setComments(String comments) { this.comments = comments; }
+    public Boolean getFavorite() { return favorite; }
+    public void setFavorite(Boolean favorite) { this.favorite = favorite; }
 
 }

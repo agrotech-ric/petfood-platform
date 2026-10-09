@@ -31,13 +31,7 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
   }
 
   if (!user || !allowedRoles.includes(user.role)) {
-    if (user?.role === 'VET') {
-      return <Navigate to="/vet/dashboard" replace />;
-    } else if (user?.role === 'ADMIN') {
-      return <Navigate to="/admin/dashboard" replace />;
-    } else {
-      return <Navigate to="/dashboard" replace />;
-    }
+    return <Navigate to={user?.role === 'ADMIN' ? "/admin/users" : "/dashboard"} replace />;
   }
 
   return <>{children}</>;
