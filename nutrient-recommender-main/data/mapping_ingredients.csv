@@ -1,4 +1,4 @@
-﻿name_feed_ingredient,full_name_ingredient,category_ru
+name_feed_ingredient,full_name_ingredient,category_ru
 apple,"APPLES,RAW,WITH SKIN",Овощи и фрукты
 barley,"BARLEY,PEARLED,RAW",Крупы
 beef,"BEEF,BRISKET,WHL,LN,ALL GRDS,RAW",Мясо
@@ -51,3 +51,81 @@ turkey_liver,"TURKEY,LIVER,ALL CLASSES,RAW",Мясо
 water,"WATER,BTLD,GENERIC","Вода, соль и сахар"
 wheat,"WHEAT,SOFT RED WINTER",Крупы
 zucchini,"SQUASH,SMMR,ALL VAR,RAW",Овощи и фрукты
+vetdietolog adult balance sensitive,Vetdietolog Adult Balance Sensitive,Дополнительные пищевые компоненты
+vetdietolog renal,Vetdietolog Renal,Дополнительные пищевые компоненты
+beaphar algolith,Beaphar Algolith,Дополнительные пищевые компоненты
+beaphar bea vit totaal (ml),Beaphar Bea Vit Totaal (ml),Дополнительные пищевые компоненты
+beaphar doggy's,Beaphar Doggy's,Дополнительные пищевые компоненты
+beaphar dru cal,Beaphar Dru Cal,Дополнительные пищевые компоненты
+beaphar laveta super for dogs (ml),Beaphar Laveta Super for dogs (ml),Дополнительные пищевые компоненты
+beaphar duo active для собак,Beaphar Duo Active для собак,Дополнительные пищевые компоненты
+beaphar duo malt paste,Beaphar Duo Malt Paste,Дополнительные пищевые компоненты
+beaphar irish cal,Beaphar Irish Cal,Дополнительные пищевые компоненты
+beaphar junior cal,Beaphar Junior Cal,Дополнительные пищевые компоненты
+beaphar malt bits,Beaphar Malt Bits,Дополнительные пищевые компоненты
+beaphar malt-paste,Beaphar Malt-paste,Дополнительные пищевые компоненты
+beaphar renaletten,Beaphar Renaletten,Дополнительные пищевые компоненты
+beaphar salmon oil,Beaphar Salmon Oil,Дополнительные пищевые компоненты
+beaphar salvikal,Beaphar Salvikal,Дополнительные пищевые компоненты
+beaphar top 10 for dogs,Beaphar Top 10 for dogs,Дополнительные пищевые компоненты
+beaphar vitamin cal,Beaphar Vitamin Cal,Дополнительные пищевые компоненты
+beaphar vitamin b complex (ml),Beaphar vitamin B complex (ml),Дополнительные пищевые компоненты
+walnut,Walnut,Зелень и специи
+sesame seeds,Sesame seeds,Зелень и специи
+sunflower seeds,"SUNFLOWER SD KRNLS,DRIED",Зелень и специи
+pumpkin seeds,"PUMPKIN&SQUASH SD KRNLS,DRIED",Зелень и специи
+chia seeds,Chia seeds,Зелень и специи
+turmeric,Turmeric,Зелень и специи
+dried kelp (sea kale),Dried kelp (sea kale),Зелень и специи
+dried spirulina,Dried spirulina,Зелень и специи
+fresh ulva,Fresh Ulva,Зелень и специи
+dried ulva,Dried Ulva,Зелень и специи
+eggshell,Eggshell,Дополнительные пищевые компоненты
+cattle larynx,Cattle larynx,Дополнительные пищевые компоненты
+cattle brisket bone,Cattle brisket bone,Дополнительные пищевые компоненты
+veal brisket bone,Veal brisket bone,Дополнительные пищевые компоненты
+chicken carcass (skeleton),Chicken carcass (skeleton),Дополнительные пищевые компоненты
+cattle scapular cartilage,Cattle scapular cartilage,Дополнительные пищевые компоненты
+rabbit leg (bone),Rabbit leg (bone),Дополнительные пищевые компоненты
+lamb leg (bone),Lamb leg (bone),Дополнительные пищевые компоненты
+lamb rib,Lamb rib,Дополнительные пищевые компоненты
+deer antlers,Deer antlers,Дополнительные пищевые компоненты
+veal tail (bone),Veal tail (bone),Дополнительные пищевые компоненты
+veal bone,Veal bone,Дополнительные пищевые компоненты
+veal shoulder blade (bone),Veal shoulder blade (bone),Дополнительные пищевые компоненты
+duck neck (bone),Duck neck (bone),Дополнительные пищевые компоненты
+duck carcass (skeleton),Duck carcass (skeleton),Дополнительные пищевые компоненты
+salmon spines,Salmon spines,Дополнительные пищевые компоненты
+beef cartilage,Beef cartilage,Дополнительные пищевые компоненты
+horse neck bone,Horse neck bone,Дополнительные пищевые компоненты
+deer neck bone,Deer neck bone,Дополнительные пищевые компоненты
+veal neck bone,Veal neck bone,Дополнительные пищевые компоненты
+turkey neck (bone),Turkey neck (bone),Дополнительные пищевые компоненты
+glucose,Glucose,Дополнительные пищевые компоненты
+potassium citrate,Potassium citrate,Дополнительные пищевые компоненты
+calcium glycerophosphate,Calcium glycerophosphate,Дополнительные пищевые компоненты
+calcium gluconate,Calcium gluconate,Дополнительные пищевые компоненты
+calcium citrate,Calcium citrate,Дополнительные пищевые компоненты
+tricalcium phosphate,Tricalcium phosphate,Дополнительные пищевые компоненты
+canola oil,Canola oil,Масло и жир
+coconut oil,"VEGETABLE OIL,COCONUT",Масло и жир
+corn oil,Corn oil,Масло и жир
+sesame oil,Sesame oil,Масло и жир
+flaxseed oil,Flaxseed oil,Масло и жир
+walnut oil,Walnut oil,Масло и жир
+wheat germ oil,Wheat germ oil,Масло и жир
+olive oil,"OIL,OLIVE,SALAD OR COOKING",Масло и жир
+unrefined sunflower oil,Unrefined sunflower oil,Масло и жир
+refined sunflower oil,Refined sunflower oil,Масло и жир
+rapeseed oil,Rapeseed oil,Масло и жир
+pumpkin seed oil,Pumpkin seed oil,Масло и жир
+"fat,mutton tallow","FAT,MUTTON TALLOW",Масло и жир
+"fat,beef tallow","FAT,BEEF TALLOW",Масло и жир
+"fat,goose","FAT,GOOSE",Масло и жир
+"chicken,broilers or fryers,fat,raw","CHICKEN,BROILERS OR FRYERS,FAT,RAW",Масло и жир
+butter,Butter,Масло и жир
+fish oil,FISH OIL,Масло и жир
+horse meat,Horse meat,Мясо
+broth beef,Broth Beef,Мясо
+broth chicken,Broth Chicken,Мясо
+broth fish,Broth Fish,Мясо

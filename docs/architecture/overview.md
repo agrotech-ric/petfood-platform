@@ -159,6 +159,17 @@ user-created ingredients are request-scoped and use the recommender's internal
 nutrient keys. The maximization model currently supports moisture, protein,
 carbohydrates, and fat.
 
+The global ingredient catalog spans two owned representations: pets-service
+stores the user-visible, read-only system records, while the recommender stores
+the matching calculation profiles in `data/ingredients_data.csv`.
+`data/additional_ingredients.csv` is the normalized, reviewable source snapshot
+for curated additional imports. Regenerate its synchronized recommender rows,
+translation mappings, and the next unapplied pets-service Flyway migration with
+`tools/import_additional_ingredients.py`; do not hand-edit generated data rows.
+The importer maps only nutrients supported by the current API, uses explicit
+aliases for reviewed semantic matches, and fails before writing partial output
+when source identities or supported nutrient values are invalid.
+
 ### Notifications
 
 The account and pets services publish email commands to RabbitMQ. The
@@ -194,4 +205,6 @@ not by reading another service's tables directly.
 - Enforce ownership on the backend even when the UI filters resources.
 - Put persistent schema evolution in Flyway migrations.
 - Keep calculation logic in the recommender and persistence in pets-service.
+- Keep global ingredient migrations and recommender calculation profiles aligned
+  through the normalized catalog source and its consistency tests.
 - Update this document when component ownership or request flow changes.
