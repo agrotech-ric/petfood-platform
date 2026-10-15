@@ -101,6 +101,7 @@ jq -e --arg release "$release_commit" '
   (.services["frontend-production"].image == ("petfood/frontend:" + $release)) and
   ([.volumes[] | select(.external == true)] | length) == 5 and
   ([.volumes[].name] | unique | length) == 5 and
+  ([.volumes[].name | select(test("sandbox"; "i"))] | length) == 0 and
   ([.volumes[].name | select(startswith("petfood_platforma_"))] | length) == 0
 ' <<<"$rendered_config" >/dev/null
 
@@ -125,6 +126,16 @@ if [ "$volume_check" = --require-volumes ]; then
   for volume_name in "${durable_volumes[@]}"; do
     test -n "${volume_name:?}"
     docker volume inspect "$volume_name" >/dev/null
+    mapfile -t active_consumers < <(docker ps --filter "volume=$volume_name" --format '{{.Names}}')
+    for container_name in "${active_consumers[@]}"; do
+      case "$container_name" in
+        petfood_production-*) ;;
+        *)
+          echo "Production volume $volume_name is mounted by running non-production container $container_name" >&2
+          exit 1
+          ;;
+      esac
+    done
   done
 fi
 

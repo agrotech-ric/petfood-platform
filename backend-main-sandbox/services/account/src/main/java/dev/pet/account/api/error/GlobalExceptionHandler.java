@@ -3,6 +3,8 @@ package dev.pet.account.api.error;
 import dev.pet.account.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
@@ -20,6 +22,8 @@ import org.hibernate.exception.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiError> handleBadRequest(BadRequestException ex, HttpServletRequest req) {
@@ -81,6 +85,7 @@ public class GlobalExceptionHandler {
             String msg = rse.getReason() != null ? rse.getReason() : rse.getMessage();
             return build(st != null ? st : HttpStatus.BAD_REQUEST, msg, req);
         }
+        log.error("Unhandled exception while processing {} {}", req.getMethod(), req.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", req);
     }
 

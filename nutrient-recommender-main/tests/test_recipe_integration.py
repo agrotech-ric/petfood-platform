@@ -103,6 +103,21 @@ class RecipeIntegrationTest(unittest.TestCase):
         self.assertEqual(name, result.composition[0].ingredient)
         self.assertIn(name, result.ingredients_required)
 
+    def test_curated_ingredient_categories_are_available_to_optimization(self):
+        ingredients = [
+            "Beaphar — Beaphar Doggy's",
+            "Кости и хрящи — Грудная телячья кость",
+            "Растительное Масло — Канола",
+            "Конина — Мясо",
+            "Бульон — Говяжий",
+        ]
+
+        for ingredient in ingredients:
+            with self.subTest(ingredient=ingredient):
+                result = _optimize_recipe_impl(request_for(ingredient))
+                self.assertEqual("optimization", result.method)
+                self.assertEqual(ingredient, result.composition[0].ingredient)
+
 
 if __name__ == "__main__":
     unittest.main()

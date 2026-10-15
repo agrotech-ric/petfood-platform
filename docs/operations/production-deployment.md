@@ -13,14 +13,17 @@ running generation:
 - the full 40-character commit currently at protected `origin/main`;
 - a restore-tested or accepted backup-set identifier;
 - a protected production environment file outside the checkout;
-- five explicit beta-derived external volume names for PostgreSQL, Redis,
-  RabbitMQ, MinIO, and pet photos;
+- five explicit production-only external volume names for PostgreSQL, Redis,
+  RabbitMQ, MinIO, and pet photos; promotion may seed them from reviewed beta
+  backups, but the volumes must never remain attached to sandbox containers;
 - the production environment approval and `DEPLOY_APPROVED` confirmation.
 
 Create the protected environment file from `.env.production.example`, keep it
 mode `0600`, and never print or commit it. The validator rejects placeholders,
 in-repository files, secret fallbacks, insecure cookie/path settings, invalid
-CORS and public URL shapes, legacy volume names, and unexpected public ports.
+CORS and public URL shapes, legacy or sandbox volume names, and unexpected
+public ports. Host-side validation also rejects a durable production volume
+that is mounted by any running non-production container.
 
 RabbitMQ storage is hostname-sensitive. The production runtime uses the stable
 node identity `rabbit@petfood-rabbitmq`; do not attach a raw beta broker volume

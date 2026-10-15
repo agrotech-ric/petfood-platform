@@ -251,12 +251,12 @@ services:
       RECOMMENDER_SERVICE_URL: http://recommender-service-sandbox:8000
       REDIS_HOST: redis-sandbox
       REDIS_PORT: 6379
-      CORS_ALLOWED_ORIGIN_LAN: http://10.1.10.144:5174
+      CORS_ALLOWED_ORIGIN_LAN: ${SANDBOX_FRONTEND_ORIGIN:-http://127.0.0.1:5174}
       SHARE_RATE_REPLENISH_RATE: ${SHARE_RATE_REPLENISH_RATE:-5}
       SHARE_RATE_BURST_CAPACITY: ${SHARE_RATE_BURST_CAPACITY:-20}
       SHARE_RATE_REQUESTED_TOKENS: ${SHARE_RATE_REQUESTED_TOKENS:-1}
     ports:
-      - "18190:8090"
+      - "127.0.0.1:18190:8090"
     restart: unless-stopped
     networks:
       - pets_network_sandbox
@@ -267,7 +267,12 @@ networks:
 
 volumes:
   postgres_data_sandbox:
+    name: pets_sandbox_postgres_data_20261008
   redis_data_sandbox:
+    name: pets_sandbox_redis_data_20261008
   rabbitmq_data_sandbox:
+    name: pets_sandbox_rabbitmq_data_20261008
   minio_data_sandbox:
+    name: pets_sandbox_minio_data_20261008
   pets_photos_sandbox:
+    name: pets_sandbox_photos_data_20261008
