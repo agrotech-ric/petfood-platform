@@ -23,6 +23,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -108,7 +110,13 @@ public class PdfReportService {
         }
         enforceRecordLimit(recipe.getIngredients().size() + recipe.getNutrientConstraints().size());
         ReportMessages messages = ReportMessages.forLocale(localeValue);
-        return new GeneratedPdf(render(recipeHtml(recipe, messages)), filename(messages, "recipe", recipe.getName()));
+        PetContraindication contraindication = recipe.getPet() == null
+            ? null
+            : contraindicationRepository.findByPetId(recipe.getPet().getId()).orElse(null);
+        return new GeneratedPdf(
+            render(recipeHtml(recipe, contraindication, messages)),
+            filename(messages, "recipe", recipe.getName())
+        );
     }
 
     private String petHtml(
@@ -175,101 +183,404 @@ public class PdfReportService {
         return document(m.get("petTitle"), body.toString(), m);
     }
 
-    private String recipeHtml(Recipe recipe, ReportMessages m) {
-        StringBuilder body = new StringBuilder();
-        Pet pet = recipe.getPet();
-        hero(body, m.get("recipeTitle"), recipe.getName(), pet == null ? null : imageData(pet));
-        if (pet != null) {
-            section(body, m.get("pet"));
-            body.append("<table class='facts'>").append(row(m.get("name"), pet.getName()))
-                .append(row(m.get("species"), pet.getSpecies() == null ? null : pet.getSpecies().getName()))
-                .append(row(m.get("breed"), pet.getBreed() == null ? null : pet.getBreed().getName()))
-                .append(row(m.get("birthDate"), pet.getBirthDate()))
-                .append(row(m.get("weight"), pet.getWeightKg() == null ? null : pet.getWeightKg() + " kg"))
-                .append("</table>");
-        }
-        section(body, m.get("profile"));
-        body.append("<table class='facts'>").append(row(m.get("name"), recipe.getName()))
-            .append(row(m.get("description"), recipe.getDescription()))
-            .append(row(m.get("category"), join(recipe.getAgeCategory(), recipe.getBreedSize())))
-            .append(row(m.get("weight"), recipe.getTargetWeightKg()))
-            .append(row(m.get("ageMonths"), recipe.getTargetAgeMonths()))
-            .append(row(m.get("gender"), recipe.getTargetGender()))
-            .append(row(m.get("breed"), recipe.getTargetBreed() == null ? null : recipe.getTargetBreed().getName()))
-            .append(row(m.get("activity"), recipe.getTargetActivityType() == null ? null : recipe.getTargetActivityType().getName()))
-            .append(row(m.get("reproductive"), recipe.getTargetReproductiveStatus() == null ? null : recipe.getTargetReproductiveStatus().getName()))
-            .append(row(m.get("condition"), join(recipe.getTargetDisorder(), recipe.getTargetHealthCondition() == null ? null : recipe.getTargetHealthCondition().getNameRu())))
-            .append(row(m.get("symptoms"), recipe.getTargetSymptoms().stream().map(item -> item.getName()).toList()))
-            .append(row(m.get("energy"), recipe.getTargetEnergyKcal()))
-            .append(row(m.get("maximize"), recipe.getMaximizeNutrients()))
-            .append(row(m.get("version"), recipe.getCalculationVersion()))
-            .append(row(m.get("calculatedAt"), recipe.getCalculatedAt()))
-            .append("</table>");
-
-        section(body, m.get("ingredients"));
-        body.append("<table><thead><tr>").append(th(m.get("name"))).append(th(m.get("category")))
-            .append(th(m.get("minimum"))).append(th(m.get("maximum"))).append(th(m.get("quantity")))
-            .append("</tr></thead><tbody>");
-        recipe.getIngredients().forEach(item -> body.append("<tr>")
-            .append(td(join(item.getIngredient().getName(), item.getIngredient().getSubtype())))
-            .append(td(item.getIngredient().getCategory())).append(td(item.getMinPercent() + "%"))
-            .append(td(item.getMaxPercent() + "%")).append(td(join(item.getResultPercent(), item.getResultGrams()))).append("</tr>"));
-        body.append("</tbody></table>");
-
-        section(body, m.get("constraints"));
-        if (recipe.getNutrientConstraints().isEmpty()) body.append(empty(m));
-        else {
-            body.append("<table><thead><tr>").append(th(m.get("name"))).append(th(m.get("minimum")))
-                .append(th(m.get("maximum"))).append("</tr></thead><tbody>");
-            recipe.getNutrientConstraints().forEach(item -> body.append("<tr>").append(td(item.getNutrientKey()))
-                .append(td(item.getMinValue())).append(td(item.getMaxValue())).append("</tr>"));
-            body.append("</tbody></table>");
-        }
-
-        section(body, m.get("charts"));
+    private String recipeHtml(Recipe recipe, PetContraindication contraindication, ReportMessages m) {
         JsonNode result = recipe.getCalculationResult();
-        body.append(metricCards(result, m));
-        boolean chartAdded = false;
-        JsonNode composition = result.path("composition");
-        JsonNode nutrition = result.path("nutrition");
-        JsonNode nutrients = result.path("nutrients");
-        JsonNode minerals = result.path("minerals");
-        JsonNode vitamins = result.path("vitamins");
-        if (composition.isArray() && !composition.isEmpty()) {
-            body.append(donutChart(m.get("composition"), composition, "percent", "%"));
-            chartAdded = true;
+        Pet pet = recipe.getPet();
+        StringBuilder body = new StringBuilder();
+
+        body.append("<section class='prescription-page prescription-page-break'>")
+            .append("<div class='prescription-date'><strong>").append(escape(m.get("date"))).append("</strong><br/>")
+            .append(escape(recipeDate(recipe, m))).append("</div>")
+            .append("<h1 class='prescription-title'>").append(escape(m.get("prescriptionTitle"))).append("</h1>")
+            .append("<h2 class='recipe-name'>").append(escape(recipe.getName())).append("</h2>")
+            .append("<p class='recipe-description'>").append(escape(recipe.getDescription())).append("</p>")
+            .append("<table class='category-grid'><tr><td><strong>").append(escape(m.get("age"))).append("</strong><br/>")
+            .append(escape(localizedValue(m, "ageCategory", recipe.getAgeCategory()))).append("</td><td><strong>")
+            .append(escape(m.get("breedSize"))).append("</strong><br/>")
+            .append(escape(localizedValue(m, "breedSize", recipe.getBreedSize()))).append("</td></tr></table>")
+            .append("<div class='orange-rule'></div><h2 class='center-heading'>").append(escape(m.get("pet"))).append("</h2>");
+
+        appendPrescriptionPet(body, pet, recipe, m);
+        body.append("<h2 class='section-heading'>").append(escape(m.get("healthState"))).append("</h2>")
+            .append("<table class='striped-table health-table'>")
+            .append(prescriptionRow(m.get("condition"), join(recipe.getTargetDisorder(),
+                recipe.getTargetHealthCondition() == null ? null : recipe.getTargetHealthCondition().getNameRu())))
+            .append(prescriptionRow(m.get("symptoms"), String.join(", ",
+                recipe.getTargetSymptoms().stream().map(item -> item.getName()).toList())))
+            .append(prescriptionRow(m.get("contra"), contraindication == null ? null : readContraindications(contraindication)))
+            .append("</table></section>");
+
+        body.append("<section class='prescription-page prescription-page-break'>")
+            .append("<h1 class='page-heading'>").append(escape(m.get("recipe"))).append("</h1>")
+            .append("<table class='daily-metrics'><tr>")
+            .append(prescriptionMetric(m.get("dailyCalorieRequirement"), result.path("dailyCaloriesNorm"), m.get("kcalPerDay")))
+            .append(prescriptionMetric(m.get("dailyFoodAmount"), result.path("dailyNorm"), m.get("gramsPerDay")))
+            .append("</tr></table>")
+            .append("<table class='recipe-composition-layout'><tr><td class='ingredients-cell'>")
+            .append(ingredientTable(recipe, result, m))
+            .append("</td><td class='composition-chart-cell'>")
+            .append(prescriptionDonut(result.path("composition"), "percent", "%", false))
+            .append("</td></tr></table>")
+            .append("<h2 class='center-heading nutrients-heading'>").append(escape(m.get("nutrientsHeading"))).append("</h2>")
+            .append("<table class='macro-layout'><tr><td class='macro-chart-cell'>")
+            .append(prescriptionDonut(result.path("nutrition"), "value", "", true))
+            .append("</td><td>").append(macroTable(result.path("nutrition"), result.path("calories"), m))
+            .append("</td></tr></table>")
+            .append("<h2 class='center-heading daily-nutrients-heading'>").append(escape(m.get("dailyNutrientContent"))).append("</h2>")
+            .append("<table class='nutrient-columns'><tr><td>")
+            .append(nutrientTable(m.get("minerals"), result.path("minerals"), m))
+            .append("</td><td>").append(nutrientTable(m.get("vitamins"), result.path("vitamins"), m))
+            .append("</td></tr></table>")
+            .append(otherNutrientsTable(result.path("nutrients"), m))
+            .append("</section>");
+
+        body.append("<section class='prescription-page recommendations-page'>")
+            .append("<h1 class='page-heading recommendation-heading'>").append(escape(m.get("useRecommendations"))).append("</h1>")
+            .append("<table class='striped-table recommendations-table'>")
+            .append(prescriptionRow(m.get("feedingSchedule"), null))
+            .append(prescriptionRow(m.get("servingEnergy"), null))
+            .append(prescriptionRow(m.get("applicationDuration"), null))
+            .append("</table>")
+            .append(prescriptionTextSection(m.get("introductionMethod"), m.get("introductionMethodText")))
+            .append(prescriptionTextSection(m.get("preparation"), m.get("preparationText")))
+            .append(prescriptionTextSection(m.get("storageConditions"), m.get("storageConditionsText")))
+            .append("<div class='legal-block'><h2>").append(escape(m.get("warnings"))).append("</h2><ul>");
+        for (String key : List.of("warning1", "warning2", "warning3", "warning4")) {
+            body.append("<li>").append(escape(m.get(key))).append("</li>");
         }
-        if (nutrition.isArray() && !nutrition.isEmpty()) {
-            body.append(donutChart(m.get("nutrition"), nutrition, "value", ""));
-            chartAdded = true;
+        body.append("</ul></div><div class='consent-block'><h2>").append(escape(m.get("consent")))
+            .append("</h2><p><span class='checkbox'>&#9744;</span> ").append(escape(m.get("consentText")))
+            .append("</p></div>").append(signatureBlock(m)).append("</section>");
+
+        return recipeDocument(body.toString(), m);
+    }
+
+    private void appendPrescriptionPet(StringBuilder body, Pet pet, Recipe recipe, ReportMessages m) {
+        if (pet == null) {
+            body.append("<div class='pet-empty'>").append(escape(m.get("none"))).append("</div>");
+            return;
         }
-        if (nutrients.isArray() && !nutrients.isEmpty()) {
-            body.append(valueTable(m.get("nutrients"), nutrients));
-            chartAdded = true;
+        String image = imageData(pet);
+        body.append("<table class='pet-summary'><tr><td class='pet-photo-cell'>");
+        if (image == null) {
+            body.append("<div class='pet-photo-placeholder'>—</div>");
+        } else {
+            body.append("<img src='").append(image).append("' alt='' />");
         }
-        if (minerals.isArray() && !minerals.isEmpty()) {
-            body.append(balanceChart(m.get("minerals"), minerals, m));
-            chartAdded = true;
-        }
-        if (vitamins.isArray() && !vitamins.isEmpty()) {
-            body.append(balanceChart(m.get("vitamins"), vitamins, m));
-            chartAdded = true;
-        }
-        JsonNode digestion = recipe.getCalculationResult().path("digestion");
-        if (digestion.isObject()) {
-            for (String key : List.of("protein", "fat", "carbs")) {
-                JsonNode items = digestion.path(key);
-                if (items.isArray() && !items.isEmpty()) {
-                    body.append(digestionChart(m.get(key), items, m));
-                    chartAdded = true;
+        body.append("</td><td class='pet-identity'><strong>").append(escape(pet.getName())).append("</strong><br/>")
+            .append(escape(petAge(pet, recipe, m))).append("<br/>")
+            .append(escape(m.get("id"))).append(": ").append(escape(pet.getId())).append("</td></tr></table>")
+            .append("<table class='striped-table pet-facts'>")
+            .append(prescriptionRow(m.get("breed"), pet.getBreed() == null ? null : pet.getBreed().getName()))
+            .append(prescriptionRow(m.get("birthDate"), formatDate(pet.getBirthDate(), m)))
+            .append(prescriptionRow(m.get("weight"), pet.getWeightKg() == null ? null : formatNumber(pet.getWeightKg()) + " " + m.get("kg")))
+            .append(prescriptionRow(m.get("gender"), localizedValue(m, "gender", pet.getGender())))
+            .append(prescriptionRow(m.get("activity"), recipe.getTargetActivityType() == null ? null : recipe.getTargetActivityType().getName()))
+            .append(prescriptionRow(m.get("reproductive"), pet.getReproductiveStatus() == null ? null : pet.getReproductiveStatus().getName()))
+            .append(prescriptionRow(reproductiveDetailLabel(pet, m), pet.getReproductiveSubStatus() == null ? null : pet.getReproductiveSubStatus().getName()))
+            .append(prescriptionRow(m.get("puppies"), pet.getPuppiesCount()))
+            .append("</table>");
+    }
+
+    private String prescriptionMetric(String label, JsonNode value, String unit) {
+        String rendered = value.isNumber() ? formatPrescriptionNumber(value.asDouble()) + " " + unit : "—";
+        return "<td><div>" + escape(label) + "</div><strong>" + escape(rendered) + "</strong></td>";
+    }
+
+    private String ingredientTable(Recipe recipe, JsonNode result, ReportMessages m) {
+        StringBuilder table = new StringBuilder("<table class='ingredients-table'><thead><tr><th></th><th>")
+            .append(escape(m.get("ingredients"))).append("</th><th>%</th><th>")
+            .append(escape(m.get("grams"))).append("</th></tr></thead><tbody>");
+        if (!recipe.getIngredients().isEmpty()) {
+            recipe.getIngredients().forEach(item -> table.append("<tr><td class='ingredient-check'>&#9744;</td><td>")
+                .append(escape(ingredientName(item.getIngredient().getName(), item.getIngredient().getSubtype(), item.getIngredient().getCategory())))
+                .append("</td><td>").append(escape(measure(item.getResultPercent(), "%")))
+                .append("</td><td>").append(escape(measure(item.getResultGrams(), m.get("g")))).append("</td></tr>"));
+        } else {
+            JsonNode composition = result.path("composition");
+            if (composition.isArray()) {
+                for (JsonNode item : composition) {
+                    table.append("<tr><td class='ingredient-check'>&#9744;</td><td>")
+                        .append(escape(item.path("label").asText("—"))).append("</td><td>")
+                        .append(escape(jsonMeasure(item, "percent", "%"))).append("</td><td>")
+                        .append(escape(jsonMeasure(item, "grams", m.get("g")))).append("</td></tr>");
                 }
             }
         }
-        if (!chartAdded) body.append(empty(m));
+        if (table.toString().endsWith("<tbody>")) {
+            table.append("<tr><td></td><td colspan='3'>—</td></tr>");
+        }
+        return table.append("</tbody></table>").toString();
+    }
 
-        section(body, m.get("calculation"));
-        body.append(calculationTable(recipe.getCalculationResult(), m));
-        return document(m.get("recipeTitle"), body.toString(), m);
+    private String prescriptionDonut(JsonNode items, String valueField, String suffix, boolean macroPalette) {
+        if (!items.isArray() || items.isEmpty()) return "<div class='empty-chart'>—</div>";
+        String[] colors = macroPalette
+            ? new String[]{"#4a8fe7", "#79d65d", "#ff9a57", "#ef4836", "#8e53b7"}
+            : new String[]{"#ef4836", "#8e53b7", "#4a8fe7", "#79d65d", "#ff9a57"};
+        int count = Math.min(items.size(), 12);
+        double total = 0;
+        for (int i = 0; i < count; i++) total += Math.max(0, items.get(i).path(valueField).asDouble());
+        if (total <= 0) return "<div class='empty-chart'>—</div>";
+        StringBuilder svg = new StringBuilder("<svg class='prescription-donut' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 190'>");
+        double angle = -90;
+        for (int i = 0; i < count; i++) {
+            double value = Math.max(0, items.get(i).path(valueField).asDouble());
+            if (value <= 0) continue;
+            double sweep = value / total * 360;
+            if (sweep >= 359.999) {
+                svg.append("<circle cx='120' cy='88' r='52' fill='none' stroke='").append(colors[i % colors.length])
+                    .append("' stroke-width='28'/>");
+            } else {
+                svg.append("<path d='").append(donutPath(120, 88, 66, 38, angle, angle + sweep))
+                    .append("' fill='").append(colors[i % colors.length]).append("' stroke='#ffffff' stroke-width='1'/>");
+            }
+            double middle = Math.toRadians(angle + sweep / 2);
+            svg.append("<text x='").append(formatNumber(120 + Math.cos(middle) * 83)).append("' y='")
+                .append(formatNumber(91 + Math.sin(middle) * 83)).append("' font-size='9' text-anchor='middle' fill='")
+                .append(colors[i % colors.length]).append("'>").append(escape(formatNumber(value) + suffix)).append("</text>");
+            angle += sweep;
+        }
+        return svg.append("</svg>").toString();
+    }
+
+    private String macroTable(JsonNode items, JsonNode calories, ReportMessages m) {
+        String[] colors = {"#4a8fe7", "#79d65d", "#ff9a57", "#ef4836", "#8e53b7"};
+        StringBuilder table = new StringBuilder("<table class='macro-table'><thead><tr><th>")
+            .append(escape(m.get("mainNutrients"))).append("</th><th>%</th></tr></thead><tbody>");
+        if (items.isArray() && !items.isEmpty()) {
+            for (int i = 0; i < items.size(); i++) {
+                JsonNode item = items.get(i);
+                table.append("<tr><td><span class='nutrient-dot' style='background:").append(colors[i % colors.length])
+                .append("'></span>").append(escape(item.path("label").asText(item.path("key").asText("—"))))
+                    .append("</td><td>").append(escape(jsonNumber(item.path("value")))).append("</td></tr>");
+            }
+        } else {
+            table.append("<tr><td colspan='2'>—</td></tr>");
+        }
+        table.append("</tbody></table><p class='energy-density'><strong>").append(escape(m.get("energyValue")))
+            .append(":</strong> ").append(escape(calories.isNumber() ? formatPrescriptionNumber(calories.asDouble()) + " " + m.get("kcalPer100g") : "—"))
+            .append("</p>");
+        return table.toString();
+    }
+
+    private String nutrientTable(String title, JsonNode items, ReportMessages m) {
+        StringBuilder table = new StringBuilder("<table class='compact-nutrients'><thead><tr><th colspan='2'>")
+            .append(escape(title)).append("</th></tr></thead><tbody>");
+        if (!items.isArray() || items.isEmpty()) {
+            return table.append("<tr><td colspan='2'>—</td></tr></tbody></table>").toString();
+        }
+        for (JsonNode item : items) {
+            table.append("<tr><td>").append(escape(item.path("label").asText(item.path("key").asText("—"))))
+                .append("</td><td>").append(escape(nutrientValue(item, m))).append("</td></tr>");
+        }
+        return table.append("</tbody></table>").toString();
+    }
+
+    private String otherNutrientsTable(JsonNode items, ReportMessages m) {
+        StringBuilder body = new StringBuilder("<div class='other-nutrients'><h3>")
+            .append(escape(m.get("otherNutrients"))).append("</h3><table><tr><td>");
+        if (!items.isArray() || items.isEmpty()) {
+            return body.append("—</td><td>—</td></tr></table></div>").toString();
+        }
+        int split = (items.size() + 1) / 2;
+        body.append(nutrientSlice(items, 0, split, m)).append("</td><td>")
+            .append(nutrientSlice(items, split, items.size(), m));
+        return body.append("</td></tr></table></div>").toString();
+    }
+
+    private String nutrientSlice(JsonNode items, int start, int end, ReportMessages m) {
+        StringBuilder table = new StringBuilder("<table class='compact-nutrients'><tbody>");
+        for (int i = start; i < end; i++) {
+            JsonNode item = items.get(i);
+            table.append("<tr><td>").append(escape(item.path("label").asText(item.path("key").asText("—"))))
+                .append("</td><td>").append(escape(nutrientValue(item, m))).append("</td></tr>");
+        }
+        return table.append("</tbody></table>").toString();
+    }
+
+    private String prescriptionTextSection(String title, String text) {
+        return "<div class='text-section'><h2>" + escape(title) + "</h2><p>" + escape(text) + "</p></div>";
+    }
+
+    private String signatureBlock(ReportMessages m) {
+        return "<table class='signatures'><tr><td><strong>" + escape(m.get("ownerFullName")) + "</strong><br/>"
+            + "_____________________________<br/><strong>" + escape(m.get("signature")) + "</strong> &#160; ___________________<br/>"
+            + "<strong>" + escape(m.get("date")) + "</strong> &#160;&#160;&#160;&#160; ___________________</td><td><strong>"
+            + escape(m.get("veterinarianFullName")) + "</strong><br/>_____________________________<br/><strong>"
+            + escape(m.get("signature")) + "</strong> &#160; ___________________<br/><strong>" + escape(m.get("date"))
+            + "</strong> &#160;&#160;&#160;&#160; ___________________</td></tr></table>";
+    }
+
+    private String recipeDocument(String body, ReportMessages m) {
+        return """
+            <!DOCTYPE html><html lang='%s'><head><meta charset='UTF-8'/><style>
+            @page { size: A4; margin: 12.5mm 20mm 18mm; @bottom-right { content: counter(page); font-family: 'Inter'; font-size: 9pt; color: #111111; } }
+            * { box-sizing: border-box; }
+            body { margin: 0; color: #111111; font-family: 'Inter', Arial, sans-serif; font-size: 10pt; line-height: 1.35; }
+            table { width: 100%%; border-collapse: collapse; }
+            tr, td, th, h1, h2, h3, .legal-block, .consent-block, .signatures { page-break-inside: avoid; }
+            .prescription-page { width: 100%%; }
+            .prescription-page-break { page-break-after: always; }
+            .prescription-date { min-height: 17mm; text-align: right; }
+            .prescription-title { margin: 0 0 7mm; font-size: 16pt; text-align: center; text-transform: uppercase; }
+            .recipe-name { margin: 0 0 1mm; font-size: 13pt; }
+            .recipe-description { min-height: 12mm; margin: 0 0 3mm; }
+            .category-grid { margin-bottom: 3mm; table-layout: fixed; }
+            .category-grid td { width: 50%%; padding: 1mm; text-align: center; }
+            .orange-rule { border-top: 1.5px solid #f47e42; }
+            .center-heading { margin: 7mm 0 3mm; font-size: 13pt; text-align: center; }
+            .pet-summary { margin: 0 0 3mm; }
+            .pet-summary td { border: 0; vertical-align: bottom; }
+            .pet-photo-cell { width: 47mm; padding: 2mm 4mm; }
+            .pet-photo-cell img, .pet-photo-placeholder { width: 40mm; height: 40mm; object-fit: cover; }
+            .pet-photo-placeholder { padding-top: 16mm; background: #eeeeee; color: #777777; text-align: center; }
+            .pet-identity { padding: 0 0 7mm 2mm; font-size: 10.5pt; }
+            .pet-identity strong { font-size: 12pt; }
+            .pet-empty { padding: 10mm 0; text-align: center; }
+            .striped-table { margin: 0 0 5mm; table-layout: fixed; }
+            .striped-table tr:nth-child(even) { background: #f8d7c1; }
+            .striped-table th, .striped-table td { padding: 1.2mm 2mm; border: 0; text-align: left; vertical-align: top; }
+            .striped-table th { width: 34%%; font-weight: bold; }
+            .section-heading { margin: 6mm 0 0; padding-bottom: 1.5mm; border-bottom: 1.5px solid #f47e42; font-size: 13pt; }
+            .health-table { margin-top: 0; }
+            .page-heading { margin: 0 0 4mm; font-size: 16pt; text-align: left; }
+            .daily-metrics { margin: 0 0 3mm; table-layout: fixed; }
+            .daily-metrics td { width: 50%%; padding: 0 2mm 2mm; border: 0; text-align: center; }
+            .daily-metrics strong { display: block; margin-top: 1mm; font-size: 13pt; }
+            .recipe-composition-layout, .macro-layout, .nutrient-columns { table-layout: fixed; }
+            .recipe-composition-layout > tbody > tr > td, .macro-layout > tbody > tr > td, .nutrient-columns > tbody > tr > td { width: 50%%; padding: 0 3mm 0 0; border: 0; vertical-align: top; }
+            .recipe-composition-layout > tbody > tr > td:last-child, .macro-layout > tbody > tr > td:last-child, .nutrient-columns > tbody > tr > td:last-child { padding: 0 0 0 3mm; }
+            .ingredients-table { font-size: 9pt; }
+            .ingredients-table th { padding: 1mm; border-bottom: 1.5px solid #f47e42; text-align: left; }
+            .ingredients-table td { padding: 1.2mm 1mm; border-bottom: 0.5px solid #cccccc; }
+            .ingredients-table th:first-child, .ingredients-table td:first-child { width: 8mm; }
+            .ingredients-table th:nth-child(3), .ingredients-table td:nth-child(3) { width: 14mm; text-align: right; }
+            .ingredients-table th:nth-child(4), .ingredients-table td:nth-child(4) { width: 20mm; text-align: right; }
+            .ingredient-check { font-size: 11pt; }
+            .composition-chart-cell, .macro-chart-cell { text-align: center; }
+            .prescription-donut { width: 62mm; height: 48mm; }
+            .empty-chart { height: 42mm; padding-top: 18mm; color: #777777; text-align: center; }
+            .nutrients-heading { margin: 2mm 0 1mm; }
+            .macro-table { font-size: 9pt; }
+            .macro-table th { padding: 1mm 2mm; border-bottom: 1.5px solid #f47e42; text-align: left; }
+            .macro-table th:last-child, .macro-table td:last-child { width: 14mm; text-align: right; }
+            .macro-table td { padding: 1.2mm 2mm; border-bottom: 0.5px solid #cccccc; }
+            .nutrient-dot { display: inline-block; width: 3mm; height: 3mm; margin-right: 1.5mm; border-radius: 50%%; }
+            .energy-density { margin: 2mm 0 0; padding-top: 2mm; border-top: 1px solid #777777; font-size: 9pt; }
+            .daily-nutrients-heading { margin: 3mm 0 2mm; }
+            .compact-nutrients { font-size: 8pt; }
+            .compact-nutrients th { padding: 0.7mm; border-bottom: 1.5px solid #f47e42; text-align: center; }
+            .compact-nutrients td { padding: 0.45mm 1.5mm; border: 0; }
+            .compact-nutrients tr:nth-child(even) { background: #f8d7c1; }
+            .compact-nutrients td:last-child { width: 28mm; text-align: right; white-space: nowrap; }
+            .other-nutrients { margin-top: 2mm; }
+            .other-nutrients h3 { margin: 0; padding-bottom: 0.7mm; border-bottom: 1.5px solid #f47e42; font-size: 9pt; text-align: center; }
+            .other-nutrients > table { table-layout: fixed; }
+            .other-nutrients > table > tbody > tr > td { width: 50%%; padding: 0 3mm 0 0; border: 0; vertical-align: top; }
+            .other-nutrients > table > tbody > tr > td:last-child { padding: 0 0 0 3mm; }
+            .recommendation-heading { margin-bottom: 1mm; text-align: center; }
+            .recommendations-table { margin-bottom: 5mm; border-top: 1.5px solid #f47e42; border-bottom: 1.5px solid #f47e42; }
+            .text-section { margin: 0 0 6mm; }
+            .text-section h2, .legal-block h2, .consent-block h2 { margin: 0 0 1mm; font-size: 13pt; }
+            .text-section p { margin: 0; }
+            .legal-block { margin-top: 2mm; padding: 2mm 2mm 1mm; border-top: 1.5px solid #f47e42; border-bottom: 1.5px solid #f47e42; }
+            .legal-block ul { margin: 1mm 0 1mm 8mm; padding-left: 4mm; }
+            .legal-block li { margin: 0.5mm 0; }
+            .consent-block { padding: 2mm; border-bottom: 1.5px solid #f47e42; }
+            .consent-block p { margin: 0 0 0 6mm; }
+            .checkbox { font-size: 12pt; }
+            .signatures { margin-top: 11mm; table-layout: fixed; }
+            .signatures td { width: 50%%; padding: 0 7mm 0 2mm; border: 0; line-height: 2; vertical-align: top; }
+            .signatures td:last-child { padding: 0 2mm 0 7mm; }
+            </style><title>%s</title></head><body>%s</body></html>
+            """.formatted(escape(m.locale()), escape(m.get("prescriptionTitle")), body);
+    }
+
+    private String prescriptionRow(String label, Object value) {
+        return "<tr><th>" + escape(label) + "</th><td>" + escape(value) + "</td></tr>";
+    }
+
+    private String ingredientName(String name, String subtype, String category) {
+        if (subtype != null && !subtype.isBlank()) return name + " — " + subtype;
+        if (category != null && !category.isBlank() && !category.equalsIgnoreCase(name)) return name + " — " + category;
+        return name;
+    }
+
+    private String measure(Double value, String unit) {
+        return value == null || !Double.isFinite(value) ? "—" : formatPrescriptionNumber(value) + (unit.isBlank() ? "" : " " + unit);
+    }
+
+    private String jsonMeasure(JsonNode item, String field, String unit) {
+        return item.path(field).isNumber() ? formatPrescriptionNumber(item.path(field).asDouble()) + (unit.isBlank() ? "" : " " + unit) : "—";
+    }
+
+    private String jsonNumber(JsonNode value) {
+        return value.isNumber() ? formatPrescriptionNumber(value.asDouble()) : "—";
+    }
+
+    private String nutrientValue(JsonNode item, ReportMessages m) {
+        JsonNode value = item.path("current").isNumber() ? item.path("current") : item.path("value");
+        if (!value.isNumber()) return "—";
+        String unit = item.path("unit").asText("");
+        return formatPrescriptionNumber(value.asDouble()) + (unit.isBlank() ? "" : " " + localizedUnit(unit, m));
+    }
+
+    private String localizedUnit(String unit, ReportMessages m) {
+        String key = "unit." + unit.trim().toLowerCase(Locale.ROOT);
+        String translated = m.get(key);
+        return translated.equals(key) ? unit : translated;
+    }
+
+    private String localizedValue(ReportMessages m, String group, Object raw) {
+        if (raw == null || raw.toString().isBlank()) return null;
+        String key = group + "." + raw.toString().trim().toLowerCase(Locale.ROOT);
+        String translated = m.get(key);
+        return translated.equals(key) ? raw.toString() : translated;
+    }
+
+    private String reproductiveDetailLabel(Pet pet, ReportMessages m) {
+        if (pet.getReproductiveStatus() == null || pet.getReproductiveStatus().getCode() == null) {
+            return m.get("reproductiveDetail");
+        }
+        return switch (pet.getReproductiveStatus().getCode()) {
+            case "female_lactation" -> m.get("lactationWeek");
+            case "female_pregnant" -> m.get("pregnancyPeriod");
+            default -> m.get("reproductiveDetail");
+        };
+    }
+
+    private String recipeDate(Recipe recipe, ReportMessages m) {
+        LocalDate date = recipe.getCalculatedAt() != null ? recipe.getCalculatedAt().toLocalDate()
+            : recipe.getUpdatedAt() != null ? recipe.getUpdatedAt().toLocalDate() : null;
+        return formatDate(date, m);
+    }
+
+    private String formatDate(LocalDate date, ReportMessages m) {
+        if (date == null) return null;
+        String pattern = m.locale().equals("en") ? "MM/dd/yyyy" : "dd.MM.yyyy";
+        return date.format(DateTimeFormatter.ofPattern(pattern));
+    }
+
+    private String petAge(Pet pet, Recipe recipe, ReportMessages m) {
+        if (pet.getBirthDate() == null) return null;
+        LocalDate onDate = recipe.getCalculatedAt() != null ? recipe.getCalculatedAt().toLocalDate()
+            : recipe.getUpdatedAt() != null ? recipe.getUpdatedAt().toLocalDate() : LocalDate.now();
+        if (pet.getBirthDate().isAfter(onDate)) return null;
+        Period age = Period.between(pet.getBirthDate(), onDate);
+        if (age.getYears() > 0) return age.getYears() + " " + pluralAge(age.getYears(), "year", m);
+        return age.getMonths() + " " + pluralAge(age.getMonths(), "month", m);
+    }
+
+    private String pluralAge(int value, String unit, ReportMessages m) {
+        if (m.locale().equals("en")) return m.get(unit + (value == 1 ? "One" : "Many"));
+        if (m.locale().equals("kz")) return m.get(unit + "Many");
+        int mod100 = value % 100;
+        int mod10 = value % 10;
+        if (mod100 >= 11 && mod100 <= 14) return m.get(unit + "Many");
+        if (mod10 == 1) return m.get(unit + "One");
+        if (mod10 >= 2 && mod10 <= 4) return m.get(unit + "Few");
+        return m.get(unit + "Many");
     }
 
     private byte[] render(String html) {
@@ -424,58 +735,6 @@ public class PdfReportService {
         return lineChartSvg(title, values, labels, "#4A90E2");
     }
 
-    private String metricCards(JsonNode result, ReportMessages m) {
-        return "<table class='metrics'><tr>" + metric(result.path("calories"), "kcal", m.get("energyValue"))
-            + metric(result.path("dailyNorm"), "g", m.get("dailyPortion"))
-            + metric(result.path("dailyCaloriesNorm"), "kcal", m.get("dailyCalories")) + "</tr></table>";
-    }
-
-    private String metric(JsonNode node, String unit, String label) {
-        String value = node.isNumber() ? formatNumber(node.asDouble()) : "—";
-        return "<td><div class='metric-value'>" + escape(value + " " + unit) + "</div><div class='metric-label'>" + escape(label) + "</div></td>";
-    }
-
-    private String donutChart(String title, JsonNode items, String valueField, String suffix) {
-        String[] colors = {"#4A90E2", "#7FDB6A", "#FF9F5A", "#E74C3C", "#9B59B6"};
-        int count = Math.min(items.size(), 12);
-        double total = 0;
-        for (int i = 0; i < count; i++) total += Math.max(0, items.get(i).path(valueField).asDouble());
-        if (total <= 0) return "";
-        StringBuilder svg = new StringBuilder("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 230'>");
-        double angle = -90;
-        for (int i = 0; i < count; i++) {
-            double value = Math.max(0, items.get(i).path(valueField).asDouble());
-            if (value <= 0) continue;
-            double sweep = value / total * 360;
-            if (sweep >= 359.999) {
-                svg.append("<circle cx='160' cy='105' r='61' fill='none' stroke='").append(colors[i % colors.length])
-                    .append("' stroke-width='34'/>");
-            } else {
-                svg.append("<path d='").append(donutPath(160, 105, 78, 44, angle, angle + sweep))
-                    .append("' fill='").append(colors[i % colors.length]).append("' stroke='#ffffff' stroke-width='1'/>");
-            }
-            double middle = Math.toRadians(angle + sweep / 2);
-            double labelRadius = 94;
-            svg.append("<text x='").append(formatNumber(160 + Math.cos(middle) * labelRadius)).append("' y='")
-                .append(formatNumber(108 + Math.sin(middle) * labelRadius)).append("' font-size='9' text-anchor='middle' fill='")
-                .append(colors[i % colors.length]).append("'>").append(escape(formatNumber(value) + suffix)).append("</text>");
-            angle += sweep;
-        }
-        svg.append("</svg>");
-        StringBuilder legend = new StringBuilder("<table>");
-        for (int i = 0; i < count; i++) {
-            JsonNode item = items.get(i);
-            double value = item.path(valueField).asDouble();
-            String label = item.path("label").asText(item.path("key").asText("#" + (i + 1)));
-            String unit = item.path("unit").asText("");
-            legend.append("<tr class='legend-row'><td><span class='legend-dot' style='background:")
-                .append(colors[i % colors.length]).append("'></span>").append(escape(label)).append("</td><td>")
-                .append(escape(formatNumber(value) + suffix + (unit.isBlank() ? "" : " " + unit))).append("</td></tr>");
-        }
-        return "<div class='chart'><div class='chart-title'>" + escape(title) + "</div><table class='donut-layout'><tr><td class='donut-cell'>"
-            + svg + "</td><td>" + legend.append("</table>") + "</td></tr></table></div>";
-    }
-
     private String donutPath(double cx, double cy, double outer, double inner, double startAngle, double endAngle) {
         double[] startOuter = polar(cx, cy, outer, startAngle);
         double[] endOuter = polar(cx, cy, outer, endAngle);
@@ -492,51 +751,6 @@ public class PdfReportService {
     }
 
     private String point(double[] value) { return formatNumber(value[0]) + " " + formatNumber(value[1]); }
-
-    private String valueTable(String title, JsonNode items) {
-        StringBuilder body = new StringBuilder("<div class='chart'><div class='chart-title'>").append(escape(title)).append("</div><table class='value-grid'>");
-        for (int i = 0; i < Math.min(items.size(), 30); i += 2) {
-            body.append("<tr>").append(valueCells(items.get(i)));
-            if (i + 1 < items.size()) body.append(valueCells(items.get(i + 1)));
-            else body.append("<td></td><td></td>");
-            body.append("</tr>");
-        }
-        return body.append("</table></div>").toString();
-    }
-
-    private String valueCells(JsonNode item) {
-        String label = item.path("label").asText(item.path("key").asText("—"));
-        String unit = item.path("unit").asText("");
-        return "<td>" + escape(label) + "</td><td>" + escape(formatNumber(numeric(item, "value", "current", "percent")) + " " + unit) + "</td>";
-    }
-
-    private String balanceChart(String title, JsonNode items, ReportMessages m) {
-        StringBuilder body = new StringBuilder("<div class='chart'><div class='chart-title'>").append(escape(title)).append("</div>");
-        for (int i = 0; i < Math.min(items.size(), 24); i++) {
-            JsonNode item = items.get(i);
-            double percent = Math.max(0, item.path("percent").asDouble());
-            double width = Math.min(percent, 175) / 175d * 100;
-            String color = percent >= 100 ? "#4A90E2" : "#F28C4C";
-            body.append("<table class='balance-row'><tr><td class='balance-label'>").append(escape(item.path("label").asText("—")))
-                .append("</td><td><div class='balance-track'><div class='balance-fill' style='width:").append(formatNumber(width))
-                .append("%;background:").append(color).append("'></div></div></td><td class='balance-value'>")
-                .append(escape(formatNumber(percent) + "%")).append("</td></tr></table>");
-        }
-        return body.append("<div class='balance-norm'>").append(escape(m.get("norm"))).append(" · 100%</div></div>").toString();
-    }
-
-    private String digestionChart(String title, JsonNode items, ReportMessages m) {
-        List<Double> values = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        for (int i = 0; i < Math.min(items.size(), 30); i++) {
-            JsonNode item = items.get(i);
-            if (item.path("remaining").isNumber()) {
-                values.add(item.path("remaining").asDouble());
-                labels.add(formatNumber(item.path("time").asDouble()) + " " + m.get("hours"));
-            }
-        }
-        return values.isEmpty() ? "" : lineChartSvg(title, values, labels, "#E74C3C");
-    }
 
     private String lineChartSvg(String title, List<Double> values, List<String> labels, String color) {
         double max = Math.max(1, values.stream().mapToDouble(Double::doubleValue).max().orElse(1)) * 1.2;
@@ -575,48 +789,15 @@ public class PdfReportService {
         return String.format(Locale.ROOT, "%.2f", value).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 
-    private String calculationTable(JsonNode result, ReportMessages m) {
-        StringBuilder rows = new StringBuilder();
-        appendCalculationRows(rows, result, "");
-        if (rows.isEmpty()) return empty(m);
-        return "<table class='appendix'><thead><tr><th>" + escape(m.get("parameter")) + "</th><th>"
-            + escape(m.get("value")) + "</th></tr></thead><tbody>" + rows + "</tbody></table>";
-    }
-
-    private void appendCalculationRows(StringBuilder rows, JsonNode node, String path) {
-        if (node == null || node.isNull()) {
-            rows.append("<tr><td>").append(escape(path)).append("</td><td>—</td></tr>");
-            return;
-        }
-        if (node.isObject()) {
-            node.fields().forEachRemaining(entry -> {
-                String key = entry.getKey();
-                String normalized = key.toLowerCase(Locale.ROOT);
-                if (normalized.equals("ownerid") || normalized.equals("photoobjectkey") || normalized.equals("passportid")
-                    || normalized.contains("token") || normalized.contains("secret")) return;
-                appendCalculationRows(rows, entry.getValue(), path.isBlank() ? key : path + "." + key);
-            });
-            return;
-        }
-        if (node.isArray()) {
-            for (int i = 0; i < node.size(); i++) appendCalculationRows(rows, node.get(i), path + "[" + i + "]");
-            return;
-        }
-        if (visuallyRepresented(path)) return;
-        rows.append("<tr><td>").append(escape(path)).append("</td><td>").append(escape(node.asText())).append("</td></tr>");
-    }
-
-    private boolean visuallyRepresented(String path) {
-        if (path.equals("calories") || path.equals("dailyNorm") || path.equals("dailyCaloriesNorm")) return true;
-        for (String prefix : List.of("composition[", "nutrition[", "nutrients[", "minerals[", "vitamins[")) {
-            if (path.startsWith(prefix)) return true;
-        }
-        return path.matches("digestion\\.(protein|fat|carbs)\\[\\d+]\\.(time|remaining)");
-    }
-
-    private double numeric(JsonNode node, String... fields) {
-        for (String field : fields) if (node.path(field).isNumber()) return node.path(field).asDouble();
-        return 0;
+    private String formatPrescriptionNumber(double value) {
+        String raw = formatNumber(value);
+        int decimal = raw.indexOf('.');
+        String integer = decimal < 0 ? raw : raw.substring(0, decimal);
+        String fraction = decimal < 0 ? "" : raw.substring(decimal);
+        boolean negative = integer.startsWith("-");
+        String digits = negative ? integer.substring(1) : integer;
+        String grouped = digits.replaceAll("(?<=\\d)(?=(\\d{3})+$)", " ");
+        return (negative ? "-" : "") + grouped + fraction;
     }
 
     private String readContraindications(PetContraindication value) {
@@ -628,11 +809,6 @@ public class PdfReportService {
         } catch (Exception ex) {
             return "";
         }
-    }
-
-    private String pretty(JsonNode value) {
-        try { return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(value); }
-        catch (Exception ex) { return value == null ? "" : value.toString(); }
     }
 
     private String filename(ReportMessages m, String type, String name) {

@@ -7,7 +7,13 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.pet.pets.config.PdfReportProperties;
+import dev.pet.pets.domain.Breed;
+import dev.pet.pets.domain.Gender;
 import dev.pet.pets.domain.Pet;
+import dev.pet.pets.domain.PetContraindication;
+import dev.pet.pets.domain.Recipe;
+import dev.pet.pets.domain.Symptom;
+import dev.pet.pets.error.BadRequestException;
 import dev.pet.pets.error.NotFoundException;
 import dev.pet.pets.repo.PetContraindicationRepository;
 import dev.pet.pets.repo.PetHealthRecordRepository;
@@ -18,11 +24,16 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Base64;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +45,8 @@ class PdfReportServiceTest {
     private PetContraindicationRepository contraindications;
     private RecipeRepository recipes;
     private PetPhotoStorage photos;
+    private ResourceShareService shares;
+    private ObjectMapper objectMapper;
     private PdfReportService service;
 
     @BeforeEach
@@ -43,11 +56,13 @@ class PdfReportServiceTest {
         contraindications = mock(PetContraindicationRepository.class);
         recipes = mock(RecipeRepository.class);
         photos = mock(PetPhotoStorage.class);
+        shares = mock(ResourceShareService.class);
+        objectMapper = new ObjectMapper();
         PdfReportProperties properties = new PdfReportProperties();
         properties.setFontPath("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf");
         service = new PdfReportService(
             pets, recipes, health, contraindications, photos,
-            mock(ResourceShareService.class), new ObjectMapper(), properties
+            shares, objectMapper, properties
         );
     }
 
@@ -112,6 +127,157 @@ class PdfReportServiceTest {
 
         assertThatThrownBy(() -> service.pet(jwt(owner), pet.getId(), "ru"))
             .isInstanceOf(NotFoundException.class).hasMessage("Pet not found");
+    }
+
+    @Test
+    void rendersCalculatedRecipeAsThreePageVeterinaryPrescription() throws Exception {
+        UUID owner = UUID.randomUUID();
+        Recipe recipe = referenceRecipe(owner);
+        PetContraindication contraindication = new PetContraindication();
+        contraindication.setPetId(recipe.getPet().getId());
+        contraindication.setOwnerId(owner);
+        contraindication.setIngredientsJson("[\"Курица-грудка\",\"Индейка-грудка\"]");
+        when(recipes.findById(42L)).thenReturn(Optional.of(recipe));
+        when(shares.isCalculated(recipe)).thenReturn(true);
+        when(contraindications.findByPetId(recipe.getPet().getId())).thenReturn(Optional.of(contraindication));
+
+        GeneratedPdf pdf = service.recipe(jwt(owner), 42L, "ru");
+
+        assertThat(pdf.bytes()).startsWith('%', 'P', 'D', 'F').hasSizeGreaterThan(10_000);
+        try (PDDocument document = Loader.loadPDF(pdf.bytes())) {
+            assertThat(document.getNumberOfPages()).isEqualTo(3);
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text)
+                .contains("ВЕТЕРИНАРНЫЙ РЕЦЕПТ НА КОРМ")
+                .contains("Суточная потребность калорий")
+                .contains("4 471")
+                .contains("Курица-грудка")
+                .contains("Содержание нутриентов в суточной дозе")
+                .contains("Рекомендации по применению")
+                .contains("ФИО владельца")
+                .contains("ФИО ветеринара");
+        }
+    }
+
+    @Test
+    void localizesPrescriptionAndKeepsUnsupportedInstructionsUnavailable() throws Exception {
+        UUID owner = UUID.randomUUID();
+        Recipe recipe = referenceRecipe(owner);
+        when(recipes.findById(42L)).thenReturn(Optional.of(recipe));
+        when(shares.isCalculated(recipe)).thenReturn(true);
+        when(contraindications.findByPetId(recipe.getPet().getId())).thenReturn(Optional.empty());
+
+        GeneratedPdf pdf = service.recipe(jwt(owner), 42L, "kz");
+
+        try (PDDocument document = Loader.loadPDF(pdf.bytes())) {
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text)
+                .contains("ЖЕМГЕ АРНАЛҒАН ВЕТЕРИНАРИЯЛЫҚ РЕЦЕПТ")
+                .contains("Қолдану жөніндегі ұсынымдар")
+                .contains("Азықтандыру тәртібі")
+                .contains("—");
+        }
+    }
+
+    @Test
+    void rejectsDraftAndAnotherOwnersRecipe() throws Exception {
+        UUID owner = UUID.randomUUID();
+        Recipe recipe = referenceRecipe(owner);
+        when(recipes.findById(42L)).thenReturn(Optional.of(recipe));
+
+        assertThatThrownBy(() -> service.recipe(jwt(UUID.randomUUID()), 42L, "ru"))
+            .isInstanceOf(NotFoundException.class).hasMessage("Recipe not found");
+
+        when(shares.isCalculated(recipe)).thenReturn(false);
+        assertThatThrownBy(() -> service.recipe(jwt(owner), 42L, "ru"))
+            .isInstanceOf(BadRequestException.class)
+            .hasMessage("Only a fully calculated recipe can be exported");
+    }
+
+    @Test
+    void letsLongPrescriptionContentFlowWithoutClippingTheFinalSection() throws Exception {
+        UUID owner = UUID.randomUUID();
+        Recipe recipe = referenceRecipe(owner);
+        recipe.setDescription("Длинное описание рациона. ".repeat(80));
+        when(recipes.findById(42L)).thenReturn(Optional.of(recipe));
+        when(shares.isCalculated(recipe)).thenReturn(true);
+        when(contraindications.findByPetId(recipe.getPet().getId())).thenReturn(Optional.empty());
+
+        GeneratedPdf pdf = service.recipe(jwt(owner), 42L, "ru");
+
+        try (PDDocument document = Loader.loadPDF(pdf.bytes())) {
+            assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(3);
+            assertThat(new PDFTextStripper().getText(document)).contains("ФИО ветеринара");
+        }
+    }
+
+    private Recipe referenceRecipe(UUID owner) throws Exception {
+        Pet pet = new Pet();
+        pet.setId(UUID.randomUUID());
+        pet.setOwnerId(owner);
+        pet.setName("Белка");
+        pet.setBirthDate(LocalDate.of(2023, 3, 12));
+        pet.setWeightKg(25.0);
+        pet.setGender(Gender.female);
+        Breed breed = new Breed();
+        breed.setNameRu("Далматинец");
+        breed.setNameEn("Dalmatian");
+        pet.setBreed(breed);
+
+        Symptom symptom = new Symptom();
+        symptom.setName("Вялость, Кашель");
+        Recipe recipe = new Recipe();
+        recipe.setOwnerId(owner);
+        recipe.setPet(pet);
+        recipe.setName("Корм для беременных");
+        recipe.setDescription("Корм рассчитанный для беременных и кормящих с 5 и более щенками, насыщен быстроусвояемыми белками.");
+        recipe.setAgeCategory("adults");
+        recipe.setBreedSize("large");
+        recipe.setTargetGender("female");
+        recipe.setTargetDisorder("Уход за взрослыми");
+        recipe.setTargetSymptoms(Set.of(symptom));
+        recipe.setStatus("calculated");
+        recipe.setCalculatedAt(OffsetDateTime.parse("2026-09-12T10:00:00+05:00"));
+        recipe.setCalculationResult(objectMapper.readTree("""
+            {
+              "calories": 118,
+              "dailyNorm": 3797,
+              "dailyCaloriesNorm": 4471,
+              "composition": [
+                {"label":"Свинина — Мясо","percent":66,"grams":2506},
+                {"label":"Фрукты — Яблоки","percent":25,"grams":949},
+                {"label":"Рис — Белый, Среднезерный","percent":5,"grams":190},
+                {"label":"Вода — Обыкновенный","percent":3,"grams":114},
+                {"label":"Растительное масло — Кокосовое","percent":1,"grams":38}
+              ],
+              "nutrition": [
+                {"label":"Влага","value":73,"unit":"g"},
+                {"label":"Белки","value":15,"unit":"g"},
+                {"label":"Углеводы","value":7,"unit":"g"},
+                {"label":"Жиры","value":5,"unit":"g"}
+              ],
+              "minerals": [
+                {"label":"Кальций","current":8.91,"unit":"mg"},
+                {"label":"Фосфор","current":121.41,"unit":"mg"},
+                {"label":"Магний","current":28.35,"unit":"mg"},
+                {"label":"Натрий","current":54.09,"unit":"mg"},
+                {"label":"Калий","current":251.84,"unit":"mg"}
+              ],
+              "vitamins": [
+                {"label":"Витамин A","current":15.01,"unit":"µg"},
+                {"label":"Витамин E","current":0.21,"unit":"mg"},
+                {"label":"Витамин Д","current":0.15,"unit":"µg"},
+                {"label":"Витамин B1 (тиамин)","current":0.11,"unit":"mg"}
+              ],
+              "nutrients": [
+                {"label":"Зола","value":29.3,"unit":"g"},
+                {"label":"Клетчатка","value":25.44,"unit":"g"},
+                {"label":"Холестерин","value":1478.68,"unit":"mg"},
+                {"label":"Линолевая кислота","value":13.57,"unit":"g"}
+              ]
+            }
+            """));
+        return recipe;
     }
 
     private Jwt jwt(UUID subject) {

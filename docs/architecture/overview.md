@@ -135,7 +135,11 @@ recipes.
   recipe DTOs expose only saved calculations and never invoke digestibility.
 - The service renders owner-only pet and fully calculated recipe PDF reports on
   the server using OpenHTMLToPDF/PDFBox, inline SVG, bounded local photos, and an
-  embedded Inter font. PDF export never creates or changes a share.
+  embedded Inter font. Calculated recipes use the localized A4 veterinary feed
+  prescription layout with linked-pet and health context, saved calculation
+  values, preparation guidance, warnings, consent, and signature lines. Missing
+  prescription-only instructions remain explicitly unavailable rather than
+  being inferred. PDF export never creates or changes a share.
 
 PDF dependencies are pinned at build time. OpenHTMLToPDF is distributed under
 LGPL-2.1-or-later, its Apache PDFBox and Batik stack under Apache-2.0, and the
