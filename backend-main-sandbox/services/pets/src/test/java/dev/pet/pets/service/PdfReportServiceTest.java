@@ -155,7 +155,8 @@ class PdfReportServiceTest {
                 .contains("Содержание нутриентов в суточной дозе")
                 .contains("Рекомендации по применению")
                 .contains("ФИО владельца")
-                .contains("ФИО ветеринара");
+                .contains("ФИО ветеринара")
+                .doesNotContain("#");
         }
     }
 
@@ -244,11 +245,13 @@ class PdfReportServiceTest {
               "dailyNorm": 3797,
               "dailyCaloriesNorm": 4471,
               "composition": [
-                {"label":"Свинина — Мясо","percent":66,"grams":2506},
-                {"label":"Фрукты — Яблоки","percent":25,"grams":949},
-                {"label":"Рис — Белый, Среднезерный","percent":5,"grams":190},
                 {"label":"Вода — Обыкновенный","percent":3,"grams":114},
-                {"label":"Растительное масло — Кокосовое","percent":1,"grams":38}
+                {"label":"Спаржа — Обыкновенный","percent":3,"grams":114},
+                {"label":"Рис — Белый, Круглозерный (Короткозерный)","percent":16.77,"grams":637},
+                {"label":"Рыбий жир — Печень трески","percent":1.23,"grams":47},
+                {"label":"Животный жир — Бараний","percent":1,"grams":38},
+                {"label":"Утятина — Печень","percent":50,"grams":1899},
+                {"label":"Фрукты — Яблоки","percent":25,"grams":949}
               ],
               "nutrition": [
                 {"label":"Влага","value":73,"unit":"g"},
@@ -261,19 +264,39 @@ class PdfReportServiceTest {
                 {"label":"Фосфор","current":121.41,"unit":"mg"},
                 {"label":"Магний","current":28.35,"unit":"mg"},
                 {"label":"Натрий","current":54.09,"unit":"mg"},
-                {"label":"Калий","current":251.84,"unit":"mg"}
+                {"label":"Калий","current":251.84,"unit":"mg"},
+                {"label":"Железо","current":0.74,"unit":"mg"},
+                {"label":"Медь","current":0.06,"unit":"mg"},
+                {"label":"Цинк","current":0.96,"unit":"mg"},
+                {"label":"Марганец","current":0.11,"unit":"mg"},
+                {"label":"Селен","current":8.13,"unit":"µg"},
+                {"label":"Йод","current":1.11,"unit":"µg"}
               ],
               "vitamins": [
                 {"label":"Витамин A","current":15.01,"unit":"µg"},
                 {"label":"Витамин E","current":0.21,"unit":"mg"},
                 {"label":"Витамин Д","current":0.15,"unit":"µg"},
-                {"label":"Витамин B1 (тиамин)","current":0.11,"unit":"mg"}
+                {"label":"Витамин B1 (тиамин)","current":0.11,"unit":"mg"},
+                {"label":"Витамин B2 (рибофлавин)","current":0.1,"unit":"mg"},
+                {"label":"Витамин B3 (ниацин)","current":4.66,"unit":"mg"},
+                {"label":"Пантотеновая кислота","current":0.8,"unit":"mg"},
+                {"label":"Витамин B6","current":0.24,"unit":"mg"},
+                {"label":"Фолиевая кислота","current":0.0,"unit":"mg"},
+                {"label":"Витамин B12","current":0.18,"unit":"µg"},
+                {"label":"Витамин C","current":4.17,"unit":"mg"},
+                {"label":"Витамин K","current":1.07,"unit":"µg"}
               ],
               "nutrients": [
                 {"label":"Зола","value":29.3,"unit":"g"},
                 {"label":"Клетчатка","value":25.44,"unit":"g"},
                 {"label":"Холестерин","value":1478.68,"unit":"mg"},
-                {"label":"Линолевая кислота","value":13.57,"unit":"g"}
+                {"label":"Сахар общее","value":98.64,"unit":"g"},
+                {"label":"Холин","value":1933.21,"unit":"mg"},
+                {"label":"Линолевая кислота","value":13.57,"unit":"g"},
+                {"label":"Альфа-линоленовая кислота","value":0.65,"unit":"g"},
+                {"label":"Арахидоновая кислота","value":1.75,"unit":"g"},
+                {"label":"Эйкозапентаеновая кислота (ЭПК)","value":0,"unit":"g"},
+                {"label":"Докозагексаеновая кислота (ДГК)","value":0,"unit":"g"}
               ]
             }
             """));
