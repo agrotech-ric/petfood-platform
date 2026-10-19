@@ -17,3 +17,10 @@
 - [x] 3.2 Generate a Russian fixture matching the DOCX example, render both PDFs to images at equal resolution, and compare all pages side by side; tune layout until the structure, spacing, tables, charts, and legal/signature sections match closely.
 - [x] 3.3 Run pets-service tests and the share/export sandbox smoke test, rebuild the affected container, and inspect startup/export logs.
 - [x] 3.4 Review durable PDF-export documentation, run `git status --short`, `git diff --check`, and focused diff review, and record any unavoidable renderer differences from the Word reference.
+
+## 4. Production Export Visual Corrections
+
+- [x] 4.1 Replace font-dependent checkbox glyphs with renderer-safe drawn controls in ingredient and consent rows.
+- [x] 4.2 Tighten the recipe and nutrient page geometry so a normal production export retains the approved three-page composition without splitting recommendations onto a fourth page.
+- [x] 4.3 Render the reported production PDF fixture after the correction and compare all three pages with the DOCX reference, including consent, signatures, page numbering, tables, and charts.
+- [x] 4.4 Run focused pets-service tests, rebuild the sandbox pets container, execute the PDF smoke test, and review the final diff.

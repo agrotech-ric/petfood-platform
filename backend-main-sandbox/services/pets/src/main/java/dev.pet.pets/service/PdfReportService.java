@@ -210,7 +210,7 @@ public class PdfReportService {
             .append(prescriptionRow(m.get("contra"), contraindication == null ? null : readContraindications(contraindication)))
             .append("</table></section>");
 
-        body.append("<section class='prescription-page prescription-page-break'>")
+        body.append("<section class='prescription-page prescription-page-break recipe-data-page'>")
             .append("<h1 class='page-heading'>").append(escape(m.get("recipe"))).append("</h1>")
             .append("<table class='daily-metrics'><tr>")
             .append(prescriptionMetric(m.get("dailyCalorieRequirement"), result.path("dailyCaloriesNorm"), m.get("kcalPerDay")))
@@ -249,7 +249,7 @@ public class PdfReportService {
             body.append("<li>").append(escape(m.get(key))).append("</li>");
         }
         body.append("</ul></div><div class='consent-block'><h2>").append(escape(m.get("consent")))
-            .append("</h2><p><span class='checkbox'>&#9744;</span> ").append(escape(m.get("consentText")))
+            .append("</h2><p><span class='drawn-checkbox consent-checkbox'></span>").append(escape(m.get("consentText")))
             .append("</p></div>").append(signatureBlock(m)).append("</section>");
 
         return recipeDocument(body.toString(), m);
@@ -292,7 +292,7 @@ public class PdfReportService {
             .append(escape(m.get("ingredients"))).append("</th><th>%</th><th>")
             .append(escape(m.get("grams"))).append("</th></tr></thead><tbody>");
         if (!recipe.getIngredients().isEmpty()) {
-            recipe.getIngredients().forEach(item -> table.append("<tr><td class='ingredient-check'>&#9744;</td><td>")
+            recipe.getIngredients().forEach(item -> table.append("<tr><td class='ingredient-check'><span class='drawn-checkbox'></span></td><td>")
                 .append(escape(ingredientName(item.getIngredient().getName(), item.getIngredient().getSubtype(), item.getIngredient().getCategory())))
                 .append("</td><td>").append(escape(measure(item.getResultPercent(), "%")))
                 .append("</td><td>").append(escape(measure(item.getResultGrams(), m.get("g")))).append("</td></tr>"));
@@ -300,7 +300,7 @@ public class PdfReportService {
             JsonNode composition = result.path("composition");
             if (composition.isArray()) {
                 for (JsonNode item : composition) {
-                    table.append("<tr><td class='ingredient-check'>&#9744;</td><td>")
+                    table.append("<tr><td class='ingredient-check'><span class='drawn-checkbox'></span></td><td>")
                         .append(escape(item.path("label").asText("—"))).append("</td><td>")
                         .append(escape(jsonMeasure(item, "percent", "%"))).append("</td><td>")
                         .append(escape(jsonMeasure(item, "grams", m.get("g")))).append("</td></tr>");
@@ -422,14 +422,14 @@ public class PdfReportService {
             tr, td, th, h1, h2, h3, .legal-block, .consent-block, .signatures { page-break-inside: avoid; }
             .prescription-page { width: 100%%; }
             .prescription-page-break { page-break-after: always; }
-            .prescription-date { min-height: 17mm; text-align: right; }
-            .prescription-title { margin: 0 0 7mm; font-size: 16pt; text-align: center; text-transform: uppercase; }
+            .prescription-date { min-height: 14mm; text-align: right; }
+            .prescription-title { margin: 0 0 5mm; font-size: 16pt; text-align: center; text-transform: uppercase; }
             .recipe-name { margin: 0 0 1mm; font-size: 13pt; }
-            .recipe-description { min-height: 12mm; margin: 0 0 3mm; }
-            .category-grid { margin-bottom: 3mm; table-layout: fixed; }
+            .recipe-description { min-height: 8mm; margin: 0 0 2mm; }
+            .category-grid { margin-bottom: 2mm; table-layout: fixed; }
             .category-grid td { width: 50%%; padding: 1mm; text-align: center; }
             .orange-rule { border-top: 1.5px solid #f47e42; }
-            .center-heading { margin: 7mm 0 3mm; font-size: 13pt; text-align: center; }
+            .center-heading { margin: 5mm 0 2mm; font-size: 13pt; text-align: center; }
             .pet-summary { margin: 0 0 3mm; }
             .pet-summary td { border: 0; vertical-align: bottom; }
             .pet-photo-cell { width: 47mm; padding: 2mm 4mm; }
@@ -442,55 +442,61 @@ public class PdfReportService {
             .striped-table tr:nth-child(even) { background: #f8d7c1; }
             .striped-table th, .striped-table td { padding: 1.2mm 2mm; border: 0; text-align: left; vertical-align: top; }
             .striped-table th { width: 34%%; font-weight: bold; }
-            .section-heading { margin: 6mm 0 0; padding-bottom: 1.5mm; border-bottom: 1.5px solid #f47e42; font-size: 13pt; }
+            .section-heading { margin: 4mm 0 0; padding-bottom: 1mm; border-bottom: 1.5px solid #f47e42; font-size: 13pt; }
             .health-table { margin-top: 0; }
             .page-heading { margin: 0 0 4mm; font-size: 16pt; text-align: left; }
+            .recipe-data-page { font-size: 9pt; line-height: 1.2; }
+            .recipe-data-page .page-heading { margin-bottom: 2mm; font-size: 15pt; }
             .daily-metrics { margin: 0 0 3mm; table-layout: fixed; }
-            .daily-metrics td { width: 50%%; padding: 0 2mm 2mm; border: 0; text-align: center; }
-            .daily-metrics strong { display: block; margin-top: 1mm; font-size: 13pt; }
+            .daily-metrics td { width: 50%%; padding: 0 2mm 1mm; border: 0; text-align: center; }
+            .daily-metrics strong { display: block; margin-top: 0.5mm; font-size: 12pt; }
             .recipe-composition-layout, .macro-layout, .nutrient-columns { table-layout: fixed; }
             .recipe-composition-layout > tbody > tr > td, .macro-layout > tbody > tr > td, .nutrient-columns > tbody > tr > td { width: 50%%; padding: 0 3mm 0 0; border: 0; vertical-align: top; }
             .recipe-composition-layout > tbody > tr > td:last-child, .macro-layout > tbody > tr > td:last-child, .nutrient-columns > tbody > tr > td:last-child { padding: 0 0 0 3mm; }
-            .ingredients-table { font-size: 9pt; }
-            .ingredients-table th { padding: 1mm; border-bottom: 1.5px solid #f47e42; text-align: left; }
-            .ingredients-table td { padding: 1.2mm 1mm; border-bottom: 0.5px solid #cccccc; }
-            .ingredients-table th:first-child, .ingredients-table td:first-child { width: 8mm; }
-            .ingredients-table th:nth-child(3), .ingredients-table td:nth-child(3) { width: 14mm; text-align: right; }
-            .ingredients-table th:nth-child(4), .ingredients-table td:nth-child(4) { width: 20mm; text-align: right; }
-            .ingredient-check { font-size: 11pt; }
+            .recipe-composition-layout > tbody > tr > .ingredients-cell { width: 62%%; padding-right: 2mm; }
+            .recipe-composition-layout > tbody > tr > .composition-chart-cell { width: 38%%; padding-left: 2mm; }
+            .ingredients-table { font-size: 8pt; line-height: 1.15; }
+            .ingredients-table th { padding: 0.8mm 0.65mm; border-bottom: 1.5px solid #f47e42; text-align: left; }
+            .ingredients-table td { padding: 1.35mm 0.65mm; border-bottom: 0.5px solid #cccccc; }
+            .ingredients-table th:first-child, .ingredients-table td:first-child { width: 5mm; }
+            .ingredients-table th:nth-child(3), .ingredients-table td:nth-child(3) { width: 12mm; text-align: right; }
+            .ingredients-table th:nth-child(4), .ingredients-table td:nth-child(4) { width: 18mm; text-align: right; }
+            .ingredient-check { text-align: center; }
+            .drawn-checkbox { display: inline-block; width: 2.6mm; height: 2.6mm; border: 0.7px solid #111111; vertical-align: -0.35mm; }
             .composition-chart-cell, .macro-chart-cell { text-align: center; }
-            .prescription-donut { width: 62mm; height: 48mm; }
-            .empty-chart { height: 42mm; padding-top: 18mm; color: #777777; text-align: center; }
-            .nutrients-heading { margin: 2mm 0 1mm; }
-            .macro-table { font-size: 9pt; }
-            .macro-table th { padding: 1mm 2mm; border-bottom: 1.5px solid #f47e42; text-align: left; }
+            .prescription-donut { width: 58mm; height: 49mm; }
+            .empty-chart { height: 45mm; padding-top: 19mm; color: #777777; text-align: center; }
+            .nutrients-heading { margin: 2mm 0 1mm; font-size: 12pt; }
+            .macro-table { font-size: 8pt; line-height: 1.15; }
+            .macro-table th { padding: 0.8mm 1mm; border-bottom: 1.5px solid #f47e42; text-align: left; }
             .macro-table th:last-child, .macro-table td:last-child { width: 14mm; text-align: right; }
-            .macro-table td { padding: 1.2mm 2mm; border-bottom: 0.5px solid #cccccc; }
-            .nutrient-dot { display: inline-block; width: 3mm; height: 3mm; margin-right: 1.5mm; border-radius: 50%%; }
-            .energy-density { margin: 2mm 0 0; padding-top: 2mm; border-top: 1px solid #777777; font-size: 9pt; }
-            .daily-nutrients-heading { margin: 3mm 0 2mm; }
-            .compact-nutrients { font-size: 8pt; }
-            .compact-nutrients th { padding: 0.7mm; border-bottom: 1.5px solid #f47e42; text-align: center; }
-            .compact-nutrients td { padding: 0.45mm 1.5mm; border: 0; }
+            .macro-table td { padding: 0.9mm 1mm; border-bottom: 0.5px solid #cccccc; }
+            .nutrient-dot { display: inline-block; width: 2.3mm; height: 2.3mm; margin-right: 1mm; border-radius: 50%%; }
+            .energy-density { margin: 1.5mm 0 0; padding-top: 1.5mm; border-top: 1px solid #777777; font-size: 8pt; }
+            .daily-nutrients-heading { margin: 5mm 0 2mm; font-size: 12pt; }
+            .compact-nutrients { font-size: 7.5pt; line-height: 1.12; }
+            .compact-nutrients th { padding: 0.55mm; border-bottom: 1.5px solid #f47e42; text-align: center; }
+            .compact-nutrients td { padding: 0.8mm 1mm; border: 0; }
             .compact-nutrients tr:nth-child(even) { background: #f8d7c1; }
             .compact-nutrients td:last-child { width: 28mm; text-align: right; white-space: nowrap; }
             .other-nutrients { margin-top: 2mm; }
-            .other-nutrients h3 { margin: 0; padding-bottom: 0.7mm; border-bottom: 1.5px solid #f47e42; font-size: 9pt; text-align: center; }
+            .other-nutrients h3 { margin: 0; padding-bottom: 0.6mm; border-bottom: 1.5px solid #f47e42; font-size: 9pt; text-align: center; }
             .other-nutrients > table { table-layout: fixed; }
             .other-nutrients > table > tbody > tr > td { width: 50%%; padding: 0 3mm 0 0; border: 0; vertical-align: top; }
             .other-nutrients > table > tbody > tr > td:last-child { padding: 0 0 0 3mm; }
             .recommendation-heading { margin-bottom: 1mm; text-align: center; }
             .recommendations-table { margin-bottom: 5mm; border-top: 1.5px solid #f47e42; border-bottom: 1.5px solid #f47e42; }
-            .text-section { margin: 0 0 6mm; }
+            .recommendations-table th { width: 50%%; }
+            .text-section { margin: 0 0 4mm; }
             .text-section h2, .legal-block h2, .consent-block h2 { margin: 0 0 1mm; font-size: 13pt; }
             .text-section p { margin: 0; }
             .legal-block { margin-top: 2mm; padding: 2mm 2mm 1mm; border-top: 1.5px solid #f47e42; border-bottom: 1.5px solid #f47e42; }
             .legal-block ul { margin: 1mm 0 1mm 8mm; padding-left: 4mm; }
             .legal-block li { margin: 0.5mm 0; }
             .consent-block { padding: 2mm; border-bottom: 1.5px solid #f47e42; }
-            .consent-block p { margin: 0 0 0 6mm; }
-            .checkbox { font-size: 12pt; }
-            .signatures { margin-top: 11mm; table-layout: fixed; }
+            .consent-block p { margin: 0 0 0 6mm; text-indent: -6mm; }
+            .consent-checkbox { margin-right: 2mm; }
+            .signatures { margin-top: 8mm; table-layout: fixed; }
             .signatures td { width: 50%%; padding: 0 7mm 0 2mm; border: 0; line-height: 2; vertical-align: top; }
             .signatures td:last-child { padding: 0 2mm 0 7mm; }
             </style><title>%s</title></head><body>%s</body></html>
