@@ -656,6 +656,9 @@ function EditCalculationResult({
 }) {
   const { t } = useTranslation()
   const composition = result.composition ?? []
+  const visibleComposition = composition
+    .filter(item => Number(item.grams ?? 0) > 1)
+    .sort((a, b) => Number(b.grams ?? 0) - Number(a.grams ?? 0))
   const nutrition = result.nutrition ?? []
   const nutrients = result.nutrients ?? []
   const minerals = result.minerals ?? []
@@ -728,12 +731,12 @@ function EditCalculationResult({
         </div>
       </div>
 
-      {(composition.length > 0 || nutrition.length > 0) && (
+      {(visibleComposition.length > 0 || nutrition.length > 0) && (
         <div className={styles.chartsRow}>
           <div className={styles.chartCard}>
             <p className={styles.chartTitle}>Состав рациона</p>
             <div className={styles.donutWrapper}>
-              <RecipeDonutChart data={composition.map((item, index) => ({
+              <RecipeDonutChart data={visibleComposition.map((item, index) => ({
                 name: item.label,
                 value: item.percent,
                 color: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length],
@@ -745,59 +748,83 @@ function EditCalculationResult({
                 <tr><th>Ингредиенты</th><th>%</th><th>грамм</th></tr>
               </thead>
               <tbody>
-                {composition.map((item, index) => (
-                  <tr key={`${item.ingredientId ?? item.label}-${index}`}>
-                    <td>{item.label}</td>
-                    <td>{item.percent}%</td>
-                    <td>{item.grams} г</td>
+                {visibleComposition.map((item, index) => {
+                const color = item.color ?? RESULT_COLORS[index % RESULT_COLORS.length]
+                     return (
+    
+                  <tr key={`${item.ingredientId ?? item.label} — ${index}`}>
+                    <td> <span className={styles.compositionName}>
+                             <span className={styles.compositionDot} style={{ background: color }} />
+                             {item.label}</span></td>
+                    <td>{Math.round(item.percent)}</td>
+                    <td>{Math.round(item.grams)}</td>
                   </tr>
-                ))}
+                )
+                })}
               </tbody>
             </table>
           </div>
 
-          <div className={styles.chartCard}>
-            <p className={styles.chartTitle}>Питательная ценность</p>
-            <div className={styles.donutWrapper}>
-              <RecipeDonutChart data={nutrition.map((item, index) => ({
-                name: item.label,
-                value: item.value,
-                color: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length],
-                label: `${item.value} ${t('recipes.unitPer100', { unit: item.unit })}`,
-              }))} />
-            </div>
-            <div className={styles.donutLegend}>
-              {nutrition.map((item, index) => (
-                <div key={`${item.key ?? item.label}-${index}`} className={styles.donutLegendRow}>
-                  <span
-                    className={styles.legendDot}
-                    style={{ background: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length] }}
-                  />
-                  <span>
-                    {item.label} — {item.value} {t('recipes.unitPer100', { unit: item.unit })}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {result.nutritionPer100 && (
-              <p className={styles.resultEnergy}>
-                {t('recipes.energyPer100Summary', { value: result.nutritionPer100.calories })}
+          <div className={`${styles.chartCard} ${styles.nutritionChartCard}`}>
+              <p className={styles.chartTitle}>Питательная ценность</p>
+
+              <div className={styles.donutWrapper}>
+                <RecipeDonutChart
+                  data={nutrition.map((item, index) => ({
+                    name: item.label,
+                    value:item.value,
+                    color: item.color ?? RESULT_COLORS[index % RESULT_COLORS.length],
+                    label: `${Math.round(item.value)}%`,
+                  }))}
+                />
+              </div>
+
+              <p className={styles.nutritionLegendTitle}>
+                {t('recipes.nutritionPer100')}
               </p>
-            )}
-          </div>
+
+              <div className={styles.donutLegend}>
+                {nutrition.map((item, index) => (
+                  <div
+                    key={`${item.key ?? item.label}-${index}`}
+                    className={styles.donutLegendRow}
+                  >
+                    <span className={styles.legendName}>
+                      <span
+                        className={styles.legendDot}
+                        style={{
+                          background:
+                            item.color ?? RESULT_COLORS[index % RESULT_COLORS.length],
+                        }}
+                      />
+                      {item.label}
+                    </span>
+
+                    <span>{Math.round(item.value)}%</span>
+                  </div>
+                ))}
+              </div>
+
+              {result.nutritionPer100 && (
+                <div className={styles.nutritionSummary}>
+                  {t('recipes.energyPer100Summary', { value: Math.round(result.nutritionPer100.calories) })}
+                </div>
+              )}
+            </div>
+
         </div>
       )}
 
       {(nutrients.length > 0 || minerals.length > 0 || vitamins.length > 0) && (
-        <div className={`${styles.card} ${styles.resultDetailsCard}`}>
+        <div className={`${styles.card} ${styles.nutrientsCard}`}>
           {nutrients.length > 0 && (
             <>
-              <p className={styles.sectionTitle}>Содержание нутриентов</p>
+              <p className={styles.sectionTitle}>Содержание нутриентов в суточной порции</p>
               <div className={styles.nutrientsGrid}>
                 {nutrients.map((item, index) => (
-                  <div key={`${item.key ?? item.label}-${index}`} className={styles.nutrientRow}>
-                    <span>{item.label}</span>
-                    <span>{item.value} {t('recipes.unitPer100', { unit: item.unit })}</span>
+                  <div key={`${item.key ?? item.label} — ${index}`} className={styles.nutrientRow}>
+                    <span  className={styles.nutrientName}>{item.label}</span>
+                    <span className={styles.nutrientVal}>{item.value} {item.unit}</span>
                   </div>
                 ))}
               </div>
@@ -936,6 +963,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   const [persistedStatus, setPersistedStatus] = useState<RecipeStatus | null>(null)
   const [dirtyRevision, setDirtyRevision] = useState(0)
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set())
+  const [openIngredientGroups, setOpenIngredientGroups] = useState<Set<string>>(new Set())
   const [calculationResult, setCalculationResult] = useState<RecipeCalculationResult | null>(null)
   const [calculationVersion, setCalculationVersion] = useState<string | null>(null)
   const [nutrientNorms, setNutrientNorms] = useState<Record<string, number>>({})
@@ -1098,9 +1126,19 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
         group.push(ingredient)
         groups.set(ingredient.category, group)
       })
-    return Array.from(groups, ([category, ingredients]) => ({ category, ingredients }))
+    return Array.from(groups, ([category, categoryIngredients]) => ({
+      category,
+      ingredients: Array.from(
+        categoryIngredients.reduce((byName, ingredient) => {
+          const group = byName.get(ingredient.name) ?? []
+          group.push(ingredient)
+          byName.set(ingredient.name, group)
+          return byName
+        }, new Map<string, Ingredient[]>()),
+        ([name, variants]) => ({ name, variants }),
+      ),
+    }))
   }, [references.ingredients])
-
   const compatibleStatuses = references.reproductiveStatuses.filter(status => {
     if (!status.gender) return true
     return status.gender.toLowerCase() === form.gender
@@ -2061,31 +2099,39 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   </button>
                   {openCategories.has(group.category) && (
                     <div className={styles.accordionBody}>
-                      {group.ingredients.map(ingredient => (
-                        <button
-                          key={ingredient.id}
-                          
-                          className={`${styles.ingredientTag} ${
-                            isContraindicatedIngredient(ingredient, excludedIngredients)
-                              ? form.ingredientIds.includes(ingredient.id)
-                                ? styles.ingredientTagContraindicatedSelected
-                                : styles.ingredientTagContraindicated
-                              : form.ingredientIds.includes(ingredient.id)
-                                ? styles.ingredientTagActive
-                                : ''
-                          }`}
-                          onClick={() => toggleIngredient(ingredient.id)}
-                        >
-                          {ingredientDisplayName(ingredient)}
-                          {form.ingredientIds.includes(ingredient.id) && ' ×'}
-                        </button>
-                      ))}
+
+                      {group.ingredients.map(ingredientGroup => {
+                        const regular = ingredientGroup.variants.filter(item => !item.subtype || normalizeLabel(item.subtype) === normalizeLabel('Обыкновенный'))
+                        const variants = ingredientGroup.variants.filter(item => item.subtype && normalizeLabel(item.subtype) !== normalizeLabel('Обыкновенный'))
+                        const groupKey = `${group.category} — ${ingredientGroup.name}`
+                        const renderButton = (ingredient: Ingredient, label: string) => (
+                          <button key={ingredient.id} className={`${styles.ingredientTag} 
+                          ${isContraindicatedIngredient(ingredient, excludedIngredients) ? form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagContraindicatedSelected : styles.ingredientTagContraindicated : form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagActive : ''}`} 
+                          onClick={() => toggleIngredient(ingredient.id)}>
+                            {label}{form.ingredientIds.includes(ingredient.id) && ' ?'}
+                          </button>
+                        )
+                        return (
+                          <div key={groupKey} className={styles.ingredientGroup}>
+                            {variants.length > 0 && 
+                               <button className={styles.ingredientGroupHeader} 
+                               onClick={() => setOpenIngredientGroups(current => { 
+                                  const next = new Set(current); 
+                                    if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey); return next })}>
+                                      <span className={styles.accordionChevron}>{openIngredientGroups.has(groupKey) ? '▼' : '›'}
+                                        </span>{ingredientGroup.name}</button>}
+                            {variants.length > 0 && openIngredientGroups.has(groupKey) && 
+                            <div className={styles.ingredientVariants}>
+                              {variants.map(item => renderButton(item, item.subtype ?? item.name))}
+                              </div>}
+                            {regular.map(item => renderButton(item, ingredientGroup.name))}
+                          </div>
+                        )
+                      })}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className={styles.selectedBox}>
+                  )}   
+
+                  <div className={styles.selectedBox}>
               <p className={styles.selectedTitle}>Выбранные ингредиенты</p>
               <div className={styles.selectedItems}>
                 {form.ingredientIds.map(ingredientId => {

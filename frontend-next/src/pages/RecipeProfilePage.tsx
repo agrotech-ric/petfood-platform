@@ -185,6 +185,9 @@ function CalculationSections({
 }) {
   const { t } = useTranslation()
   const composition = result.composition ?? []
+  const visibleComposition = composition
+    .filter(item => Number(item.grams ?? 0) > 1)
+    .sort((a, b) => Number(b.grams ?? 0) - Number(a.grams ?? 0))
   const nutrition = result.nutrition ?? []
   const nutrients = result.nutrients ?? []
   const minerals = result.minerals ?? []
@@ -254,13 +257,13 @@ function CalculationSections({
         </div>
       </div>
 
-      {(composition.length > 0 || nutrition.length > 0) && (
+      {(visibleComposition.length > 0 || nutrition.length > 0) && (
         <div className={styles.chartsRow}>
-          {composition.length > 0 && (
+          {visibleComposition.length > 0 && (
             <div className={`${styles.chartCard} ${styles.compositionChartCard}`}>
               <p className={styles.chartTitle}>Состав рациона</p>
               <div className={styles.donutWrapper}>
-                <RecipeDonutChart data={composition.map((item, index) => ({
+                <RecipeDonutChart data={visibleComposition.map((item, index) => ({
                   name: item.label,
                   value: item.percent,
                   color: item.color ?? CHART_COLORS[index % CHART_COLORS.length],
@@ -276,18 +279,18 @@ function CalculationSections({
                   </tr>
                 </thead>
                 <tbody>
-                  {composition.map((item, index) => {
+                  {visibleComposition.map((item, index) => {
                     const color = item.color ?? CHART_COLORS[index % CHART_COLORS.length]
                     return (
-                      <tr key={`${item.ingredientId ?? item.label}-${index}`}>
+                      <tr key={`${item.ingredientId ?? item.label} — ${index}`}>
                         <td>
                           <span className={styles.compositionName}>
                             <span className={styles.compositionDot} style={{ background: color }} />
                             {item.label}
                           </span>
                         </td>
-                        <td>{item.percent}%</td>
-                        <td>{item.grams} г</td>
+                        <td>{Math.round(item.percent)}</td>
+                        <td>{Math.round(item.grams)}</td>
                       </tr>
                     )
                   })}
@@ -304,7 +307,7 @@ function CalculationSections({
                   name: item.label,
                   value: item.value,
                   color: item.color ?? CHART_COLORS[index % CHART_COLORS.length],
-                  label: `${item.value} ${t('recipes.unitPer100', { unit: item.unit })}`,
+                  label: `${Math.round(item.value)}%`,
                 }))} />
               </div>
               <p className={styles.nutritionLegendTitle}>{t('recipes.nutritionPer100')}</p>
@@ -318,13 +321,13 @@ function CalculationSections({
                       />
                       {item.label}
                     </span>
-                    <span>{item.value} {t('recipes.unitPer100', { unit: item.unit })}</span>
+                    <span>{Math.round(item.value)}%</span>
                   </div>
                 ))}
               </div>
               {result.nutritionPer100 && (
                 <div className={styles.nutritionSummary}>
-                  {t('recipes.energyPer100Summary', { value: result.nutritionPer100.calories })}
+                  {t('recipes.energyPer100Summary', { value: Math.round(result.nutritionPer100.calories) })}
                 </div>
               )}
             </div>
@@ -334,14 +337,14 @@ function CalculationSections({
 
       {(nutrients.length > 0 || minerals.length > 0 || vitamins.length > 0) && (
         <div className={`${styles.card} ${styles.nutrientsCard}`}>
-          <p className={styles.sectionTitle}>Содержание нутриентов</p>
+          <p className={styles.sectionTitle}>Содержание нутриентов в суточной порции</p>
           {nutrients.length > 0 && (
             <div className={styles.nutrientsGrid}>
               {nutrients.map((item, index) => (
-                <div key={`${item.key ?? item.label}-${index}`} className={styles.nutrientRow}>
+                <div key={`${item.key ?? item.label} — ${index}`} className={styles.nutrientRow}>
                   <span className={styles.nutrientName}>{item.label}</span>
                   <span className={styles.nutrientVal}>
-                    {item.value} {t('recipes.unitPer100', { unit: item.unit })}
+                    {item.value}  { item.unit }
                   </span>
                 </div>
               ))}
