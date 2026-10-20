@@ -2129,9 +2129,12 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                         )
                       })}
                     </div>
-                  )}   
+                  )}
+                </div>
+              ))}
+            </div>
 
-                  <div className={styles.selectedBox}>
+            <div className={styles.selectedBox}>
               <p className={styles.selectedTitle}>Выбранные ингредиенты</p>
               <div className={styles.selectedItems}>
                 {form.ingredientIds.map(ingredientId => {
