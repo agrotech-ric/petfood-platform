@@ -50,9 +50,7 @@ export function NutrientBalanceChart({ title, items }: { title: string; items: B
                 {hasValues ? (
                   <>
                     <span>
-                      {t('public.currentValue')}: {item.current}{item.unit
-                        ? ` ${t('recipes.unitPer100', { unit: item.unit })}`
-                        : ''}
+                        {t('public.currentValue')}: {item.current}{item.unit ? ` ${item.unit}` : ''}
                     </span>
                     <span>{t('public.norm')}: {item.norm} {item.unit ?? ''}</span>
                     <span>
