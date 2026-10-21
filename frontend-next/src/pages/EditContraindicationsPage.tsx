@@ -184,6 +184,7 @@ export function EditContraindicationsPage() {
                     </div>
                   )}
                 </div>
+                
               ))}
             </div>
           </div>

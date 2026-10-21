@@ -779,6 +779,7 @@ function EditCalculationResult({
                 />
               </div>
 
+              <div className={styles.nutritionBottom}>
               <p className={styles.nutritionLegendTitle}>
                 {t('recipes.nutritionPer100')}
               </p>
@@ -811,7 +812,7 @@ function EditCalculationResult({
                 </div>
               )}
             </div>
-
+         </div>
         </div>
       )}
 
@@ -2100,7 +2101,29 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   {openCategories.has(group.category) && (
                     <div className={styles.accordionBody}>
 
-                      {group.ingredients.map(ingredientGroup => {
+                      {[...group.ingredients]
+                        .sort((a, b) => {
+                          const aHasVariants = a.variants.some(
+                            item =>
+                              item.subtype &&
+                              normalizeLabel(item.subtype) !== normalizeLabel('Обыкновенный')
+                          )
+
+                          const bHasVariants = b.variants.some(
+                            item =>
+                              item.subtype &&
+                              normalizeLabel(item.subtype) !== normalizeLabel('Обыкновенный')
+                          )
+
+                          // Сначала группы с раскрывающимся списком
+                          if (aHasVariants !== bHasVariants) {
+                            return Number(bHasVariants) - Number(aHasVariants)
+                          }
+
+                          // Внутри каждой группы — алфавитная сортировка
+                          return a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
+                        })
+                        .map(ingredientGroup => {
                         const regular = ingredientGroup.variants.filter(item => !item.subtype || normalizeLabel(item.subtype) === normalizeLabel('Обыкновенный'))
                         const variants = ingredientGroup.variants.filter(item => item.subtype && normalizeLabel(item.subtype) !== normalizeLabel('Обыкновенный'))
                         const groupKey = `${group.category} — ${ingredientGroup.name}`
@@ -2108,7 +2131,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                           <button key={ingredient.id} className={`${styles.ingredientTag} 
                           ${isContraindicatedIngredient(ingredient, excludedIngredients) ? form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagContraindicatedSelected : styles.ingredientTagContraindicated : form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagActive : ''}`} 
                           onClick={() => toggleIngredient(ingredient.id)}>
-                            {label}{form.ingredientIds.includes(ingredient.id) && ' ?'}
+                            {label}{form.ingredientIds.includes(ingredient.id) && ' x'}
                           </button>
                         )
                         return (
@@ -2122,10 +2145,22 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                                         </span>{ingredientGroup.name}</button>}
                             {variants.length > 0 && openIngredientGroups.has(groupKey) && 
                             <div className={styles.ingredientVariants}>
-                              {variants.map(item => renderButton(item, item.subtype ?? item.name))}
+                              {[...variants]
+                                  .sort((a, b) =>
+                                    (a.subtype ?? a.name).localeCompare(
+                                      b.subtype ?? b.name,
+                                      'ru',
+                                      { sensitivity: 'base' }
+                                    )
+                                  )
+                                  .map(item => renderButton(item, item.subtype ?? item.name))}
                               </div>}
-                            {regular.map(item => renderButton(item, ingredientGroup.name))}
-                          </div>
+                            {[...regular]
+                              .sort((a, b) =>
+                                a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
+                              )
+                              .map(item => renderButton(item, ingredientGroup.name))}
+                             </div>
                         )
                       })}
                     </div>
@@ -2145,7 +2180,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                       className={`${styles.selectedChip} ${ingredient && isContraindicatedIngredient(ingredient, excludedIngredients) ? styles.selectedChipContraindicated : ''}`}
                     >
                       {ingredient ? ingredientDisplayName(ingredient) : `ID ${ingredientId}`}
-                      <button className={styles.selectedChipRemove} onClick={() => toggleIngredient(ingredientId)}>×</button>
+                      <button className={styles.selectedChipRemove} onClick={() => toggleIngredient(ingredientId)}>x</button>
                     </span>
                   )
                 })}

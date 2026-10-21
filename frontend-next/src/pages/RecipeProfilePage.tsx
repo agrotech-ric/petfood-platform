@@ -310,6 +310,7 @@ function CalculationSections({
                   label: `${Math.round(item.value)}%`,
                 }))} />
               </div>
+              <div className={styles.nutritionBottom}>
               <p className={styles.nutritionLegendTitle}>{t('recipes.nutritionPer100')}</p>
               <div className={styles.donutLegend}>
                 {nutrition.map((item, index) => (
@@ -331,6 +332,7 @@ function CalculationSections({
                 </div>
               )}
             </div>
+             </div>
           )}
         </div>
       )}
