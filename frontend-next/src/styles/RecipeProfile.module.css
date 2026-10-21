@@ -413,7 +413,7 @@
 .nutritionLegendTitle {
   margin: 6px 0;
   padding-bottom: 7px;
-  border-bottom: 1px solid var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
   font-size: 12px;
   font-weight: 600;
@@ -471,7 +471,7 @@
   color: var(--color-text);
   font-size: 11px;
 }
-.nutrientsColumn .nutrientRow:last-child {
+.nutrientRow:last-child {
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -797,7 +797,10 @@
   .nutrientsCard {
     min-height: 0;
   }
-
+.nutritionBottom {
+  margin-top: auto;
+  flex-shrink: 0;
+}
   .nutrientsGrid {
     grid-auto-flow: row;
     grid-template-rows: none;
