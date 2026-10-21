@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ingredientService } from '../../services/ingredientService'
+import { ingredientService, type Ingredient } from '../../services/ingredientService'
 import { petService } from '../../services/petService'
 import styles from '../styles/EditPet.module.css'
 
@@ -13,10 +13,13 @@ export function EditContraindicationsPage() {
   const [description, setDescription] = useState('')
   const [search, setSearch] = useState('')
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set())
+  const [openIngredientGroups, setOpenIngredientGroups] = useState<Set<string>>(new Set())
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
-  const [ingredientCategories, setIngredientCategories] = useState<
-    Array<{ key: string; label: string; items: string[] }>
-  >([])
+  const [ingredientCategories, setIngredientCategories] = useState<Array<{
+    key: string
+    label: string
+    groups: Array<{ name: string; variants: Ingredient[] }>
+  }>>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -37,20 +40,25 @@ export function EditContraindicationsPage() {
         if (cancelled) return
         setDescription(data.description || '')
         setSelectedIngredients(data.ingredients || [])
-        const grouped = new Map<string, string[]>()
-        ingredients.forEach((ingredient) => {
+        const grouped = new Map<string, Ingredient[]>()
+        ingredients.forEach(ingredient => {
           const items = grouped.get(ingredient.category) ?? []
-          items.push(ingredient.subtype
-            ? `${ingredient.name} â€” ${ingredient.subtype}`
-            : ingredient.name)
+          items.push(ingredient)
           grouped.set(ingredient.category, items)
         })
-        setIngredientCategories(Array.from(grouped, ([label, items]) => ({
+        setIngredientCategories(Array.from(grouped, ([label, categoryIngredients]) => ({
           key: label,
           label,
-          items,
-        })))
-      } catch (err) {
+          groups: Array.from(
+            categoryIngredients.reduce((byName, ingredient) => {
+              const variants = byName.get(ingredient.name) ?? []
+              variants.push(ingredient)
+              byName.set(ingredient.name, variants)
+              return byName
+            }, new Map<string, Ingredient[]>()),
+            ([name, variants]) => ({ name, variants }),
+          ),
+        })))      } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð·Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ Ð¿Ñ€Ð¾Ñ‚Ð¸Ð²Ð¾Ð¿Ð¾ÐºÐ°Ð·Ð°Ð½Ð¸Ñ')
       } finally {
         if (!cancelled) setLoading(false)
@@ -81,13 +89,10 @@ export function EditContraindicationsPage() {
       prev.includes(name) ? prev.filter(x => x !== name) : [...prev, name]
     )
   }
-
-  const filteredCategories = ingredientCategories.map(cat => ({
-    ...cat,
-    items: cat.items.filter(item =>
-      item.toLowerCase().includes(search.toLowerCase())
-    ),
-  })).filter(cat => search === '' || cat.items.length > 0)
+  const filteredCategories = ingredientCategories.map(category => ({
+    ...category,
+    groups: category.groups.filter(group => group.name.toLowerCase().includes(search.toLowerCase()) || group.variants.some(item => ${item.name} .toLowerCase().includes(search.toLowerCase()))),
+  })).filter(category => search === '' || category.groups.length > 0)
 
   const goBack = () => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })
 
@@ -167,21 +172,28 @@ export function EditContraindicationsPage() {
                   </button>
                   {openCategories.has(cat.key) && (
                     <div className={styles.accordionBody}>
-                      {cat.items.map(item => (
-                        <span
-                          key={item}
-                          className={styles.accordionIngredient}
-                          style={selectedIngredients.includes(item)
-                            ? { color: 'var(--color-accent-alt)', fontWeight: 600 }
-                            : undefined}
-                          onClick={() => {
-                            if (!saving) toggleIngredient(item)
-                          }}
-                        >
-                          {selectedIngredients.includes(item) ? 'âœ“ ' : ''}{item}
-                        </span>
-                      ))}
-                    </div>
+                      {cat.groups.map(group => {
+                        const regular = group.variants.filter(item => !item.subtype || item.subtype.toLowerCase() === 'îáûêíîâåííûé')
+                        const variants = group.variants.filter(item => item.subtype && item.subtype.toLowerCase() !== 'îáûêíîâåííûé')
+                        const groupKey = `${cat.key}-${group.name}`
+                        const renderItem = (ingredient: Ingredient, label: string) => {
+                          const value = ingredient.subtype ? `${ingredient.name} — ${ingredient.subtype}` : ingredient.name
+                          return (
+                            <span key={ingredient.id} className={styles.accordionIngredient}
+                              style={selectedIngredients.includes(value) ? { color: 'var(--color-accent-alt)', fontWeight: 600 } : undefined}
+                              onClick={() => { if (!saving) toggleIngredient(value) }}>
+                              {selectedIngredients.includes(value) ? '? ' : ''}{label}
+                            </span>
+                          )
+                        }
+                        return (
+                          <div key={groupKey}>
+                            {variants.length > 0 && <button className={styles.accordionHeader} onClick={() => setOpenIngredientGroups(current => { const next = new Set(current); if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey); return next })}><span className={styles.accordionChevron}>{openIngredientGroups.has(groupKey) ? '¡' : '›'}</span>{group.name}</button>}
+                            {variants.length > 0 && openIngredientGroups.has(groupKey) && <div className={styles.accordionBody}>{variants.map(item => renderItem(item, item.subtype ?? item.name))}</div>}
+                            {regular.map(item => renderItem(item, group.name))}
+                          </div>
+                        )
+                      })}                    </div>
                   )}
                 </div>
                 
