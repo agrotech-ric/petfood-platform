@@ -91,7 +91,12 @@ export function EditContraindicationsPage() {
   }
   const filteredCategories = ingredientCategories.map(category => ({
     ...category,
-    groups: category.groups.filter(group => group.name.toLowerCase().includes(search.toLowerCase()) || group.variants.some(item => ${item.name} .toLowerCase().includes(search.toLowerCase()))),
+    groups: category.groups.filter(group => (
+      group.name.toLowerCase().includes(search.toLowerCase())
+      || group.variants.some(item => (
+        `${item.name} ${item.subtype ?? ''}`.toLowerCase().includes(search.toLowerCase())
+      ))
+    )),
   })).filter(category => search === '' || category.groups.length > 0)
 
   const goBack = () => navigate(`/pet-profile/${id}`, { state: { tab: returnTab } })
