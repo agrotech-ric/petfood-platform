@@ -24,6 +24,11 @@ export function EditContraindicationsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const sortByName = <T,>(items: T[], getName: (item: T) => string): T[] =>
+  [...items].sort((a, b) =>
+    getName(a).localeCompare(getName(b), 'ru', { sensitivity: 'base' })
+  )
+
   useEffect(() => {
     if (!id) return
     let cancelled = false
@@ -46,7 +51,39 @@ export function EditContraindicationsPage() {
           items.push(ingredient)
           grouped.set(ingredient.category, items)
         })
-        setIngredientCategories(Array.from(grouped, ([label, categoryIngredients]) => ({
+        
+setIngredientCategories(
+  sortByName(
+    Array.from(grouped, ([label, categoryIngredients]) => {
+      const byName = categoryIngredients.reduce(
+        (map, ingredient) => {
+          const variants = map.get(ingredient.name) ?? []
+          variants.push(ingredient)
+          map.set(ingredient.name, variants)
+          return map
+        },
+        new Map<string, Ingredient[]>()
+      )
+
+      return {
+        key: label,
+        label,
+        groups: sortByName(
+          Array.from(byName, ([name, variants]) => ({
+            name,
+            variants: sortByName(
+              variants,
+              item => item.subtype ?? ''
+            ),
+          })),
+          group => group.name
+        ),
+      }
+    }),
+    category => category.label
+  )
+)
+ => ({
           key: label,
           label,
           groups: Array.from(
@@ -185,7 +222,10 @@ export function EditContraindicationsPage() {
                           const value = ingredient.subtype ? `${ingredient.name} — ${ingredient.subtype}` : ingredient.name
                           return (
                             <span key={ingredient.id} className={styles.accordionIngredient}
-                              style={selectedIngredients.includes(value) ? { color: 'var(--color-accent-alt)', fontWeight: 600 } : undefined}
+                              style={selectedIngredients.includes(value) ? {fontWeight: 600,
+                                                    background: 'var(--color-accent-alt)',
+                                                    borderColor: 'var(--color-accent-alt)',
+                                                    color: '#fff'}} : undefined}
                               onClick={() => { if (!saving) toggleIngredient(value) }}>
                               {label}{selectedIngredients.includes(value) ? ' x' : ''}
                             </span>
@@ -201,7 +241,7 @@ export function EditContraindicationsPage() {
                                          {openIngredientGroups.has(groupKey) ? '▼' : '›'}
                                          </span>{group.name}</button>}
                             {variants.length > 0 && openIngredientGroups.has(groupKey) && 
-                                <div className={styles.ingredientVariants}>
+                                <div className={styles.accordionBody}>
                                   {variants.map(item => renderItem(item, item.subtype ?? item.name))}</div>}
                             {regular.map(item => renderItem(item, group.name))}
                           </div>
