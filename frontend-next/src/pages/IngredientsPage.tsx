@@ -37,13 +37,13 @@ const NUTRIENT_TABLE_COLS: Partial<Record<SortKey, { key: SortKey; label: string
    vitaminD: { key: 'vitaminD', label: 'Витамин D' }, 
    vitaminB2: { key: 'vitaminB2', label: 'Витамин B2' }, 
    vitaminC: { key: 'vitaminC', label: 'Витамин C' }, 
-   linoleic: { key: 'linoleic', label：'Линолеевая кислота' }, 
-   alphaLinolenic: { key：'alphaLinolenic', label：'Альфа-линоленовая кислота' }, 
-   epa: { key：'epa', label：'EPA' }, 
-   dha: { key：'dha', label：'DHA' }, 
-   alphaCarotene: { key：'alphaCarotene', label：'Альфа-каротин' }, 
-   betaCarotene: { key：'betaCarotene', label：'Бета-каротин' }, 
-   retinol: { key：'retinol', label：'Ретинол' },
+   linoleic: { key: 'linoleic', label: 'Линолеевая кислота' }, 
+   alphaLinolenic: { key: 'alphaLinolenic', label: 'Альфа-линоленовая кислота' }, 
+   epa: { key: 'epa', label: 'EPA' }, 
+   dha: { key: 'dha', label: 'DHA' }, 
+   alphaCarotene: { key: 'alphaCarotene', label: 'Альфа-каротин' }, 
+   betaCarotene: { key: 'betaCarotene', label: 'Бета-каротин' }, 
+   retinol: { key: 'retinol', label: 'Ретинол' },
 }
 
 const DEFAULT_NUTRIENT_KEYS: SortKey[] = ['protein', 'fat', 'phosphorus', 'calcium', 'vitaminB1']
