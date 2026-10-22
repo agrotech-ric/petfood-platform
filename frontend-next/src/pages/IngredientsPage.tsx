@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ingredientService, type Ingredient } from '../../services/ingredientService'
 import { useTranslation } from '../../context/LanguageContext'
@@ -12,18 +12,41 @@ type IngredientSource = 'all' | 'system' | 'mine'
 
 type ActiveFilter = { group: string; key: string; label: string }
 
-const TABLE_COLS: { key: SortKey; label: string }[] = [
+const BASE_TABLE_COLS: { key: SortKey; label: string }[] = [
   { key: 'category', label: 'Категория' },
   { key: 'name', label: 'Ингредиент' },
   { key: 'subtype', label: 'Подвид' },
-  { key: 'protein', label: 'Белки' },
-  { key: 'fat', label: 'Жиры' },
-  { key: 'moisture', label: 'Влага' },
-  { key: 'calcium', label: 'Кальций' },
-  { key: 'phosphorus', label: 'Фосфор' },
-  { key: 'vitaminB1', label: 'Витамин B1' },
 ]
 
+const NUTRIENT_TABLE_COLS: Partial<Record<SortKey, { key: SortKey; label: string }>> = {
+  protein: { key: 'protein', label: 'Белки' },
+   fat: { key: 'fat', label: 'Жиры' }, 
+   carbs: { key: 'carbs', label: 'Углеводы' }, 
+   phosphorus: { key: 'phosphorus', label: 'Фосфор' }, 
+   calcium: { key: 'calcium', label: 'Кальций' }, 
+   vitaminB1: { key: 'vitaminB1', label: 'Витамин B1' }, 
+   moisture: { key: 'moisture', label: 'Влага' }, 
+   fiber: { key: 'fiber', label: 'Клетчатка' }, 
+   ash: { key: 'ash', label: 'Зола' }, 
+   cholesterol: { key: 'cholesterol', label: 'Холестерин' }, 
+   choline: { key: 'choline', label: 'Холин' }, 
+   selenium: { key: 'selenium', label: 'Селен' }, 
+   iodine: { key: 'iodine', label: 'Йод' }, 
+   vitaminA: { key: 'vitaminA', label: 'Витамин A' }, 
+   vitaminE: { key: 'vitaminE', label: 'Витамин E' }, 
+   vitaminD: { key: 'vitaminD', label: 'Витамин D' }, 
+   vitaminB2: { key: 'vitaminB2', label: 'Витамин B2' }, 
+   vitaminC: { key: 'vitaminC', label: 'Витамин C' }, 
+   linoleic: { key: 'linoleic', label：'Линолеевая кислота' }, 
+   alphaLinolenic: { key：'alphaLinolenic', label：'Альфа-линоленовая кислота' }, 
+   epa: { key：'epa', label：'EPA' }, 
+   dha: { key：'dha', label：'DHA' }, 
+   alphaCarotene: { key：'alphaCarotene', label：'Альфа-каротин' }, 
+   betaCarotene: { key：'betaCarotene', label：'Бета-каротин' }, 
+   retinol: { key：'retinol', label：'Ретинол' },
+}
+
+const DEFAULT_NUTRIENT_KEYS: SortKey[] = ['protein', 'fat', 'phosphorus', 'calcium', 'vitaminB1']
 export function IngredientsPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -33,6 +56,11 @@ export function IngredientsPage() {
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([])
+  const tableCols = useMemo(() => {
+    const keys = [...DEFAULT_NUTRIENT_KEYS, ...activeFilters.map(filter => filter.key as SortKey)]
+    return [...BASE_TABLE_COLS, ...Array.from(new Set(keys)).map(key => NUTRIENT_TABLE_COLS[key]).filter((column): column is { key: SortKey; label: string } => Boolean(column))]
+  }, [activeFilters])
+
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -208,7 +236,7 @@ export function IngredientsPage() {
           <table className={styles.table}>
             <thead>
               <tr>
-                {TABLE_COLS.map(col => (
+                {tableCols.map(col => (
                   <th key={col.key} onClick={() => handleSort(col.key)}>
                     {col.label}
                     <span className={styles.sortIcon}>
@@ -220,28 +248,16 @@ export function IngredientsPage() {
             </thead>
             <tbody>
               {loading || error || ingredients.length === 0 ? (
-                <tr><td colSpan={TABLE_COLS.length} className={styles.emptyRow}>
+                <tr><td colSpan={tableCols.length} className={styles.emptyRow}>
                   {loading ? 'Загрузка...' : error || 'Ничего не найдено'}
                 </td></tr>
               ) : (
                 ingredients.map(item => (
                   <tr key={item.id} onClick={() => navigate(`/ingredients/${item.id}`)}>
                     <td>{item.category}</td>
-                    <td>
-                      <span className={styles.ingredientName}>
-                        {item.name}
-                        {!item.system && (
-                          <span className={styles.ownerBadge}>{t('ingredients.mineBadge')}</span>
-                        )}
-                      </span>
-                    </td>
+                    <td><span className={styles.ingredientName}>{item.name}{!item.system && <span className={styles.ownerBadge}>{t('ingredients.mineBadge')}</span>}</span></td>
                     <td>{item.subtype ?? '—'}</td>
-                    <td>{item.protein}</td>
-                    <td>{item.fat}</td>
-                    <td>{item.moisture}</td>
-                    <td>{item.calcium}</td>
-                    <td>{item.phosphorus}</td>
-                    <td>{item.vitaminB1}</td>
+                    {tableCols.slice(3).map(column => <td key={column.key}>{String(item[column.key] ?? '—')}</td>)}
                   </tr>
                 ))
               )}
