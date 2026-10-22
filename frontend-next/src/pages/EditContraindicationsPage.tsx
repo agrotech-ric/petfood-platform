@@ -209,7 +209,21 @@ setIngredientCategories(
                   </button>
                   {openCategories.has(cat.key) && (
                     <div className={styles.accordionBody}>
-                      {cat.groups.map(group => {
+                      {[...cat.groups]
+                          .sort((a, b) => {
+                            const aHasSubgroups = a.variants.some(
+                              item => item.subtype &&
+                                item.subtype.toLowerCase() !== 'обыкновенный'
+                            )
+
+                            const bHasSubgroups = b.variants.some(
+                              item => item.subtype &&
+                                item.subtype.toLowerCase() !== 'обыкновенный'
+                            )
+
+                            return Number(bHasSubgroups) - Number(aHasSubgroups)
+                          })
+                          .map(group => {
                         const regular = group.variants.filter(item => !item.subtype || item.subtype.toLowerCase() === 'обыкновенный')
                         const variants = group.variants.filter(item => item.subtype && item.subtype.toLowerCase() !== 'обыкновенный')
                         const groupKey = `${cat.key} — ${group.name}`
@@ -236,7 +250,7 @@ setIngredientCategories(
                                          {openIngredientGroups.has(groupKey) ? '▼' : '›'}
                                          </span>{group.name}</button>}
                             {variants.length > 0 && openIngredientGroups.has(groupKey) && 
-                                <div className={styles.accordionBody}>
+                                <div className={styles.ingredientVariants}>
                                   {variants.map(item => renderItem(item, item.subtype ?? item.name))}</div>}
                             {regular.map(item => renderItem(item, group.name))}
                           </div>
@@ -252,7 +266,7 @@ setIngredientCategories(
           {/* Right: selected ingredients */}
           <div>
             <p className={styles.panelTitle}>Выбранные нежелательные ингредиенты</p>
-            <div className={styles.chipsBox} style={{ minHeight: 80 }}>
+            <div className={styles.chipsBox} style={{ minHeight: 50 }}>
               {selectedIngredients.map(ing => (
                 <span key={ing} className={styles.chip}>
                   {ing}
