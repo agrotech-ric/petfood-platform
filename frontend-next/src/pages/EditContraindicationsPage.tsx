@@ -164,7 +164,7 @@ export function EditContraindicationsPage() {
             </div>
 
             <div className={styles.accordionList}>
-              {filteredCategories.map(cat => (
+              {filteredCategories.map((cat: { key: string; label: any; groups: any[] }) => (
                 <div key={cat.key} className={styles.accordionItem}>
                   <button
                     className={styles.accordionHeader}
@@ -178,23 +178,31 @@ export function EditContraindicationsPage() {
                   {openCategories.has(cat.key) && (
                     <div className={styles.accordionBody}>
                       {cat.groups.map(group => {
-                        const regular = group.variants.filter(item => !item.subtype || item.subtype.toLowerCase() === 'Обыкновенный')
-                        const variants = group.variants.filter(item => item.subtype && item.subtype.toLowerCase() !== 'Обыкновенный')
-                        const groupKey = `${cat.key} - ${group.name}`
+                        const regular = group.variants.filter(item => !item.subtype || item.subtype.toLowerCase() === 'обыкновенный')
+                        const variants = group.variants.filter(item => item.subtype && item.subtype.toLowerCase() !== 'обыкновенный')
+                        const groupKey = `${cat.key} — ${group.name}`
                         const renderItem = (ingredient: Ingredient, label: string) => {
-                          const value = ingredient.subtype ? `${ingredient.name} - ${ingredient.subtype}` : ingredient.name
+                          const value = ingredient.subtype ? `${ingredient.name} — ${ingredient.subtype}` : ingredient.name
                           return (
                             <span key={ingredient.id} className={styles.accordionIngredient}
                               style={selectedIngredients.includes(value) ? { color: 'var(--color-accent-alt)', fontWeight: 600 } : undefined}
                               onClick={() => { if (!saving) toggleIngredient(value) }}>
-                              {selectedIngredients.includes(value) ? '? ' : ''}{label}
+                              {label}{selectedIngredients.includes(value) ? ' x' : ''}
                             </span>
                           )
                         }
                         return (
                           <div key={groupKey}>
-                            {variants.length > 0 && <button className={styles.accordionHeader} onClick={() => setOpenIngredientGroups(current => { const next = new Set(current); if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey); return next })}><span className={styles.accordionChevron}>{openIngredientGroups.has(groupKey) ? '▼' : '›'}</span>{group.name}</button>}
-                            {variants.length > 0 && openIngredientGroups.has(groupKey) && <div className={styles.accordionBody}>{variants.map(item => renderItem(item, item.subtype ?? item.name))}</div>}
+                            {variants.length > 0 && <button className={styles.accordionHeader} 
+                               onClick={() => setOpenIngredientGroups(
+                                    current => { const next = new Set(current); 
+                                    if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey); return next })}>
+                                      <span className={styles.accordionChevron}>
+                                         {openIngredientGroups.has(groupKey) ? '▼' : '›'}
+                                         </span>{group.name}</button>}
+                            {variants.length > 0 && openIngredientGroups.has(groupKey) && 
+                                <div className={styles.ingredientVariants}>
+                                  {variants.map(item => renderItem(item, item.subtype ?? item.name))}</div>}
                             {regular.map(item => renderItem(item, group.name))}
                           </div>
                         )
