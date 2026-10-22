@@ -242,7 +242,8 @@ setIngredientCategories(
                         }
                         return (
                           <div key={groupKey}>
-                            {variants.length > 0 && <button className={styles.accordionHeader} 
+                            {variants.length > 0 && <button className={styles.accordionHeader } 
+                              style={{ border: '1px solid var(--color-border)', borderRadius: '6px',}}
                                onClick={() => setOpenIngredientGroups(
                                     current => { const next = new Set(current); 
                                     if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey); return next })}>
