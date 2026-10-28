@@ -575,7 +575,9 @@
 .ingredientGroup {
   width: 100%;
 }
-
+.ingredientGroupContent{
+  width: 100%;
+}
 .ingredientGroupHeader {
   width: 100%;
   display: flex;

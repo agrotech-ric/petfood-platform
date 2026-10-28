@@ -2135,7 +2135,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                           </button>
                         )
                         return (
-                          <div key={groupKey} className={styles.ingredientGroup}>
+                          <div key={groupKey} >
+                            <div className={styles.ingredientGroupContent}>
                             {variants.length > 0 && 
                                <button className={styles.ingredientGroupHeader} 
                                onClick={() => setOpenIngredientGroups(current => { 
@@ -2155,6 +2156,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                                   )
                                   .map(item => renderButton(item, item.subtype ?? item.name))}
                               </div>}
+                              </div>
                             <div className={styles.ingredientVariants}>
                                 {[...regular]
                                   .sort((a, b) =>
