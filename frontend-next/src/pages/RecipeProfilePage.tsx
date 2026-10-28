@@ -243,16 +243,16 @@ function CalculationSections({
       <div className={styles.metricsRow}>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>
-            {t('recipes.energyPer100Value', { value: result.calories ?? '—' })}
+            {t('recipes.energyPer100Value', { value: result.calories != null ? Math.round(result.calories) : '—' })}
           </p>
           <p className={styles.metricLabel}>{t('recipes.energyValueLabel')}</p>
         </div>
         <div className={styles.metricCard}>
-          <p className={styles.metricValue}>{result.dailyNorm ?? '—'} г</p>
+          <p className={styles.metricValue}>{result.dailyNorm != null ? Math.round(result.dailyNorm) : '—'} г</p>
           <p className={styles.metricLabel}>{t('recipes.dailyPortion')}</p>
         </div>
         <div className={styles.metricCard}>
-          <p className={styles.metricValue}>{result.dailyCaloriesNorm ?? '—'} ккал</p>
+          <p className={styles.metricValue}>{result.dailyCaloriesNorm != null ? Math.round(result.dailyCaloriesNorm) : '—'} ккал</p>
           <p className={styles.metricLabel}>Суточная норма калорий</p>
         </div>
       </div>
@@ -405,7 +405,7 @@ function CalculationSections({
                           {item.percent.toFixed(1)}%
                         </span>
                       </td>
-                      <td>{item.grams} г</td>
+                      <td>{item.grams.toFixed(1)} г</td>
                     </tr>
                   ))}
                 </tbody>
@@ -437,7 +437,7 @@ function CalculationSections({
                 </p>
 
                 <p className={styles.ingredientContributionAmount}>
-                  {value.amount.toFixed(2)} {value.unit}
+                   {Math.round(value.amount)} {value.unit}
                 </p>
 
                 <p className={styles.ingredientContributionPercent}>

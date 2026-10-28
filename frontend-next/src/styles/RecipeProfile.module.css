@@ -337,6 +337,8 @@
   min-width: 0;
   min-height: 0;
   padding: 24px 32px;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .chartTitle {

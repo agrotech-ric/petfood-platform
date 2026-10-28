@@ -906,6 +906,9 @@
   box-shadow: 0 1px 4px var(--color-shadow);
   padding: 24px 28px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .chartTitle {
@@ -943,8 +946,9 @@
 .donutLegendRow {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
 }
 
 .compositionName,
@@ -960,21 +964,36 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-
 .compositionTable {
   width: 100%;
+  margin-top: 0;
   border-collapse: collapse;
+  table-layout: auto;
   font-size: 12px;
-  margin-top: 12px;
+}
+
+.compositionTable th,
+.compositionTable td {
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
 }
 
 .compositionTable th {
-  text-align: left;
-  padding: 6px 0;
-  font-weight: 600;
   color: var(--color-text);
-  border-bottom: 1px solid var(--color-border);
+  font-weight: 700;
 }
+
+.compositionTable td {
+  color: var(--color-text-muted);
+}
+
+.compositionTable th:nth-child(n + 2),
+.compositionTable td:nth-child(n + 2) {
+  text-align: right;
+  white-space: nowrap;
+}
+
 
 .nutritionSummary {
   margin-top: 10px;
@@ -984,10 +1003,6 @@
   font-size: 11px;
 }
 
-.compositionTable td {
-  padding: 5px 0;
-  color: var(--color-text-muted);
-}
 
 .resultEnergy {
   margin: 10px 0 0;

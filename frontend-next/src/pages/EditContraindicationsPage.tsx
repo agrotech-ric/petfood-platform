@@ -253,7 +253,11 @@ setIngredientCategories(
                             {variants.length > 0 && openIngredientGroups.has(groupKey) && 
                                 <div className={styles.ingredientVariants}>
                                   {variants.map(item => renderItem(item, item.subtype ?? item.name))}</div>}
-                            {regular.map(item => renderItem(item, group.name))}
+                            {regular.length > 0 && (
+                                <div className={styles.ingredientVariants}>
+                                  {regular.map(item => renderItem(item, group.name))}
+                                </div>
+                              )}
                           </div>
                         )
                       })}                    </div>

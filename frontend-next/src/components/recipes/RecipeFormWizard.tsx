@@ -717,16 +717,16 @@ function EditCalculationResult({
       <div className={styles.metricsRow}>
         <div className={styles.metricCard}>
           <p className={styles.metricValue}>
-            {t('recipes.energyPer100Value', { value: result.calories ?? '—' })}
+            {t('recipes.energyPer100Value', {value: result.calories != null ? Math.round(result.calories) : '—'})}
           </p>
           <p className={styles.metricLabel}>{t('recipes.energyValueLabel')}</p>
         </div>
         <div className={styles.metricCard}>
-          <p className={styles.metricValue}>{result.dailyNorm ?? '—'} г</p>
+          <p className={styles.metricValue}>{result.dailyNorm != null ? Math.round(result.dailyNorm) : '—'} г</p>
           <p className={styles.metricLabel}>{t('recipes.dailyPortion')}</p>
         </div>
         <div className={styles.metricCard}>
-          <p className={styles.metricValue}>{result.dailyCaloriesNorm ?? '—'} ккал</p>
+          <p className={styles.metricValue}>{result.dailyCaloriesNorm != null ? Math.round(result.dailyCaloriesNorm) : '—'} ккал</p>
           <p className={styles.metricLabel}>Суточная норма калорий</p>
         </div>
       </div>
@@ -889,7 +889,7 @@ function EditCalculationResult({
                                 {item.percent.toFixed(1)}%
                               </span>
                             </td>
-                            <td>{item.grams} г</td>
+                            <td>{item.grams.toFixed(1)} г</td>
                           </tr>
                         ))}
                       </tbody>
@@ -920,7 +920,7 @@ function EditCalculationResult({
                 </p>
 
                 <p className={styles.ingredientContributionAmount}>
-                  {value.amount.toFixed(2)} {value.unit}
+                  {Math.round(value.amount)} {value.unit}
                 </p>
 
                 <p className={styles.ingredientContributionPercent}>
@@ -2155,11 +2155,13 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                                   )
                                   .map(item => renderButton(item, item.subtype ?? item.name))}
                               </div>}
-                            {[...regular]
-                              .sort((a, b) =>
-                                a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
-                              )
-                              .map(item => renderButton(item, ingredientGroup.name))}
+                            <div className={styles.ingredientVariants}>
+                                {[...regular]
+                                  .sort((a, b) =>
+                                    a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
+                                  )
+                                  .map(item => renderButton(item, ingredientGroup.name))}
+                              </div>
                              </div>
                         )
                       })}
@@ -2210,8 +2212,8 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                   <DualRangeSlider
                     key={ingredientId}
                     label={`${ingredient ? ingredientDisplayName(ingredient) : `ID ${ingredientId}`}:`}
-                    minValue={range.min}
-                    maxValue={range.max}
+                    minValue={Number.isInteger(range.min) ? range.min : Math.round(range.min * 10) / 10}
+                    maxValue={Number.isInteger(range.max) ? range.max : Math.round(range.max * 10) / 10}
                     onChange={value => updateIngredientRange(ingredientId, value)}
                   />
                 )
