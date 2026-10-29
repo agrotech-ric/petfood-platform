@@ -469,7 +469,12 @@
     transition: border-color .15s;
     display: inline-flex;
 }
-
+.regularIngredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 4px 18px;
+}
 .accordionIngredient:hover { color: var(--color-accent-alt); }
 
 /* ── Two panel layout ───────────────────────────────── */
