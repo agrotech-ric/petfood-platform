@@ -2123,97 +2123,49 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                           // Внутри каждой группы — алфавитная сортировка
                           return a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
                         })
-                           
                         .map(ingredientGroup => {
-                          const regular = ingredientGroup.variants.filter(
-                            item =>
-                              !item.subtype ||
-                              normalizeLabel(item.subtype) === normalizeLabel('Обыкновенный')
-                          );
-
-                          const variants = ingredientGroup.variants.filter(
-                            item =>
-                              item.subtype &&
-                              normalizeLabel(item.subtype) !== normalizeLabel('Обыкновенный')
-                          );
-
-                          const groupKey = `${group.category} — ${ingredientGroup.name}`;
-
-                          const renderButton = (ingredient: Ingredient, label: string) => (
-                            <button
-                              key={ingredient.id}
-                              className={`${styles.ingredientTag}
-                                ${
-                                  isContraindicatedIngredient(ingredient, excludedIngredients)
-                                    ? form.ingredientIds.includes(ingredient.id)
-                                      ? styles.ingredientTagContraindicatedSelected
-                                      : styles.ingredientTagContraindicated
-                                    : form.ingredientIds.includes(ingredient.id)
-                                      ? styles.ingredientTagActive
-                                      : ''
-                                }`}
-                              onClick={() => toggleIngredient(ingredient.id)}
-                            >
-                              {label}{form.ingredientIds.includes(ingredient.id) && ' x'}
-                            </button>
-                          );
-
-                          return (
-                            <div key={groupKey} className={styles.ingredientGroup}>
-                              {/* Ингредиенты с подклассами */}
-                              {variants.length > 0 && (
-                                <div className={styles.ingredientGroupContent}>
-                                  <button
-                                    className={styles.ingredientGroupHeader}
-                                    onClick={() =>
-                                      setOpenIngredientGroups(current => {
-                                        const next = new Set(current);
-                                        if (next.has(groupKey)) {
-                                          next.delete(groupKey);
-                                        } else {
-                                          next.add(groupKey);
-                                        }
-                                        return next;
-                                      })
-                                    }
-                                  >
-                                    <span className={styles.accordionChevron}>
-                                      {openIngredientGroups.has(groupKey) ? '▼' : '›'}
-                                    </span>
-                                    {ingredientGroup.name}
-                                  </button>
-
-                                  {openIngredientGroups.has(groupKey) && (
-                                    <div className={styles.ingredientVariants}>
-                                      {[...variants]
-                                        .sort((a, b) =>
-                                          (a.subtype ?? a.name).localeCompare(
-                                            b.subtype ?? b.name,
-                                            'ru',
-                                            { sensitivity: 'base' }
-                                          )
-                                        )
-                                        .map(item => renderButton(item, item.subtype ?? item.name))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Одиночные ингредиенты */}
-                              {regular.length > 0 && (
-                                <div className={styles.regularIngredients}>
-                                  {regular
-                                    .sort((a, b) =>
-                                      a.name.localeCompare(b.name, 'ru', {
-                                        sensitivity: 'base'
-                                      })
+                        const regular = ingredientGroup.variants.filter(item => !item.subtype || normalizeLabel(item.subtype) === normalizeLabel('Обыкновенный'))
+                        const variants = ingredientGroup.variants.filter(item => item.subtype && normalizeLabel(item.subtype) !== normalizeLabel('Обыкновенный'))
+                        const groupKey = `${group.category} — ${ingredientGroup.name}`
+                        const renderButton = (ingredient: Ingredient, label: string) => (
+                          <button key={ingredient.id} className={`${styles.ingredientTag} 
+                          ${isContraindicatedIngredient(ingredient, excludedIngredients) ? form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagContraindicatedSelected : styles.ingredientTagContraindicated : form.ingredientIds.includes(ingredient.id) ? styles.ingredientTagActive : ''}`} 
+                          onClick={() => toggleIngredient(ingredient.id)}>
+                            {label}{form.ingredientIds.includes(ingredient.id) && ' x'}
+                          </button>
+                        )
+                        return (
+                          <div key={groupKey} className={styles.ingredientGroupContent} >
+                            {variants.length > 0 && 
+                               <button className={styles.ingredientGroupHeader} 
+                               onClick={() => setOpenIngredientGroups(current => { 
+                                  const next = new Set(current); 
+                                    if (next.has(groupKey)) next.delete(groupKey); else next.add(groupKey); return next })}>
+                                      <span className={styles.accordionChevron}>{openIngredientGroups.has(groupKey) ? '▼' : '›'}
+                                        </span>{ingredientGroup.name}</button>}
+                            {variants.length > 0 && openIngredientGroups.has(groupKey) && 
+                            <div className={styles.ingredientVariants}>
+                              {[...variants]
+                                  .sort((a, b) =>
+                                    (a.subtype ?? a.name).localeCompare(
+                                      b.subtype ?? b.name,
+                                      'ru',
+                                      { sensitivity: 'base' }
                                     )
-                                    .map(item => renderButton(item, ingredientGroup.name))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
+                                  )
+                                  .map(item => renderButton(item, item.subtype ?? item.name))}
+                              </div>}
+                            <div className={styles.ingredientVariants}>
+                                {[...regular]
+                                  .sort((a, b) =>
+                                    a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' })
+                                  )
+                                  .map(item => renderButton(item, ingredientGroup.name))}
+                              </div>
+                             </div>
+                        )
+                      })   
+                                         
                       }
                     </div>
                   )}

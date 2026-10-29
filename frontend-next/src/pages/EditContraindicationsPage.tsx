@@ -254,7 +254,7 @@ setIngredientCategories(
                                 <div className={styles.ingredientVariants}>
                                   {variants.map(item => renderItem(item, item.subtype ?? item.name))}</div>}
                             {regular.length > 0 && (
-                                <div className={styles.regularIngredients}>
+                                <div className={styles.ingredientVariants}>
                                   {regular.map(item => renderItem(item, group.name))}
                                 </div>
                               )}
