@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ownerService, type PetOwner, type PetOwnerRecord } from '../../services/ownerService'
 import { petService, type PetProfileData } from '../../services/petService'
 import { useTranslation } from '../../context/LanguageContext'
@@ -16,6 +16,8 @@ type OwnerPet = PetProfileData & { photoUrl?: string }
 export function OwnerProfilePage() {
   const { ownerId = '' } = useParams()
   const navigate = useNavigate()
+  const { state } = useLocation()
+  const fromPetId = (state as { fromPetId?: string } | null)?.fromPetId
   const { t } = useTranslation()
   const [owner, setOwner] = useState<PetOwner | null>(null)
   const [pets, setPets] = useState<OwnerPet[]>([])
@@ -90,9 +92,9 @@ export function OwnerProfilePage() {
 
   return <div className={styles.page}>
     <header className={styles.header}>
-      <button className={styles.primary} onClick={() => navigate(-1)}>‹ {t('common.back')}</button>
+      <button className={styles.primary} onClick={() => navigate(fromPetId ? `/pet-profile/${fromPetId}` : '/owners', { replace: true })}>‹ {t('common.back')}</button>
       <h1>{t('owner.profile')}</h1>
-      <div className={styles.actions}><Link className={styles.primary} to={`/owners/${ownerId}/edit`}><EditIcon width={14} height={14} aria-hidden="true" />{t('common.edit')}</Link><button className={styles.secondary} onClick={() => void removeOwner()}><DeleteIcon width={14} height={14} aria-hidden="true" />{t('common.delete')}</button></div>
+      <div className={styles.actions}><Link className={styles.primary} to={`/owners/${ownerId}/edit`} state={{ ownerProfileDistance: 1, fromPetId }}><EditIcon width={14} height={14} aria-hidden="true" />{t('common.edit')}</Link><button className={styles.secondary} onClick={() => void removeOwner()}><DeleteIcon width={14} height={14} aria-hidden="true" />{t('common.delete')}</button></div>
     </header>
     {error && <p className={styles.error} role="alert">{error}</p>}
     <section className={styles.identity}>
@@ -137,9 +139,9 @@ function RecordTable({ records, ownerId, archived, reload }: { records: PetOwner
   const navigate = useNavigate()
   return <>
     <div className={styles.tableWrap}><table><thead><tr><th>{t('owner.record.date')}</th><th>{t('owner.record.topic')}</th><th>{t('owner.record.message')}</th><th>{t('owner.record.actions')}</th></tr></thead><tbody>
-      {records.map(record => <tr key={record.id} tabIndex={0} onClick={() => navigate(`/owners/${ownerId}/records/${record.id}`)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/owners/${ownerId}/records/${record.id}`) } }}><td>{record.recordDate} {record.recordTime?.slice(0, 5)}</td><td>{record.topic}</td><td>{record.message}</td><td onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>{archived ? <><button className={styles.linkButton} onClick={async () => { await ownerService.restoreRecord(ownerId, record.id); await reload() }}>{t('owner.record.restore')}</button><button className={styles.linkButton} onClick={async () => { if (confirm(t('owner.record.deleteConfirm'))) { await ownerService.deleteRecord(ownerId, record.id); await reload() } }}>{t('common.delete')}</button></> : <><Link to={`/owners/${ownerId}/records/${record.id}/edit`}>{t('common.edit')}</Link><button className={styles.linkButton} onClick={async () => { await ownerService.archiveRecord(ownerId, record.id); await reload() }}>{t('owner.record.archive')}</button></>}</td></tr>)}
+      {records.map(record => <tr key={record.id} tabIndex={0} onClick={() => navigate(`/owners/${ownerId}/records/${record.id}`, { state: { ownerProfileDistance: 1 } })} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/owners/${ownerId}/records/${record.id}`, { state: { ownerProfileDistance: 1 } }) } }}><td>{record.recordDate} {record.recordTime?.slice(0, 5)}</td><td>{record.topic}</td><td>{record.message}</td><td onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>{archived ? <><button className={styles.linkButton} onClick={async () => { await ownerService.restoreRecord(ownerId, record.id); await reload() }}>{t('owner.record.restore')}</button><button className={styles.linkButton} onClick={async () => { if (confirm(t('owner.record.deleteConfirm'))) { await ownerService.deleteRecord(ownerId, record.id); await reload() } }}>{t('common.delete')}</button></> : <><Link to={`/owners/${ownerId}/records/${record.id}/edit`} state={{ ownerProfileDistance: 1 }}>{t('common.edit')}</Link><button className={styles.linkButton} onClick={async () => { await ownerService.archiveRecord(ownerId, record.id); await reload() }}>{t('owner.record.archive')}</button></>}</td></tr>)}
     </tbody></table></div>
-    {!archived && <Link className={styles.primary} to={`/owners/${ownerId}/records/new`}>+ {t('owner.record.add')}</Link>}
+    {!archived && <Link className={styles.primary} to={`/owners/${ownerId}/records/new`} state={{ ownerProfileDistance: 1 }}>+ {t('owner.record.add')}</Link>}
     {archived && records.length > 0 && <button className={styles.secondary} onClick={async () => { if (confirm(t('owner.archive.clearConfirm'))) { await ownerService.clearArchive(ownerId); await reload() } }}>{t('owner.archive.clear')}</button>}
     {records.length === 0 && <p>{t('owner.record.empty')}</p>}
   </>

@@ -10,6 +10,14 @@ export function OwnerEditPage() {
   const { ownerId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const state = location.state as { returnTo?: string; ownerProfileDistance?: number; fromPetId?: string; petRegistrationState?: object } | null
+  const goBack = () => {
+    if (ownerId && state?.fromPetId) {
+      navigate(`/pet-profile/${state.fromPetId}`, { replace: true })
+    } else {
+      navigate(-1)
+    }
+  }
   const { t } = useTranslation()
   const [form, setForm] = useState<PetOwnerInput>(empty)
   const [avatar, setAvatar] = useState<File | null>(null)
@@ -37,14 +45,20 @@ export function OwnerEditPage() {
         await ownerService.uploadAvatar(upload.url, avatar)
         saved = await ownerService.update(saved.id, { ...form, avatarObjectKey: upload.objectKey })
       }
-      const state = location.state as { returnTo?: string } | null
-      navigate(state?.returnTo || `/owners/${saved.id}`, { state: { newOwnerId: saved.id } })
+      if (ownerId && state?.ownerProfileDistance === 1) {
+        navigate(-1)
+      } else {
+        navigate(state?.returnTo || `/owners/${saved.id}`, {
+          replace: true,
+          state: { ...state?.petRegistrationState, newOwnerId: saved.id, fromPetId: state?.fromPetId },
+        })
+      }
     } catch (e) { setError(e instanceof Error ? e.message : t('owner.error.save')) }
     finally { setSaving(false) }
   }
 
   return <div className={styles.page}>
-    <header className={styles.header}><button type="button" onClick={() => navigate(-1)}>‹ {t('common.back')}</button><h1>{ownerId ? t('owner.edit') : t('owner.create')}</h1><span /></header>
+    <header className={styles.header}><button type="button" onClick={goBack}>‹ {t('common.back')}</button><h1>{ownerId ? t('owner.edit') : t('owner.create')}</h1><span /></header>
     <form className={styles.form} onSubmit={submit} aria-busy={saving}>
       {error && <p className={styles.error} role="alert">{error}</p>}
       <div className={styles.top}>
@@ -52,7 +66,7 @@ export function OwnerEditPage() {
         <div className={styles.stack}>{(['fullName', 'country', 'city'] as const).map(key => <Field key={key} name={key} value={form[key] || ''} label={t(`owner.${key}` as 'owner.fullName')} required={key === 'fullName'} onChange={update} />)}</div>
       </div>
       <div className={styles.grid}>{(['address', 'email', 'phone', 'telegram'] as const).map(key => <Field key={key} name={key} value={form[key] || ''} label={t(`owner.${key}` as 'owner.address')} onChange={update} type={key === 'email' ? 'email' : 'text'} />)}</div>
-      <div className={styles.actions}><button type="button" className={styles.secondary} onClick={() => navigate(-1)}>{t('common.cancel')}</button><button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</button></div>
+      <div className={styles.actions}><button type="button" className={styles.secondary} onClick={goBack}>{t('common.cancel')}</button><button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</button></div>
     </form>
   </div>
 }

@@ -1455,7 +1455,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     })
   }
 
-  const handleUpdateRecommendations = async (disorderOverride?: string) => {
+  const handleUpdateRecommendations = async () => {
     if (updatingRecommendations || calculating) return
     invalidateCalculation()
     setUpdatingRecommendations(true)
@@ -1474,7 +1474,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
       const recommendedIngredientRanges = new Map<number, Range>()
       let recommendedMaximizeNutrients: string[] = []
       let recommendationWarning = ''
-      const disorder = disorderOverride ?? form.targetDisorder
+      const disorder = form.targetDisorder
       const healthyCondition = normalizeLabel(disorder) === normalizeLabel('Здоровый')
       if (disorder && !healthyCondition) {
         try {
@@ -1997,7 +1997,6 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                         healthConditionId: matchingCondition == null ? '' : String(matchingCondition.id),
                       }))
                       markDirty()
-                      if (disorder) void handleUpdateRecommendations(disorder)
                     }}
                   >
                     <option value="">

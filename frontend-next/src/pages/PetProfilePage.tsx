@@ -1040,7 +1040,7 @@ export function PetProfilePage() {
                 className={styles.ownerRow}
                 onClick={() => navigate(petData?.petOwner
                   ? `/owners/${petData.petOwner.id}`
-                  : `/pet-profile/${id}/edit-profile`)}
+                  : `/pet-profile/${id}/edit-profile`, { state: { fromPetId: id } })}
                 aria-label={petData?.petOwner ? t('owner.open') : t('owner.assign')}
               >
                 <span className={styles.ownerAvatar} aria-hidden="true">

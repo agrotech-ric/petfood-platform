@@ -1,11 +1,13 @@
 import styles from './RegisterPetPage.module.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { referenceService, type Breed, type Color, type ActivityType, type ReproductiveStatus, type Species, type Symptom } from '../../services/referenceService'
 import { petService } from '../../services/petService'
 import { ownerService, type PetOwner } from '../../services/ownerService'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../context/LanguageContext'
+import { recommenderService } from '../../services/recommenderService'
+import { RegisterPetAutocomplete } from './RegisterPetAutocomplete'
 
 function refLabel(item: { name?: string; nameRu?: string; nameEn?: string }) {
   return item.nameRu || item.name || item.nameEn || ''
@@ -25,12 +27,48 @@ function resolveDogSpeciesId(species: Species[]): number {
 
 type FormErrors = Partial<Record<string, string>>
 
+// Keep the file in this tab while React Router restores the serializable fields.
+let draftPhoto: { id: string; file: File } | null = null
+
+type PetDraft = {
+  photoId?: string
+  name: string
+  description: string
+  passportId: string
+  weight: string
+  birthDate: string
+  breedId: string
+  gender: string
+  reproductiveStatusId: string
+  activityTypeId: string
+  colorId: string
+}
+
+function activityAge(birthDate: string, adultWeight: number) {
+  const birth = new Date(`${birthDate}T00:00:00`)
+  const today = new Date()
+  if (!birthDate || Number.isNaN(birth.getTime()) || birth > today) return null
+  const months = (today.getFullYear() - birth.getFullYear()) * 12 + today.getMonth() - birth.getMonth()
+    - Number(today.getDate() < birth.getDate())
+  const adultMonths = adultWeight > 40 ? 24 : adultWeight > 25 ? 15 : 12
+  const seniorMonths = adultWeight <= 10 ? 96 : adultWeight > 40 ? 72 : 84
+  return months < adultMonths ? 'puppy' : months > seniorMonths ? 'senior' : 'adult'
+}
+
+// These IDs are the shared activity reference entries used by the recommender.
+const seniorActivities = [
+  { id: 1, label: 'petRegistration.activityPassive' },
+  { id: 3, label: 'petRegistration.activityModerate' },
+  { id: 4, label: 'petRegistration.activityActive' },
+] as const
+
 export function RegisterPetPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
   const { t } = useTranslation()
-  const routeState = location.state as { petOwnerId?: string; newOwnerId?: string; returnTo?: string } | null
+  const routeState = location.state as { petOwnerId?: string; newOwnerId?: string; returnTo?: string; petDraft?: PetDraft } | null
+  const draft = routeState?.petDraft
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [refsLoading, setRefsLoading] = useState(true)
@@ -41,23 +79,23 @@ export function RegisterPetPage() {
   const [symptoms, setSymptoms] = useState<Symptom[]>([])
   const [reproStatuses, setReproStatuses] = useState<ReproductiveStatus[]>([])
 
-  const [photo, setPhoto] = useState<File | null>(null)
+  const [photo, setPhoto] = useState<File | null>(() => draftPhoto && draftPhoto.id === draft?.photoId ? draftPhoto.file : null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [passportId, setPassportId] = useState('')
-  const [weight, setWeight] = useState('')
-  const [birthDate, setBirthDate] = useState('')
-  const [breedId, setBreedId] = useState('')
-  const [gender, setGender] = useState('')
-  const [reproductiveStatusId, setReproductiveStatusId] = useState('')
-  const [activityTypeId, setActivityTypeId] = useState('')
-  const [colorId, setColorId] = useState('')
+  const [name, setName] = useState(draft?.name ?? '')
+  const [description, setDescription] = useState(draft?.description ?? '')
+  const [passportId, setPassportId] = useState(draft?.passportId ?? '')
+  const [weight, setWeight] = useState(draft?.weight ?? '')
+  const [birthDate, setBirthDate] = useState(draft?.birthDate ?? '')
+  const [breedId, setBreedId] = useState(draft?.breedId ?? '')
+  const [gender, setGender] = useState(draft?.gender ?? '')
+  const [reproductiveStatusId, setReproductiveStatusId] = useState(draft?.reproductiveStatusId ?? '')
+  const [activityTypeId, setActivityTypeId] = useState(draft?.activityTypeId ?? '')
+  const [colorId, setColorId] = useState(draft?.colorId ?? '')
   const [owners, setOwners] = useState<PetOwner[]>([])
   const [petOwnerId, setPetOwnerId] = useState(routeState?.petOwnerId || routeState?.newOwnerId || '')
-  const [ownerQuery, setOwnerQuery] = useState('')
+  const [breedWeight, setBreedWeight] = useState<{ breed: string; weight: number } | null>(null)
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [generalError, setGeneralError] = useState('')
@@ -79,7 +117,7 @@ export function RegisterPetPage() {
         setActivityTypes(acts)
         setSymptoms(syms)
         if (cols.length > 0) {
-          setColorId(String(cols[0].id))
+          setColorId(current => current || String(cols[0].id))
         }
         const sid = resolveDogSpeciesId(sp)
         if (sid) {
@@ -110,11 +148,55 @@ export function RegisterPetPage() {
       if (cancelled) return
       setReproStatuses(list)
       if (list.length > 0) {
-        setReproductiveStatusId(String(list[0].id))
+        setReproductiveStatusId(current => current || String(list[0].id))
       }
     })
     return () => { cancelled = true }
   }, [gender])
+
+  const breed = breeds.find(item => String(item.id) === breedId)
+  const modelBreed = (breed?.nameEn ?? breed?.name ?? breed?.nameRu ?? '').trim().toLowerCase()
+  const loadingBreedWeight = !!modelBreed && breedWeight?.breed !== modelBreed
+  const age = !breed || loadingBreedWeight ? null : activityAge(birthDate, breedWeight?.weight ?? 20)
+  const availableActivities = age === 'senior'
+    ? seniorActivities.filter(option => activityTypes.some(item => item.id === option.id))
+      .map(option => ({ id: option.id, label: t(option.label) }))
+    : activityTypes.map(item => ({ id: item.id, label: refLabel(item) }))
+  const validActivity = availableActivities.some(item => String(item.id) === activityTypeId)
+  const selectedActivity = age && age !== 'puppy' && validActivity ? activityTypeId : ''
+
+  useEffect(() => {
+    if (!modelBreed) return
+    let cancelled = false
+    recommenderService.getBreedDetails(modelBreed).then(({ breed_info }) => {
+      if (!cancelled) setBreedWeight({ breed: modelBreed, weight: breed_info.avg_weight || 20 })
+    }).catch(() => {
+      if (!cancelled) setBreedWeight({ breed: modelBreed, weight: 20 })
+    })
+    return () => { cancelled = true }
+  }, [modelBreed])
+
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview(null)
+      return
+    }
+    const url = URL.createObjectURL(photo)
+    setPhotoPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [photo])
+
+  const createOwner = () => {
+    draftPhoto = photo ? { id: crypto.randomUUID(), file: photo } : null
+    const petDraft: PetDraft = {
+      photoId: draftPhoto?.id, name, description, passportId, weight, birthDate, breedId, gender,
+      reproductiveStatusId, activityTypeId, colorId,
+    }
+    navigate(location.pathname, { replace: true, state: { ...routeState, petDraft } })
+    navigate('/owners/create', {
+      state: { returnTo: location.pathname, petRegistrationState: { ...routeState, petDraft } },
+    })
+  }
 
   const handlePhotoFile = useCallback(async (file: File) => {
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
@@ -126,14 +208,11 @@ export function RegisterPetPage() {
       return
     }
     setPhoto(file)
-    setPhotoPreview(URL.createObjectURL(file))
     setErrors((e) => ({ ...e, photo: undefined }))
   }, [])
 
   const clearPhoto = () => {
-    if (photoPreview) URL.revokeObjectURL(photoPreview)
     setPhoto(null)
-    setPhotoPreview(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -146,6 +225,7 @@ export function RegisterPetPage() {
     if (!birthDate) next.birthDate = 'Укажите дату рождения'
     const w = parseFloat(weight)
     if (!weight || Number.isNaN(w) || w <= 0) next.weight = 'Укажите вес'
+    if (age && age !== 'puppy' && !selectedActivity) next.activity = t('petRegistration.activityRequired')
     if (!colorId) next.color = 'Окрас не загружен'
     setErrors(next)
     return Object.keys(next).length === 0
@@ -162,7 +242,7 @@ export function RegisterPetPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setGeneralError('')
-    if (!validate()) return
+    if (loadingBreedWeight || !validate()) return
 
     setSubmitting(true)
     try {
@@ -193,7 +273,7 @@ export function RegisterPetPage() {
 
       const noSymptom =
         symptoms.find((s) => refLabel(s).toLowerCase() === 'нет') ?? symptoms[0]
-      const actId = activityTypeId ? Number(activityTypeId) : activityTypes[0]?.id
+      const actId = selectedActivity ? Number(selectedActivity) : activityTypes[0]?.id
 
       if (created?.id && (description.trim() || actId)) {
         await petService.createHealthRecord(created.id, {
@@ -204,6 +284,7 @@ export function RegisterPetPage() {
         })
       }
 
+      draftPhoto = null
       navigate(routeState?.returnTo || '/dashboard')
     } catch (err) {
       setGeneralError(err instanceof Error ? err.message : 'Ошибка сохранения')
@@ -310,10 +391,30 @@ export function RegisterPetPage() {
               </div>
 
               <div className={styles.grid}>
-                {(user?.role === 'USER' || user?.role === 'VET') && <div className={styles.col}>
-                  <div className={styles.field}><label className={styles.label} htmlFor="pet-owner-search">{t('owner.field')}</label><input id="pet-owner-search" className={styles.input} type="search" value={ownerQuery} onChange={e => setOwnerQuery(e.target.value)} placeholder={t('owner.search')} /><select id="pet-owner" className={styles.select} value={petOwnerId} onChange={e => setPetOwnerId(e.target.value)}><option value="">{t('owner.none')}</option>{owners.filter(owner => `${owner.fullName} ${owner.phone || ''} ${owner.email || ''} ${owner.telegram || ''}`.toLowerCase().includes(ownerQuery.toLowerCase())).map(owner => <option key={owner.id} value={owner.id}>{owner.fullName || owner.id}</option>)}</select><Link to="/owners/create" state={{ returnTo: '/register-pet' }}>+ {t('owner.create')}</Link></div>
-                </div>}
                 <div className={styles.col}>
+                  {(user?.role === 'USER' || user?.role === 'VET') && (
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="pet-owner-search">{t('owner.field')}</label>
+                      <RegisterPetAutocomplete
+                        id="pet-owner-search"
+                        value={petOwnerId}
+                        onChange={setPetOwnerId}
+                        placeholder={t('owner.search')}
+                        emptyText={t('owner.search.empty')}
+                        options={owners.map(owner => ({
+                          id: owner.id,
+                          label: owner.fullName || owner.id,
+                          detail: owner.phone || owner.email || owner.telegram || undefined,
+                          searchText: `${owner.fullName} ${owner.phone || ''} ${owner.email || ''} ${owner.telegram || ''}`,
+                        }))}
+                      />
+                      {!petOwnerId && (
+                        <button type="button" className={styles.createOwnerBtn} onClick={createOwner}>
+                          <span aria-hidden="true">+</span> {t('owner.create')}
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <div className={styles.field}>
                     <label className={styles.label} htmlFor="pet-id">ID</label>
                     <input
@@ -393,35 +494,44 @@ export function RegisterPetPage() {
                 <div className={styles.col}>
                   <div className={styles.field}>
                     <label className={styles.label} htmlFor="pet-breed">
-                      Порода <span className={styles.required}>*</span>
+                      {t('public.breed')} <span className={styles.required}>*</span>
                     </label>
-                    <select
+                    <RegisterPetAutocomplete
                       id="pet-breed"
-                      className={styles.select}
                       value={breedId}
-                      onChange={(e) => setBreedId(e.target.value)}
-                    >
-                      <option value="">Выберите породу</option>
-                      {breeds.map((b) => (
-                        <option key={b.id} value={b.id}>{refLabel(b)}</option>
-                      ))}
-                    </select>
+                      onChange={setBreedId}
+                      placeholder={t('petRegistration.breedSearch')}
+                      emptyText={t('petRegistration.breedEmpty')}
+                      invalid={!!errors.breed}
+                      options={breeds.map(item => ({
+                        id: String(item.id),
+                        label: refLabel(item),
+                        searchText: [item.nameRu, item.nameEn, item.name].filter(Boolean).join(' '),
+                      }))}
+                    />
                     {errors.breed && <p className={styles.fieldError}>{errors.breed}</p>}
                   </div>
-                  <div className={styles.field}>
-                    <label className={styles.label} htmlFor="pet-activity">Уровень активности</label>
-                    <select
-                      id="pet-activity"
-                      className={styles.select}
-                      value={activityTypeId}
-                      onChange={(e) => setActivityTypeId(e.target.value)}
-                    >
-                      <option value="">Выберите уровень</option>
-                      {activityTypes.map((a) => (
-                        <option key={a.id} value={a.id}>{refLabel(a)}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {age && age !== 'puppy' && (
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="pet-activity">
+                        {t('public.activity')} <span className={styles.required}>*</span>
+                      </label>
+                      <select
+                        id="pet-activity"
+                        className={styles.select}
+                        value={selectedActivity}
+                        required
+                        onChange={(e) => {
+                          setActivityTypeId(e.target.value)
+                          setErrors(current => ({ ...current, activity: undefined }))
+                        }}
+                      >
+                        <option value="">{t('petRegistration.activityRequired')}</option>
+                        {availableActivities.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                      </select>
+                      {errors.activity && <p className={styles.fieldError}>{errors.activity}</p>}
+                    </div>
+                  )}
                   <div className={styles.field}>
                     <label className={styles.label} htmlFor="pet-gender">
                       Пол <span className={styles.required}>*</span>
@@ -442,7 +552,7 @@ export function RegisterPetPage() {
                   {colors.length > 1 && (
                     <div className={styles.field}>
                       <label className={styles.label} htmlFor="pet-color">
-                        Окрас <span className={styles.required}>*</span>
+                        {t('public.color')}
                       </label>
                       <select
                         id="pet-color"
@@ -461,7 +571,7 @@ export function RegisterPetPage() {
             </div>
 
             <div className={styles.submitRow}>
-              <button type="submit" className={styles.submitBtn} disabled={submitting}>
+              <button type="submit" className={styles.submitBtn} disabled={submitting || loadingBreedWeight}>
                 {submitting ? 'Сохранение…' : 'Сохранить'}
               </button>
             </div>

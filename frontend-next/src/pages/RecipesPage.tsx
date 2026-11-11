@@ -33,6 +33,13 @@ export function RecipesPage() {
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
 
+  const sortedFilterGroups = useMemo(() => {
+    const collator = new Intl.Collator(locale === 'kz' ? 'kk' : locale)
+    return filterGroups.map(group => group.key === 'composition'
+      ? { ...group, options: [...group.options].sort((a, b) => collator.compare(a.label, b.label)) }
+      : group)
+  }, [filterGroups, locale])
+
   const activeKeys = useMemo(
     () => new Set(activeFilters.map(f => `${f.groupKey}:${f.optionKey}`)),
     [activeFilters]
@@ -298,7 +305,7 @@ export function RecipesPage() {
 
       <FiltersDrawer
         isOpen={isDrawerOpen}
-        groups={filterGroups}
+        groups={sortedFilterGroups}
         activeKeys={activeKeys}
         onToggleOption={toggleFilter}
         onClose={() => setDrawerOpen(false)}
