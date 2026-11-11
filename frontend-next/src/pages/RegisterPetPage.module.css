@@ -27,7 +27,8 @@
   margin-bottom: 20px;
 }
 
-.backBtn {
+.backBtn,
+.createOwnerBtn {
   justify-self: start;
   display: inline-flex;
   align-items: center;
@@ -44,8 +45,14 @@
   transition: background 0.15s;
 }
 
-.backBtn:hover {
+.backBtn:hover,
+.createOwnerBtn:hover {
   background: var(--color-accent-alt-hover);
+}
+
+.createOwnerBtn {
+  align-self: flex-start;
+  text-decoration: none;
 }
 
 .backIcon {
@@ -205,7 +212,7 @@
 /* ── Two-column grid ── */
 .grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.5rem 2rem;
   margin-bottom: 32px;
 }
@@ -394,4 +401,48 @@
 .submitBtn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.autocomplete {
+  position: relative;
+}
+
+.autocompleteList {
+  position: absolute;
+  z-index: 2;
+  inset: calc(100% + 4px) 0 auto;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px var(--color-shadow);
+}
+
+.autocompleteOption {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.autocompleteOption:hover,
+.autocompleteOption[data-active='true'] {
+  background: var(--color-surface-hover);
+}
+
+.autocompleteEmpty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--color-text-muted);
+}
+
+.autocompleteDetail {
+  display: block;
+  color: var(--color-text-muted);
 }
