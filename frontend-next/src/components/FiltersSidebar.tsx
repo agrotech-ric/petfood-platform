@@ -103,6 +103,17 @@ export function FiltersSidebar({ isOpen, onClose, filters, onChange, refs }: Fil
     () => [...refs.symptoms].sort((a, b) => symptomLabel(a).localeCompare(symptomLabel(b), 'ru')),
     [refs.symptoms]
   )
+
+
+  const healthConditionLabel = (condition: HealthCondition) =>
+    condition.nameRu || condition.name || condition.code
+
+  const sortedHealthConditions = useMemo(
+    () => [...refs.healthConditions].sort((a, b) =>
+      healthConditionLabel(a).localeCompare(healthConditionLabel(b), 'ru')
+    ),
+    [refs.healthConditions]
+  )
 
   return (
     <>
@@ -244,9 +255,9 @@ export function FiltersSidebar({ isOpen, onClose, filters, onChange, refs }: Fil
               sectionId="health"
               isOpen={openSections.health}
               onToggle={() => toggleSection('health')}
-              options={refs.healthConditions.map((h) => ({
+              options={sortedHealthConditions.map((h) => ({
                 key: h.code,
-                label: h.nameRu || h.name || h.code,
+                label: healthConditionLabel(h),
                 checked: filters.healthConditionCodes.includes(h.code),
               }))}
               onToggleOption={(key) => {
