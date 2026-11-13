@@ -6,6 +6,7 @@ import {
   type RecipeBreedSize,
   type RecipeListItem,
 } from '../../services/recipeService'
+import { recommenderService } from '../../services/recommenderService'
 import { ingredientService } from '../../services/ingredientService'
 import { referenceService, type RefItem } from '../../services/referenceService'
 import {
@@ -35,7 +36,7 @@ export function RecipesPage() {
 
   const sortedFilterGroups = useMemo(() => {
     const collator = new Intl.Collator(locale === 'kz' ? 'kk' : locale)
-    return filterGroups.map(group => group.key === 'composition'
+    return filterGroups.map(group => ['composition', 'healthCondition'].includes(group.key)
       ? { ...group, options: [...group.options].sort((a, b) => collator.compare(a.label, b.label)) }
       : group)
   }, [filterGroups, locale])
@@ -71,12 +72,20 @@ export function RecipesPage() {
       safe(referenceService.fetchReproductiveStatuses('male')),
       safe(referenceService.fetchActivityTypes()),
       safe(referenceService.fetchHealthConditions()),
+      safe(recommenderService.listDiseases()),
       safe(referenceService.fetchSymptoms()),
       safe(ingredientService.list()),
-    ]).then(([femaleStatuses, maleStatuses, activities, conditions, symptoms, ingredients]) => {
+    ]).then(([femaleStatuses, maleStatuses, activities, conditions, diseases, symptoms, ingredients]) => {
       if (cancelled) return
       const statuses = [...femaleStatuses, ...maleStatuses]
         .filter((item, index, items) => items.findIndex(other => other.id === item.id) === index)
+
+      const healthOptions = new Map<string, string>()
+      for (const name of [...conditions.map(displayName), ...diseases]) {
+        const label = name.trim()
+        const key = label.toLowerCase()
+        if (key && !healthOptions.has(key)) healthOptions.set(key, label)
+      }
 
       setFilterGroups([
         ...STATIC_RECIPE_FILTER_GROUPS,
@@ -94,7 +103,7 @@ export function RecipesPage() {
           key: 'healthCondition',
           title: 'Состояние здоровья',
           searchable: true,
-          options: conditions.map(item => ({ key: String(item.id), label: displayName(item) })),
+          options: Array.from(healthOptions, ([key, label]) => ({ key, label })),
         },
         {
           key: 'symptoms',
@@ -127,7 +136,7 @@ export function RecipesPage() {
       breedSizes: values('breedSize') as RecipeBreedSize[],
       reproductiveStatusIds: ids('reproductiveStatus'),
       activityTypeIds: ids('activityLevel'),
-      healthConditionIds: ids('healthCondition'),
+      diseaseNames: values('healthCondition'),
       symptomIds: ids('symptoms'),
       ingredientIds: ids('composition'),
     }

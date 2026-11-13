@@ -113,6 +113,13 @@ async def get_breeds():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/diseases", response_model=list[str], tags=["Breeds"])
+def get_diseases():
+    _, disease_df, _, _, _ = load_data()
+    names = {name.strip() for name in disease_df["Disease_ru"].dropna() if name.strip()}
+    return sorted(names)
+
+
 @app.get("/breeds/{breed}", response_model=BreedDetailsResponse, tags=["Breeds"])
 async def get_breed_details(breed: str):
     """Get details about a specific breed"""

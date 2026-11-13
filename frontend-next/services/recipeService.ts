@@ -155,6 +155,7 @@ export type RecipeListParams = {
   reproductiveStatusIds?: number[]
   activityTypeIds?: number[]
   healthConditionIds?: number[]
+  diseaseNames?: string[]
   symptomIds?: number[]
   ingredientIds?: number[]
   status?: RecipeStatus
@@ -176,6 +177,7 @@ export const recipeService = {
     appendMany(params, 'reproductiveStatusIds', filters.reproductiveStatusIds)
     appendMany(params, 'activityTypeIds', filters.activityTypeIds)
     appendMany(params, 'healthConditionIds', filters.healthConditionIds)
+    appendMany(params, 'diseaseNames', filters.diseaseNames)
     appendMany(params, 'symptomIds', filters.symptomIds)
     appendMany(params, 'ingredientIds', filters.ingredientIds)
     if (filters.status) params.set('status', filters.status)

@@ -246,6 +246,8 @@ const STANDARD_TIMEOUT_MS = 45_000
 const OPTIMIZATION_TIMEOUT_MS = 120_000
 
 export const recommenderService = {
+  listDiseases: () => apiClient.get<string[]>('/recommender/diseases', STANDARD_TIMEOUT_MS),
+
   health: () => apiClient.get<{
     status: string
     message: string
