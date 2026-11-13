@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { petService, type HealthRecord, type PetProfileData } from '../../services/petService'
 import { referenceService, type ActivityType, type Symptom } from '../../services/referenceService'
+import { recommenderService } from '../../services/recommenderService'
 import styles from '../styles/EditPet.module.css'
 
 function refLabel(item: { name?: string; nameRu?: string; nameEn?: string }) {
@@ -30,6 +31,7 @@ export function EditDiseaseHistoryPage() {
   const [records, setRecords] = useState<HealthRecord[]>([])
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])
   const [symptoms, setSymptoms] = useState<Symptom[]>([])
+  const [diseaseOptions, setDiseaseOptions] = useState<string[]>([])
   const [date, setDate] = useState(today())
   const [disease, setDisease] = useState('')
   const [description, setDescription] = useState('')
@@ -52,11 +54,13 @@ export function EditDiseaseHistoryPage() {
       setLoading(true)
       setError('')
       try {
-        const [loadedPet, loadedRecords, loadedActivities, loadedSymptoms] = await Promise.all([
+        const [loadedPet, loadedRecords, loadedActivities, loadedSymptoms, loadedConditions, loadedDiseases] = await Promise.all([
           petService.getPet(petId),
           petService.getHealthRecords(petId),
           referenceService.fetchActivityTypes(),
           referenceService.fetchSymptoms(),
+          referenceService.fetchHealthConditions().catch(() => []),
+          recommenderService.listDiseases().catch(() => []),
         ])
 
         if (cancelled) return
@@ -66,6 +70,13 @@ export function EditDiseaseHistoryPage() {
         setRecords(loadedRecords)
         setActivityTypes(loadedActivities)
         setSymptoms(loadedSymptoms)
+
+        const diseaseNames = [...loadedConditions.map(condition => condition.nameRu || condition.name || condition.code), ...loadedDiseases]
+        .map(name => name.trim())
+        .filter(Boolean)
+        setDiseaseOptions(Array.from(new Map(diseaseNames.map(name => [name.toLocaleLowerCase('ru-RU'), name])).values())
+          .sort((a, b) => a.localeCompare(b, 'ru')))
+
         setDate(record?.recordDate || today())
         setDisease(record?.conditionName || '')
         setDescription(record?.comments || '')
@@ -165,14 +176,17 @@ export function EditDiseaseHistoryPage() {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Наличие заболевание</label>
-              <input
-                className={styles.fieldInput}
-                placeholder={isNew ? 'Введите заболевание' : undefined}
+              <label className={styles.fieldLabel}>Наличие Заболевания</label>
+              <select
+                className={styles.fieldSelect}
                 value={disease}
                 onChange={e => setDisease(e.target.value)}
                 disabled={loading || saving}
-              />
+              >
+                <option value="">Выберите заболевание</option>
+                {disease && !diseaseOptions.includes(disease) && <option value={disease}>{disease}</option>}
+                {diseaseOptions.map(name => <option key={name} value={name}>{name}</option>)}
+              </select>
             </div>
 
             <div className={styles.fieldGroup}>

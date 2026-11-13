@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../utils/apiClient'
 import { petSearchService, type PetListItem } from '../../services/petSearchService'
+import { recommenderService } from '../../services/recommenderService'
 import {
   referenceService,
   type Breed,
@@ -116,15 +117,28 @@ export function PetsListPage() {
     ;(async () => {
       setRefsLoading(true)
       try {
-        const [species, syms, health, reproFemale] = await Promise.all([
+        const [species, syms, health, reproFemale, diseases] = await Promise.all([
           referenceService.fetchSpecies(),
           referenceService.fetchSymptoms(),
           referenceService.fetchHealthConditions(),
           referenceService.fetchReproductiveStatuses('female'),
+          recommenderService.listDiseases().catch(() => []),
         ])
         if (cancelled) return
         setSymptoms(syms)
-        setHealthConditions(health)
+        const healthByLabel = new Map<string, HealthCondition>()
+        for (const condition of health) {
+          const label = condition.nameRu || condition.name || condition.code
+          healthByLabel.set(label.trim().toLocaleLowerCase('ru-RU'), condition)
+        }
+        for (const disease of diseases) {
+          const label = disease.trim()
+          const normalized = label.toLocaleLowerCase('ru-RU')
+          if (label && !healthByLabel.has(normalized)) {
+            healthByLabel.set(normalized, { id: 0, code: label, nameRu: label, name: label })
+          }
+        }
+        setHealthConditions(Array.from(healthByLabel.values()))
         setReproductiveStatuses(reproFemale)
         const sid = resolveDogSpeciesId(species)
         if (sid) {
