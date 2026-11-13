@@ -96,6 +96,7 @@ class RecipeServiceTest {
             null,
             null,
             null,
+            null,
             "format",
             "asc"
         );

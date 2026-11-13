@@ -74,6 +74,7 @@ public class RecipeService {
         List<Long> reproductiveStatusIds,
         List<Long> activityTypeIds,
         List<Long> healthConditionIds,
+        List<String> diseaseNames,
         List<Long> symptomIds,
         List<Long> ingredientIds,
         UUID petId,
@@ -82,6 +83,11 @@ public class RecipeService {
         String direction
     ) {
         UUID ownerId = subject(jwt);
+        List<String> normalizedDiseases = diseaseNames == null ? List.of() : diseaseNames.stream()
+            .map(name -> name.trim().toLowerCase(Locale.ROOT))
+            .filter(name -> !name.isEmpty())
+            .distinct()
+            .toList();
         Specification<Recipe> specification = (root, criteriaQuery, cb) -> {
             criteriaQuery.distinct(true);
             List<Predicate> predicates = new ArrayList<>();
@@ -107,6 +113,13 @@ public class RecipeService {
             }
             if (healthConditionIds != null && !healthConditionIds.isEmpty()) {
                 predicates.add(root.join("targetHealthCondition", JoinType.LEFT).get("id").in(healthConditionIds));
+            }
+            if (!normalizedDiseases.isEmpty()) {
+                var condition = root.join("targetHealthCondition", JoinType.LEFT);
+                predicates.add(cb.or(
+                    cb.lower(cb.trim(root.<String>get("targetDisorder"))).in(normalizedDiseases),
+                    cb.lower(cb.trim(condition.<String>get("nameRu"))).in(normalizedDiseases)
+                ));
             }
             if (symptomIds != null && !symptomIds.isEmpty()) {
                 predicates.add(root.join("targetSymptoms", JoinType.INNER).get("id").in(symptomIds));

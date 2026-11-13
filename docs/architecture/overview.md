@@ -158,6 +158,11 @@ calorie and nutrient calculations, disorder recommendations, and recipe
 optimization. The frontend integration is in
 `frontend-next/services/recommenderService.ts`.
 
+The authenticated `/recommender/diseases` route lists disease names across
+all breeds. The recipe filter merges these names with pets-service health
+conditions. Pets-service matches `diseaseNames` against either the saved
+disease text or the referenced condition name within the caller's recipes.
+
 Recipe requests always carry `age` together with `age_metric`. Profiles for
 user-created ingredients are request-scoped and use the recommender's internal
 nutrient keys. The maximization model currently supports moisture, protein,
