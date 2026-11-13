@@ -1,3 +1,4 @@
+import { dogAgeCategory } from '../../utils/dogAgeCategory'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from '../../../context/LanguageContext'
@@ -201,44 +202,56 @@ function stateFromRecipe(recipe: Recipe): FormState {
   }
 }
 
-function prefillFromPet(
-  current: FormState,
+async function prefillFromPet(
   pet: PetProfileData,
   records: HealthRecord[],
   references: References,
 ) {
   const record = latestRecord(records)
+  const currentCondition = latestRecord(records.filter(item =>
+    item.conditionStatus !== 'history' && item.conditionName?.trim(),
+  ))?.conditionName?.trim()
+  const ageMonths = monthsSince(pet.birthDate)
+  const breed = references.breeds.find(item => item.id === pet.breedId)
+  const modelBreed = (breed?.nameEn ?? breed?.name ?? pet.breedName ?? '').trim().toLowerCase()
+  const details = modelBreed ? await recommenderService.getBreedDetails(modelBreed).catch(() => null) : null
+  const adultWeight = details?.breed_info.avg_weight
+  const age = ageMonths && adultWeight ? dogAgeCategory(Number(ageMonths), adultWeight) : null
+  const initial = createInitialState()
   const healthCondition = references.healthConditions.find(item =>
-    displayName(item).toLowerCase() === record?.conditionName?.toLowerCase()
+    displayName(item).toLowerCase() === currentCondition?.toLowerCase()
   )
   const symptomNames = new Set((record?.symptoms ?? []).map(item => item.toLowerCase()))
 
   return {
-    ...current,
     petId: pet.id,
-    weight: pet.weightKg == null ? current.weight : String(pet.weightKg),
-    breedId: pet.breedId == null ? current.breedId : String(pet.breedId),
-    ageMonths: monthsSince(pet.birthDate) || current.ageMonths,
+    ageCategory: age === 'puppy' ? 'puppies' : age === 'senior' ? 'senior' : initial.ageCategory,
+    breedSize: adultWeight ? adultWeight <= 10 ? 'small' : adultWeight <= 25 ? 'medium' : 'large' : initial.breedSize,
+    energy: initial.energy,
+    pregnancyPeriod: initial.pregnancyPeriod,
+    weight: pet.weightKg == null ? initial.weight : String(pet.weightKg),
+    breedId: pet.breedId == null ? initial.breedId : String(pet.breedId),
+    ageMonths: ageMonths,
     gender: pet.gender === 'female' ? 'female' as const : 'male' as const,
-    activityId: record?.activityTypeId == null ? current.activityId : String(record.activityTypeId),
+    activityId: record?.activityTypeId == null ? initial.activityId : String(record.activityTypeId),
     reproductiveStatusId:
       pet.reproductiveStatusId == null
-        ? current.reproductiveStatusId
+        ? initial.reproductiveStatusId
         : String(pet.reproductiveStatusId),
     lactationWeek: (() => {
       const week = pet.reproductiveSubStatusName?.match(/[1-4]/)?.[0]
-      return week ? `week_${week}` as LactationWeek : current.lactationWeek
+      return week ? `week_${week}` as LactationWeek : initial.lactationWeek
     })(),
     puppyCount: pet.puppiesCount == null || pet.puppiesCount <= 0
-      ? current.puppyCount
+      ? initial.puppyCount
       : String(pet.puppiesCount),
     healthConditionId:
-      healthCondition == null ? current.healthConditionId : String(healthCondition.id),
-    targetDisorder: record?.conditionName ?? current.targetDisorder,
+      healthCondition == null ? initial.healthConditionId : String(healthCondition.id),
+    targetDisorder: currentCondition ?? initial.targetDisorder,
     symptomIds: references.symptoms
       .filter(item => symptomNames.has(displayName(item).toLowerCase()))
       .map(item => item.id),
-  }
+  } satisfies Partial<FormState>
 }
 
 function clearPetPrefill(current: FormState): FormState {
@@ -246,6 +259,9 @@ function clearPetPrefill(current: FormState): FormState {
   return {
     ...current,
     petId: null,
+    ageCategory: initial.ageCategory,
+    breedSize: initial.breedSize,
+    energy: initial.energy,
     weight: initial.weight,
     breedId: initial.breedId,
     ageMonths: initial.ageMonths,
@@ -1043,7 +1059,6 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           recipe,
           pet,
           records,
-          contraindications,
         ] = await Promise.all([
           safe(ingredientService.list()),
           dogSpecies ? safe(referenceService.fetchBreedsBySpeciesId(dogSpecies.id)) : Promise.resolve([]),
@@ -1057,9 +1072,6 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           originPetId == null
             ? Promise.resolve([])
             : petService.getHealthRecords(originPetId).catch(() => []),
-          originPetId == null
-            ? Promise.resolve({ ingredients: [] as string[] })
-            : petService.getContraindications(originPetId).catch(() => ({ ingredients: [] as string[] })),
         ])
 
         if (cancelled) return
@@ -1073,12 +1085,16 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           healthConditions,
           symptoms,
         }
+        const linkedPetId = recipe ? recipe.petId : pet?.id
+        const initialForm = recipe ? stateFromRecipe(recipe) : createInitialState()
+        const [next, contraindications] = await Promise.all([
+          !recipe && pet ? prefillFromPet(pet, records, loadedReferences) : null,
+          linkedPetId ? petService.getContraindications(linkedPetId) : null,
+        ])
+        if (cancelled) return
         setReferences(loadedReferences)
-        setExcludedIngredients(contraindications.ingredients ?? [])
-
-        let next = recipe ? stateFromRecipe(recipe) : createInitialState()
-        if (!recipe && pet) next = prefillFromPet(next, pet, records, loadedReferences)
-        setForm(next)
+        setExcludedIngredients(contraindications?.ingredients ?? [])
+        setForm({ ...initialForm, ...next })
         setRecommendedEnergy(recipe?.targetEnergyKcal ?? null)
         setCalculationResult(recipe?.calculationResult ?? null)
         setCalculationVersion(recipe?.calculationVersion ?? null)
@@ -1100,7 +1116,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   }, [originPetId, recipeId])
 
   useEffect(() => {
-    if (!isEdit || loading || calorieCalculation) return
+    if (!isEdit || loading || calorieCalculation || petSelectionRevisionRef.current > 0) return
 
     let cancelled = false
     const loadCalorieFormula = async () => {
@@ -1365,13 +1381,15 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   }
 
   const handlePetChange = async (petId: string | null) => {
-    if (petId === form.petId) return
+    if (petId === form.petId || calculating || updatingRecommendations) return
     const selectionRevision = petSelectionRevisionRef.current + 1
     petSelectionRevisionRef.current = selectionRevision
 
     if (petId == null) {
       invalidateCalculation()
       setForm(clearPetPrefill)
+      setExcludedIngredients([])
+      setSelectingPet(false)
       setRecommendedEnergy(null)
       setCalorieCalculation(null)
       markDirty(true)
@@ -1381,14 +1399,19 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
     setSelectingPet(true)
     setError('')
     try {
-      const [pet, records] = await Promise.all([
+      const [pet, records, contraindications] = await Promise.all([
         petService.getPet(petId),
-        petService.getHealthRecords(petId).catch(() => []),
+        petService.getHealthRecords(petId),
+        petService.getContraindications(petId),
       ])
+      const next = await prefillFromPet(pet, records, references)
       if (selectionRevision !== petSelectionRevisionRef.current) return
 
       invalidateCalculation()
-      setForm(current => prefillFromPet(current, pet, records, references))
+      setRecommendedEnergy(null)
+      setCalorieCalculation(null)
+      setExcludedIngredients(contraindications.ingredients ?? [])
+      setForm(current => ({ ...current, ...next }))
       markDirty(true)
     } catch {
       if (selectionRevision === petSelectionRevisionRef.current) {
@@ -1456,7 +1479,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   }
 
   const handleUpdateRecommendations = async () => {
-    if (updatingRecommendations || calculating) return
+    if (selectingPet || updatingRecommendations || calculating) return
     invalidateCalculation()
     setUpdatingRecommendations(true)
     setError('')
@@ -1573,7 +1596,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
   }
 
   const handleCalculate = async () => {
-    if (calculating || updatingRecommendations) return
+    if (selectingPet || calculating || updatingRecommendations) return
     if (!form.name.trim()) {
       setError(t('recipes.nameRequired'))
       return
@@ -1773,7 +1796,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
                 }))}
                 value={form.petId}
                 loading={loadingPets}
-                selecting={selectingPet}
+                selecting={selectingPet || calculating || updatingRecommendations}
                 placeholder={t('recipes.petSelectorPlaceholder')}
                 searchPlaceholder={t('recipes.petSearchPlaceholder')}
                 noSelectionLabel={t('recipes.petNoSelection')}
@@ -2046,7 +2069,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
           </div>
           <button
             className={styles.updateRecommendationsBtn}
-            disabled={updatingRecommendations || calculating}
+            disabled={selectingPet || updatingRecommendations || calculating}
             onClick={() => void handleUpdateRecommendations()}
           >
             {updatingRecommendations
@@ -2252,7 +2275,7 @@ export function RecipeFormWizard({ recipeId }: { recipeId?: number }) {
             <button
               type="button"
               className={styles.primaryBtn}
-              disabled={calculating || updatingRecommendations}
+              disabled={selectingPet || calculating || updatingRecommendations}
               onClick={() => void handleCalculate()}
             >
               {calculating ? t('recipes.calculating') : t('recipes.calculateComposition')}

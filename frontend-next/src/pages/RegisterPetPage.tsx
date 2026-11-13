@@ -1,3 +1,4 @@
+import { dogAgeCategory } from '../utils/dogAgeCategory'
 import styles from './RegisterPetPage.module.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -50,9 +51,7 @@ function activityAge(birthDate: string, adultWeight: number) {
   if (!birthDate || Number.isNaN(birth.getTime()) || birth > today) return null
   const months = (today.getFullYear() - birth.getFullYear()) * 12 + today.getMonth() - birth.getMonth()
     - Number(today.getDate() < birth.getDate())
-  const adultMonths = adultWeight > 40 ? 24 : adultWeight > 25 ? 15 : 12
-  const seniorMonths = adultWeight <= 10 ? 96 : adultWeight > 40 ? 72 : 84
-  return months < adultMonths ? 'puppy' : months > seniorMonths ? 'senior' : 'adult'
+  return dogAgeCategory(months, adultWeight)
 }
 
 // These IDs are the shared activity reference entries used by the recommender.
